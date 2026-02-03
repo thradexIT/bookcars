@@ -7,10 +7,19 @@
   ],
   "eslint.run": "onType",
   "eslint.workingDirectories": [
-    { "directory": "backend" },
-    { "directory": "admin" },
-    { "directory": "frontend" },
-    { "directory": "mobile" }
+    {
+      "directory": "backend"
+    },
+    {
+      "directory": "admin"
+    },
+    {
+      "directory": "frontend"
+    },
+    {
+      "directory": "mobile"
+    }
   ],
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

@@ -30,6 +30,7 @@ interface TextInputProps {
   onBlur?: () => void
   onSubmitEditing?: () => void
   onChangeText?: (text: string) => void
+  placeholderTextColor?: string
 }
 
 const TextInputComponent = (
@@ -114,6 +115,7 @@ const TextInputComponent = (
           }}
           secureTextEntry={props.secureTextEntry}
           placeholder={props.label}
+          placeholderTextColor={props.placeholderTextColor || "rgba(0, 0, 0, 0.6)"}
           value={value}
           onChangeText={onChangeText}
           onKeyPress={props.onKeyPress}

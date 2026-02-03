@@ -15,6 +15,8 @@ const whitelist = [
  */
 const CORS_CONFIG: cors.CorsOptions = {
   origin(origin, callback) {
+    console.log('CORS Whitelist:', whitelist)
+    console.log('Incoming Origin:', origin)
     if (!origin || whitelist.indexOf(helper.trimEnd(origin, '/')) !== -1) {
       callback(null, true)
     } else {

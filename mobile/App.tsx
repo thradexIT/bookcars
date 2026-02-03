@@ -12,18 +12,24 @@ import * as UserService from './services/UserService'
 import { GlobalProvider } from './context/GlobalContext'
 import * as env from './config/env.config'
 import { AutocompleteDropdownContextProvider } from '@/components/AutocompleteDropdown-v4.3.1'
-import { AuthProvider } from '@/context/AuthContext'
-import { SettingProvider } from '@/context/SettingContext'
 import NavigationWrapper from '@/components/NavigationWrapper'
+import { SettingProvider } from './context/SettingContext'
+import { AuthProvider } from './context/AuthContext'
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowList: true,
-  }),
-})
+console.log('DEBUG: API_HOST loaded as:', env.API_HOST)
+
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowList: true,
+    }),
+  })
+} catch (err) {
+  console.log('Notifications.setNotificationHandler failed (Expo Go?):', err)
+}
 
 //
 // Keep the splash screen visible while we fetch resources
@@ -32,6 +38,7 @@ SplashScreen.preventAutoHideAsync()
 
 const App = () => {
   const [appIsReady, setAppIsReady] = useState(false)
+  const [isNavReady, setIsNavReady] = useState(false)
 
   const responseListener = useRef<Notifications.EventSubscription | null>(null)
   const navigationRef = useRef<NavigationContainerRef<StackParams> | null>(null)
@@ -52,55 +59,71 @@ const App = () => {
     //
     // Register push notifiations token
     //
-    register()
+    // try {
+    //   register()
+    // } catch (err) {
+    //   console.log('Register push token failed:', err)
+    // }
 
     //
     // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
     //
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
-      try {
-        if (navigationRef.current) {
-          const { data } = response.notification.request.content
+    //
+    try {
+      responseListener.current = Notifications.addNotificationResponseReceivedListener(async (response) => {
+        try {
+          if (navigationRef.current) {
+            const { data } = response.notification.request.content
 
-          if (data.booking) {
-            if (data.user && data.notification) {
-              await NotificationService.markAsRead(data.user as string, [data.notification as string])
+            if (data.booking) {
+              if (data.user && data.notification) {
+                await NotificationService.markAsRead(data.user as string, [data.notification as string])
+              }
+              navigationRef.current.navigate('Booking', { id: data.booking as string })
+            } else {
+              navigationRef.current.navigate('Notifications', {})
             }
-            navigationRef.current.navigate('Booking', { id: data.booking as string })
-          } else {
-            navigationRef.current.navigate('Notifications', {})
           }
+        } catch (err) {
+          helper.error(err, false)
         }
-      } catch (err) {
-        helper.error(err, false)
-      }
-    })
+      })
+    } catch (err) {
+      console.log('Notifications listener failed:', err)
+    }
 
     return () => {
-      responseListener.current?.remove()
+      if (responseListener.current) {
+        try {
+          responseListener.current.remove()
+        } catch (err) {
+          console.log('Failed to remove notification subscription:', err)
+        }
+      }
     }
   }, [])
 
-  setTimeout(() => {
-    setAppIsReady(true)
-  }, 500)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log('DEBUG: setTimeout fired, setting appIsReady to true')
+      setAppIsReady(true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
 
-  const onReady = useCallback(async () => {
-    if (appIsReady) {
-      //
-      // This tells the splash screen to hide immediately! If we call this after
-      // `setAppIsReady`, then we may see a blank screen while the app is
-      // loading its initial state and rendering its first pixels. So instead,
-      // we hide the splash screen once we know the root view has already
-      // performed layout.
-      //
-      await SplashScreen.hideAsync()
+  const onReady = useCallback(() => {
+    console.log('DEBUG: onReady called')
+    setIsNavReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (appIsReady && isNavReady) {
+      console.log('DEBUG: Hiding Splash Screen now')
+      SplashScreen.hideAsync().catch((err) => {
+        console.log('DEBUG: Error hiding splash screen:', err)
+      })
     }
-  }, [appIsReady])
-
-  if (!appIsReady) {
-    return null
-  }
+  }, [appIsReady, isNavReady])
 
   return (
     <SettingProvider>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { StyleSheet, ScrollView, View, TextInput as ReactTextInput } from 'react-native'
+import { StyleSheet, ScrollView, View, TextInput as ReactTextInput, Image } from 'react-native'
 import { useIsFocused } from '@react-navigation/native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import validator from 'validator'
@@ -193,16 +193,17 @@ const SignInScreen = ({ navigation, route }: NativeStackScreenProps<StackParams,
   return (
     <View style={styles.master}>
       <Header route={route} title={i18n.t('SIGN_IN_TITLE')} hideTitle={false} loggedIn={false} />
-
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps={helper.android() ? 'handled' : 'always'}
       >
+        <Image source={require('@/assets/icon.png')} style={{ width: 100, height: 100, alignSelf: 'center', marginTop: 20, backgroundColor: 'transparent', borderRadius: 10 }} />
         <View style={styles.contentContainer}>
           <TextInput
             ref={emailRef}
             style={styles.component}
             label={i18n.t('EMAIL')}
+            placeholderTextColor="rgba(0, 0, 0, 0.6)"
             value={email}
             error={emailRequired || !emailValid || emailError}
             helperText={(emailRequired && i18n.t('REQUIRED')) || (!emailValid && i18n.t('EMAIL_NOT_VALID')) || (emailError && i18n.t('EMAIL_ERROR')) || ''}
@@ -214,6 +215,7 @@ const SignInScreen = ({ navigation, route }: NativeStackScreenProps<StackParams,
             style={styles.component}
             secureTextEntry
             label={i18n.t('PASSWORD')}
+            placeholderTextColor="rgba(0, 0, 0, 0.6)"
             value={password}
             error={passwordRequired || passwordLengthError || passwordError}
             helperText={(passwordRequired && i18n.t('REQUIRED')) || (passwordLengthError && i18n.t('PASSWORD_LENGTH_ERROR')) || (passwordError && i18n.t('PASSWORD_ERROR')) || ''}

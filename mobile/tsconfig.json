@@ -6,18 +6,31 @@
     "strict": true,
     "jsx": "react-native",
     "typeRoots": [
+      "./node_modules/@types",
       "./types"
     ],
     "rootDir": "./",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./*"],
-      ":bookcars-types": ["../packages/bookcars-types"],
-      ":bookcars-helper": ["../packages/bookcars-helper"]
-    }
+      "@/*": [
+        "./*"
+      ],
+      ":bookcars-types": [
+        "../packages/bookcars-types"
+      ],
+      ":bookcars-helper": [
+        "../packages/bookcars-helper"
+      ]
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "references": [
-    { "path": "../packages/bookcars-types" },
-    { "path": "../packages/bookcars-helper" }
-  ]  
+    {
+      "path": "../packages/bookcars-types"
+    },
+    {
+      "path": "../packages/bookcars-helper"
+    }
+  ]
 }
