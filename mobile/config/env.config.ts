@@ -69,6 +69,10 @@ export const CURRENCIES: Currency[] = [
     code: 'AUD',
     symbol: '$',
   },
+  {
+    code: 'PEN',
+    symbol: 'S/.',
+  },
 ]
 
 /**
@@ -91,6 +95,7 @@ export const WEBSITE_NAME: string = String(BC_WEBSITE_NAME || 'BookCars')
  * @type {string}
  */
 export const API_HOST: string = BC_API_HOST
+// export const API_HOST: string = 'http://192.168.1.33:4002'
 
 /**
  * Axios timeout in milliseconds.
@@ -147,6 +152,7 @@ export const BOOKINGS_PAGE_SIZE: number = Number.parseInt(BC_BOOKINGS_PAGE_SIZE,
  * @type {string}
  */
 export const CDN_USERS: string = BC_CDN_USERS
+// export const CDN_USERS: string = 'http://192.168.1.33:4002/cdn/bookcars/users'
 
 /**
  * Car images CDN.
@@ -154,6 +160,7 @@ export const CDN_USERS: string = BC_CDN_USERS
  * @type {string}
  */
 export const CDN_CARS: string = BC_CDN_CARS
+// export const CDN_CARS: string = 'http://192.168.1.33:4002/cdn/bookcars/cars'
 
 /**
  * Driver licenses CDN.
@@ -161,6 +168,7 @@ export const CDN_CARS: string = BC_CDN_CARS
  * @type {string}
  */
 export const CDN_LICENSES: string = BC_CDN_LICENSES
+// export const CDN_LICENSES: string = 'http://192.168.1.33:4002/cdn/bookcars/licenses'
 
 /**
  * Temp driver licenses CDN.
@@ -168,6 +176,7 @@ export const CDN_LICENSES: string = BC_CDN_LICENSES
  * @type {string}
  */
 export const CDN_TEMP_LICENSES: string = BC_CDN_TEMP_LICENSES
+// export const CDN_TEMP_LICENSES: string = 'http://192.168.1.33:4002/cdn/bookcars/temp/licenses'
 
 /**
  * Page offset.

@@ -354,6 +354,20 @@ export const EXPO_ACCESS_TOKEN = __env__('BC_EXPO_ACCESS_TOKEN', false)
  */
 export const STRIPE_SECRET_KEY = __env__('BC_STRIPE_SECRET_KEY', false, 'STRIPE_SECRET_KEY')
 
+/**
+ * Mercado Pago Access Token.
+ *
+ * @type {string}
+ */
+export const MERCADO_PAGO_ACCESS_TOKEN = __env__('BC_MERCADO_PAGO_ACCESS_TOKEN', false, 'MERCADO_PAGO_ACCESS_TOKEN')
+
+/**
+ * Mercado Pago Public Key.
+ *
+ * @type {string}
+ */
+export const MERCADO_PAGO_PUBLIC_KEY = __env__('BC_MERCADO_PAGO_PUBLIC_KEY', false, 'MERCADO_PAGO_PUBLIC_KEY')
+
 let stripeSessionExpireAt = Number.parseInt(__env__('BC_STRIPE_SESSION_EXPIRE_AT', false, '82800'), 10)
 stripeSessionExpireAt = stripeSessionExpireAt < 1800 ? 1800 : stripeSessionExpireAt
 stripeSessionExpireAt = stripeSessionExpireAt <= 82800 ? stripeSessionExpireAt : 82800

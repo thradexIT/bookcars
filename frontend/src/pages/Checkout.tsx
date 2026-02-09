@@ -48,6 +48,8 @@ import * as LocationService from '@/services/LocationService'
 import * as PaymentService from '@/services/PaymentService'
 import * as StripeService from '@/services/StripeService'
 import * as PayPalService from '@/services/PayPalService'
+import * as MercadoPagoService from '@/services/MercadoPagoService'
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react'
 import { useRecaptchaContext, RecaptchaContextType } from '@/context/RecaptchaContext'
 import Layout from '@/components/Layout'
 import Error from '@/components/Error'
@@ -72,6 +74,10 @@ import '@/assets/css/checkout.css'
 // recreating the `Stripe` object on every render.
 //
 const stripePromise = env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe ? loadStripe(env.STRIPE_PUBLISHABLE_KEY) : null
+
+if (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago) {
+  initMercadoPago(env.MERCADO_PAGO_PUBLIC_KEY)
+}
 
 const Checkout = () => {
   const location = useLocation()
@@ -109,6 +115,9 @@ const Checkout = () => {
   const [payPalLoaded, setPayPalLoaded] = useState(false)
   const [payPalInit, setPayPalInit] = useState(false)
   const [payPalProcessing, setPayPalProcessing] = useState(false)
+  const [mercadoPagoReady, setMercadoPagoReady] = useState(false)
+  const [checkoutPayload, setCheckoutPayload] = useState<bookcarsTypes.CheckoutPayload>()
+  const [qrCode, setQrCode] = useState<string>()
 
   const birthDateRef = useRef<HTMLInputElement | null>(null)
   const additionalDriverBirthDateRef = useRef<HTMLInputElement | null>(null)
@@ -281,6 +290,8 @@ const Checkout = () => {
           setClientSecret(res.clientSecret)
           _sessionId = res.sessionId
           _customerId = res.customerId
+        } else if (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago) {
+          setMercadoPagoReady(true)
         } else {
           setPayPalLoaded(true)
         }
@@ -297,6 +308,11 @@ const Checkout = () => {
         sessionId: _sessionId,
         customerId: _customerId,
         payPal: env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.PayPal,
+      }
+
+      if (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago && !payLater) {
+        setCheckoutPayload(payload)
+        return
       }
 
       const { status, bookingId: _bookingId } = await BookingService.checkout(payload)
@@ -920,57 +936,112 @@ const Checkout = () => {
                             </div>
                           )
                         )
-                        : payPalLoaded ? (
-                          <div className="payment-options-container">
-                            <PayPalButtons
-                              createOrder={async () => {
-                                const name = bookcarsHelper.truncateString(car.name, PayPalService.ORDER_NAME_MAX_LENGTH)
-                                const _description = `${car.name} - ${daysLabel} - ${pickupLocation._id === dropOffLocation._id ? pickupLocation.name : `${pickupLocation.name} - ${dropOffLocation.name}`}`
-                                const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
-                                let amount = price
-                                if (payDeposit) {
-                                  amount = depositPrice
-                                } else if (payInFull) {
-                                  amount = price + depositPrice
-                                }
-                                const orderId = await PayPalService.createOrder(bookingId!, amount, PaymentService.getCurrency(), name, description)
-                                return orderId
-                              }}
-                              onApprove={async (data, actions) => {
-                                try {
-                                  setPayPalProcessing(true)
-                                  await actions.order?.capture()
-                                  const { orderID } = data
-                                  const status = await PayPalService.checkOrder(bookingId!, orderID)
+                        : env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago
+                          ? (mercadoPagoReady && checkoutPayload && (
+                            <div className="payment-options-container">
+                              {qrCode ? (
+                                <div className="yape-qr-container" style={{ textAlign: 'center', padding: '20px' }}>
+                                  <h3>Escanea el QR con Yape</h3>
+                                  <img src={`data:image/png;base64,${qrCode}`} alt="Yape QR" style={{ width: '200px', display: 'block', margin: '0 auto 20px auto' }} />
+                                  <Button variant="contained" onClick={() => navigate('/')}>{commonStrings.CLOSE}</Button>
+                                </div>
+                              ) : (
+                                <Payment
+                                  initialization={{ amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice) : price }}
+                                  customization={{ paymentMethods: { ticket: 'all', creditCard: 'all', debitCard: 'all' } }}
+                                  locale={language === 'es' ? 'es-PE' : 'en-US'}
+                                  onSubmit={async ({ formData }) => {
+                                    try {
+                                      const paymentPayload = {
+                                        ...formData,
+                                        amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice) : price,
+                                        description: `${env.WEBSITE_NAME} - ${car.name}`,
+                                        payer: {
+                                          email: checkoutPayload.driver?.email || user?.email || formData.payer.email,
+                                          identification: formData.payer.identification
+                                        }
+                                      }
+                                      const res = await MercadoPagoService.createPayment(paymentPayload)
 
-                                  if (status === 200) {
-                                    setVisible(false)
-                                    setSuccess(true)
-                                  } else {
-                                    setPaymentFailed(true)
+                                      if (res.qr_code_base64) {
+                                        setQrCode(res.qr_code_base64)
+                                        // Create booking with Pending status
+                                        const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
+                                        await BookingService.checkout(finalPayload)
+                                      } else if (res.status === 'approved' || res.status === 'in_process') {
+                                        const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
+                                        const { status } = await BookingService.checkout(finalPayload)
+                                        if (status === 200) {
+                                          setVisible(false)
+                                          setSuccess(true)
+                                          setBookingId(res.id ? String(res.id) : undefined) // Use transaction ID as booking reference
+                                        } else {
+                                          helper.error()
+                                        }
+                                      } else {
+                                        setPaymentFailed(true)
+                                      }
+                                    } catch (err) {
+                                      console.error(err)
+                                      setPaymentFailed(true)
+                                    }
+                                  }}
+                                />
+                              )}
+                            </div>
+                          ))
+                          : payPalLoaded ? (
+                            <div className="payment-options-container">
+                              <PayPalButtons
+                                createOrder={async () => {
+                                  const name = bookcarsHelper.truncateString(car.name, PayPalService.ORDER_NAME_MAX_LENGTH)
+                                  const _description = `${car.name} - ${daysLabel} - ${pickupLocation._id === dropOffLocation._id ? pickupLocation.name : `${pickupLocation.name} - ${dropOffLocation.name}`}`
+                                  const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
+                                  let amount = price
+                                  if (payDeposit) {
+                                    amount = depositPrice
+                                  } else if (payInFull) {
+                                    amount = price + depositPrice
                                   }
-                                } catch (err) {
-                                  helper.error(err)
-                                } finally {
+                                  const orderId = await PayPalService.createOrder(bookingId!, amount, PaymentService.getCurrency(), name, description)
+                                  return orderId
+                                }}
+                                onApprove={async (data, actions) => {
+                                  try {
+                                    setPayPalProcessing(true)
+                                    await actions.order?.capture()
+                                    const { orderID } = data
+                                    const status = await PayPalService.checkOrder(bookingId!, orderID)
+
+                                    if (status === 200) {
+                                      setVisible(false)
+                                      setSuccess(true)
+                                    } else {
+                                      setPaymentFailed(true)
+                                    }
+                                  } catch (err) {
+                                    helper.error(err)
+                                  } finally {
+                                    setPayPalProcessing(false)
+                                  }
+                                }}
+                                onInit={() => {
+                                  setPayPalInit(true)
+                                }}
+                                onCancel={() => {
                                   setPayPalProcessing(false)
-                                }
-                              }}
-                              onInit={() => {
-                                setPayPalInit(true)
-                              }}
-                              onCancel={() => {
-                                setPayPalProcessing(false)
-                              }}
-                              onError={() => {
-                                setPayPalProcessing(false)
-                              }}
-                            />
-                          </div>
-                        ) : null
+                                }}
+                                onError={() => {
+                                  setPayPalProcessing(false)
+                                }}
+                              />
+                            </div>
+                          ) : null
                     )}
                     <div className="checkout-buttons">
                       {(
                         (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe && !clientSecret)
+                        || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago && !mercadoPagoReady)
                         || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.PayPal && !payPalInit)
                         || payLater) && (
                           <Button
