@@ -1008,6 +1008,7 @@ export const update = async (req: Request, res: Response) => {
       supplierCarLimit,
       notifyAdminOnNewCar,
       blacklisted,
+      clientType,
     } = body
 
     if (fullName) {
@@ -1022,6 +1023,9 @@ export const update = async (req: Request, res: Response) => {
     user.supplierCarLimit = supplierCarLimit
     user.notifyAdminOnNewCar = notifyAdminOnNewCar
     user.blacklisted = !!blacklisted
+    if (clientType) {
+      user.clientType = clientType
+    }
     if (type) {
       user.type = type as bookcarsTypes.UserType
     }
@@ -1153,7 +1157,10 @@ export const getUser = async (req: Request, res: Response) => {
       priceChangeRate: 1,
       supplierCarLimit: 1,
       notifyAdminOnNewCar: 1,
-    }).lean()
+      clientType: 1,
+    })
+      .populate<{ clientType: env.ClientType }>('clientType')
+      .lean()
 
     if (!user) {
       logger.error('[user.getUser] User not found:', req.params)
@@ -1456,6 +1463,20 @@ export const getUsers = async (req: Request, res: Response) => {
           $match,
         },
         {
+          $lookup: {
+            from: 'ClientType',
+            localField: 'clientType',
+            foreignField: '_id',
+            as: 'clientType',
+          },
+        },
+        {
+          $unwind: {
+            path: '$clientType',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
           $project: {
             supplier: 1,
             email: 1,
@@ -1471,6 +1492,7 @@ export const getUsers = async (req: Request, res: Response) => {
             blacklisted: 1,
             birthDate: 1,
             customerId: 1,
+            clientType: 1,
           },
         },
         {

@@ -82,6 +82,8 @@ export enum PaymentGateway {
   MercadoPago = 'mercadopago',
 }
 
+
+
 export interface Booking {
   _id?: string
   supplier: string | User
@@ -184,6 +186,7 @@ export interface UpdateSupplierPayload {
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
   blacklisted?: boolean
+  clientType?: string | ClientType
 }
 
 export interface CreateCarPayload {
@@ -302,6 +305,7 @@ export interface CreateUserPayload {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: string
 }
 
 export interface UpdateUserPayload extends CreateUserPayload {
@@ -407,6 +411,7 @@ export interface User {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: string | ClientType
 }
 
 export interface Option {
@@ -484,6 +489,9 @@ export interface Car {
   discountedWeeklyPrice: number | null
   monthlyPrice: number | null
   discountedMonthlyPrice: number | null
+
+  // client discount (applied in frontend after volume calculation)
+  clientDiscount?: number
 
   // date based price fields
   isDateBasedPrice: boolean
@@ -582,6 +590,17 @@ export interface CreatePayPalOrderPayload {
   currency: string
   name: string
   description: string
+}
+
+export interface ClientType {
+  _id?: string
+  name: string
+  displayName: string
+  description?: string
+  privileges: {
+    rentDiscount: number
+  }
+  active: boolean
 }
 
 export interface PaymentResult {

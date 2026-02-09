@@ -956,12 +956,17 @@ const Checkout = () => {
                                         ...formData,
                                         amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice) : price,
                                         description: `${env.WEBSITE_NAME} - ${car.name}`,
+                                        currency: env.BASE_CURRENCY,
+                                        locale: language,
+                                        receiptEmail: checkoutPayload.driver?.email || user?.email || formData.payer.email,
+                                        customerName: checkoutPayload.driver?.fullName || user?.fullName || formData.payer.email,
+                                        name: car.name,
                                         payer: {
                                           email: checkoutPayload.driver?.email || user?.email || formData.payer.email,
                                           identification: formData.payer.identification
                                         }
                                       }
-                                      const res = await MercadoPagoService.createPayment(paymentPayload)
+                                      const res = await MercadoPagoService.createPayment(paymentPayload as any)
 
                                       if (res.qr_code_base64) {
                                         setQrCode(res.qr_code_base64)

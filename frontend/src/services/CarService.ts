@@ -14,7 +14,8 @@ export const getCars = (data: bookcarsTypes.GetCarsPayload, page: number, size: 
   axiosInstance
     .post(
       `/api/frontend-cars/${page}/${size}`,
-      data
+      data,
+      { withCredentials: true } // Send cookies for authentication
     ).then((res) => res.data)
 
 /**
@@ -26,7 +27,8 @@ export const getCars = (data: bookcarsTypes.GetCarsPayload, page: number, size: 
 export const getCar = (id: string): Promise<bookcarsTypes.Car> =>
   axiosInstance
     .get(
-      `/api/car/${encodeURIComponent(id)}/${UserService.getLanguage()}`
+      `/api/car/${encodeURIComponent(id)}/${UserService.getLanguage()}`,
+      { withCredentials: true }
     )
     .then((res) => res.data)
 

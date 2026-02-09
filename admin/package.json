@@ -34,6 +34,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.69.0",
+    "react-localization": "^2.0.6",
     "react-router-dom": "^7.11.0",
     "react-toastify": "^11.0.5",
     "rrule": "^2.8.1",

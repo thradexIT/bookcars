@@ -5,6 +5,7 @@ import * as databaseHelper from '../utils/databaseHelper'
 import User from '../models/User'
 import * as logger from '../utils/logger'
 import * as authHelper from '../utils/authHelper'
+import { createClientTypes } from './clientTypes'
 
 try {
   const connected = await databaseHelper.connect(env.DB_URI, env.DB_SSL, env.DB_DEBUG)
@@ -35,6 +36,9 @@ try {
   } else {
     logger.info('Admin user already exists')
   }
+
+  await createClientTypes()
+
   process.exit(0)
 } catch (err) {
   logger.error('Error during setup:', err)

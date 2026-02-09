@@ -520,6 +520,7 @@ export interface User extends Document {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: Types.ObjectId
 }
 
 /**
@@ -617,6 +618,24 @@ export interface DateBasedPrice extends Document {
   startDate: Date
   endDate: Date
   dailyPrice: number
+}
+
+/**
+ * ClientType Document.
+ *
+ * @export
+ * @interface ClientType
+ * @typedef {ClientType}
+ * @extends {Document}
+ */
+export interface ClientType extends Document {
+  name: string
+  displayName: string
+  description?: string
+  active: boolean
+  privileges: {
+    rentDiscount: number
+  }
 }
 
 /**

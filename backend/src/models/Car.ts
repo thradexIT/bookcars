@@ -66,6 +66,11 @@ const carSchema = new Schema<env.Car>(
       type: Number,
     },
 
+    // client discount (set dynamically, not stored in DB)
+    clientDiscount: {
+      type: Number,
+    },
+
     // date based price fields
     isDateBasedPrice: {
       type: Boolean,

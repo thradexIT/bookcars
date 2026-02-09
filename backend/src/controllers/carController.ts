@@ -17,7 +17,10 @@ import User from '../models/User'
 import Notification from '../models/Notification'
 import NotificationCounter from '../models/NotificationCounter'
 import * as mailHelper from '../utils/mailHelper'
+
 import Location from '../models/Location'
+import * as authHelper from '../utils/authHelper'
+import ClientType from '../models/ClientType'
 
 /**
  * Create a Car.
@@ -584,6 +587,33 @@ export const getCar = async (req: Request, res: Response) => {
 
       for (const location of car.locations) {
         location.name = location.values.filter((value) => value.language === language)[0].value
+      }
+
+      let userDiscount = 0
+      let token = req.headers['x-access-token'] as string
+
+      if (!token) {
+        token = req.signedCookies[env.FRONTEND_AUTH_COOKIE_NAME] as string
+      }
+
+      if (token) {
+        try {
+          const sessionData = await authHelper.decryptJWT(token)
+          if (sessionData && helper.isValidObjectId(sessionData.id)) {
+            const user = await User.findById(sessionData.id).populate<{ clientType: env.ClientType }>('clientType')
+            if (user && user.clientType && user.clientType.active && user.clientType.privileges) {
+              userDiscount = user.clientType.privileges.rentDiscount
+            }
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      // Set client discount on car (will be applied in frontend)
+      if (userDiscount > 0) {
+        car.clientDiscount = userDiscount
+        console.log(`[DEBUG] Set clientDiscount=${userDiscount}% on car: ${car.name}`)
       }
 
       res.json(car)
@@ -1210,6 +1240,59 @@ export const getFrontendCars = async (req: Request, res: Response) => {
       ],
       { collation: { locale: env.DEFAULT_LANGUAGE, strength: 2 } },
     )
+
+    if (data.length > 0 && data[0].resultData.length > 0) {
+      let userDiscount = 0
+      let token = req.headers[env.X_ACCESS_TOKEN] as string
+
+      console.log('[DEBUG getFrontendCars] Token from header:', token ? 'EXISTS' : 'MISSING')
+
+      if (!token) {
+        token = req.signedCookies[env.FRONTEND_AUTH_COOKIE_NAME] as string
+        console.log('[DEBUG getFrontendCars] Token from cookie:', token ? 'EXISTS' : 'MISSING')
+      }
+
+      if (token) {
+        try {
+          const sessionData = await authHelper.decryptJWT(token)
+          console.log('[DEBUG getFrontendCars] Session data:', sessionData ? 'VALID' : 'INVALID')
+          if (sessionData && helper.isValidObjectId(sessionData.id)) {
+            const user = await User.findById(sessionData.id).populate<{ clientType: env.ClientType }>('clientType')
+            console.log('[DEBUG getFrontendCars] User:', user?.email)
+            console.log('[DEBUG getFrontendCars] ClientType:', user?.clientType?.name)
+            console.log('[DEBUG getFrontendCars] Active:', user?.clientType?.active)
+            console.log('[DEBUG getFrontendCars] Privileges:', user?.clientType?.privileges)
+            if (user && user.clientType && user.clientType.active && user.clientType.privileges) {
+              userDiscount = user.clientType.privileges.rentDiscount
+              console.log('[DEBUG getFrontendCars] Calculated userDiscount:', userDiscount)
+            }
+          }
+        } catch (err) {
+          console.log('[DEBUG getFrontendCars] Error decrypting token:', err)
+        }
+      } else {
+        console.log('[DEBUG getFrontendCars] No token found - user not authenticated')
+      }
+
+      // Set client discount on each car (will be applied in frontend)
+      if (userDiscount > 0) {
+        for (const car of data[0].resultData) {
+          car.clientDiscount = userDiscount
+          console.log(`[DEBUG] Set clientDiscount=${userDiscount}% on car: ${car.name}`)
+        }
+      } else {
+        console.log('[DEBUG getFrontendCars] No discount to apply (userDiscount=0)')
+      }
+
+      // Verify clientDiscount is in the first car before sending
+      if (data[0].resultData.length > 0) {
+        console.log('[DEBUG] First car before sending:', {
+          name: data[0].resultData[0].name,
+          clientDiscount: data[0].resultData[0].clientDiscount,
+          hasClientDiscount: 'clientDiscount' in data[0].resultData[0]
+        })
+      }
+    }
 
     res.json(data)
   } catch (err) {

@@ -268,7 +268,14 @@ export const formatPrice = (price: number, currency: string, language: string) =
  * @param {?bookcarsTypes.CarOptions} [options]
  * @returns {number}
  */
-export const calculateTotalPrice = (car: bookcarsTypes.Car, from: Date, to: Date, priceChangeRate: number, options?: bookcarsTypes.CarOptions) => {
+export const calculateTotalPrice = (
+  car: bookcarsTypes.Car,
+  from: Date,
+  to: Date,
+  priceChangeRate: number,
+  options?: bookcarsTypes.CarOptions,
+  clientDiscount?: number // NEW: Client type discount percentage (0-100)
+) => {
   let totalPrice = 0
   let totalDays = days(from, to)
 
@@ -370,6 +377,15 @@ export const calculateTotalPrice = (car: bookcarsTypes.Car, from: Date, to: Date
 
   // apply price change rate
   totalPrice += totalPrice * (priceChangeRate / 100)
+
+  // NEW: Apply client discount AFTER calculating total with volume discounts
+  // Use explicit clientDiscount parameter, or fall back to car.clientDiscount
+  const discount = clientDiscount !== undefined ? clientDiscount : (car.clientDiscount || 0)
+  if (discount > 0) {
+    const beforeDiscount = totalPrice
+    totalPrice = totalPrice * (1 - (discount / 100))
+    console.log(`[DEBUG] Applied ${discount}% client discount: $${beforeDiscount.toFixed(2)} → $${totalPrice.toFixed(2)}`)
+  }
 
   return totalPrice
 }

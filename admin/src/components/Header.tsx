@@ -374,6 +374,15 @@ const Header = ({
                   <ListItemIcon><PricingIcon /></ListItemIcon>
                   <ListItemText primary={strings.PRICING} />
                 </ListItem>
+                <ListItem
+                  onClick={() => {
+                    navigate('/client-types')
+                    handleSideMenuClose()
+                  }}
+                >
+                  <ListItemIcon><UsersIcon /></ListItemIcon>
+                  <ListItemText primary={strings.CLIENT_TYPES} />
+                </ListItem>
                 {bankDetails?.showBankDetailsPage && (
                   <ListItem
                     onClick={() => {

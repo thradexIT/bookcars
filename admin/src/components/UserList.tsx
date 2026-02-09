@@ -28,6 +28,7 @@ import * as bookcarsTypes from ':bookcars-types'
 import * as bookcarsHelper from ':bookcars-helper'
 import env from '@/config/env.config'
 import { strings as commonStrings } from '@/lang/common'
+import { strings as clientTypeStrings } from '@/lang/client-types'
 import { strings } from '@/lang/user-list'
 import * as helper from '@/utils/helper'
 import * as UserService from '@/services/UserService'
@@ -236,6 +237,15 @@ const UserList = ({
         headerName: commonStrings.PHONE,
         flex: 1,
         valueGetter: (value: string) => value,
+      },
+      {
+        field: 'clientType',
+        headerName: clientTypeStrings.CLIENT_TYPE,
+        flex: 1,
+        renderCell: ({ value }: GridRenderCellParams<bookcarsTypes.User, bookcarsTypes.ClientType>) => (
+          <span className="bs">{value?.name}</span>
+        ),
+        valueGetter: (value: bookcarsTypes.ClientType) => value,
       },
       {
         field: 'type',

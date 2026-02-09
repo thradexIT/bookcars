@@ -25,6 +25,8 @@ import { strings } from '@/lang/create-user'
 import * as helper from '@/utils/helper'
 import * as UserService from '@/services/UserService'
 import * as SupplierService from '@/services/SupplierService'
+import * as ClientTypeService from '@/services/ClientTypeService'
+import { strings as clientTypeStrings } from '@/lang/client-types'
 import Error from '@/components/Error'
 import Backdrop from '@/components/SimpleBackdrop'
 import Avatar from '@/components/Avatar'
@@ -44,6 +46,7 @@ const CreateUser = () => {
   const [avatar, setAvatar] = useState('')
   const [avatarError, setAvatarError] = useState(false)
   const [license, setLicense] = useState<string | undefined>()
+  const [clientTypes, setClientTypes] = useState<bookcarsTypes.ClientType[]>([])
 
   const {
     control,
@@ -70,7 +73,8 @@ const CreateUser = () => {
       minimumRentalDays: '',
       priceChangeRate: '',
       supplierCarLimit: '',
-      notifyAdminOnNewCar: false
+      notifyAdminOnNewCar: false,
+      clientType: ''
     },
   })
 
@@ -78,6 +82,7 @@ const CreateUser = () => {
   const payLater = useWatch({ control, name: 'payLater' })
   const licenseRequired = useWatch({ control, name: 'licenseRequired' })
   const notifyAdminOnNewCar = useWatch({ control, name: 'notifyAdminOnNewCar' })
+  const clientType = useWatch({ control, name: 'clientType' })
 
   const onBeforeUpload = () => {
     setLoading(true)
@@ -108,7 +113,14 @@ const CreateUser = () => {
     }
   }
 
-  const onLoad = (_user?: bookcarsTypes.User) => {
+  const onLoad = async (_user?: bookcarsTypes.User) => {
+    try {
+      const _clientTypes = await ClientTypeService.getClientTypes('')
+      setClientTypes(_clientTypes)
+    } catch (err) {
+      helper.error(err)
+    }
+
     if (_user && _user.verified) {
       const _admin = helper.admin(_user)
       setUser(_user)
@@ -178,6 +190,7 @@ const CreateUser = () => {
         priceChangeRate: data.priceChangeRate ? Number(data.priceChangeRate) : undefined,
         supplierCarLimit: data.supplierCarLimit ? Number(data.supplierCarLimit) : undefined,
         notifyAdminOnNewCar: type === bookcarsTypes.UserType.Supplier ? data.notifyAdminOnNewCar : undefined,
+        clientType: data.clientType,
       }
 
       if (type === bookcarsTypes.UserType.Supplier) {
@@ -297,6 +310,26 @@ const CreateUser = () => {
 
               {driver && (
                 <>
+                  <FormControl fullWidth margin="dense">
+                    <InputLabel>{clientTypeStrings.CLIENT_TYPE}</InputLabel>
+                    <Select
+                      label={clientTypeStrings.CLIENT_TYPE}
+                      value={clientType || ''}
+                      onChange={(e) => {
+                        setValue('clientType', e.target.value)
+                      }}
+                      variant="standard"
+                      fullWidth
+                    >
+                      <MenuItem value=""><em>{commonStrings.NONE}</em></MenuItem>
+                      {clientTypes.map((clientType) => (
+                        <MenuItem key={clientType._id} value={clientType._id}>
+                          {clientType.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
                   <FormControl fullWidth margin="dense">
                     <DatePicker
                       label={commonStrings.BIRTH_DATE}
