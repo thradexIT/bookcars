@@ -108,6 +108,8 @@ const Checkout = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [bookingId, setBookingId] = useState<string>()
   const [sessionId, setSessionId] = useState<string>()
+  const [deductible, setDeductible] = useState(0)
+  const [clientTypeName, setClientTypeName] = useState('')
   // const [distance, setDistance] = useState('')
   const [licenseRequired, setLicenseRequired] = useState(false)
   const [license, setLicense] = useState<string | null>(null)
@@ -230,6 +232,10 @@ const Checkout = () => {
         amount = price + depositPrice
       }
 
+      if (clientTypeName === 'Insurance' && !payDeposit) {
+        amount += deductible
+      }
+
       const basePrice = await bookcarsHelper.convertPrice(amount, PaymentService.getCurrency(), env.BASE_CURRENCY)
 
       const booking: bookcarsTypes.Booking = {
@@ -275,6 +281,10 @@ const Checkout = () => {
             finalPrice = depositPrice
           } else if (payInFull) {
             finalPrice = price + depositPrice
+          }
+
+          if (clientTypeName === 'Insurance' && !payDeposit) {
+            finalPrice -= deductible
           }
 
           const payload: bookcarsTypes.CreatePaymentPayload = {
@@ -351,9 +361,21 @@ const Checkout = () => {
   }
 
   const onLoad = async (_user?: bookcarsTypes.User) => {
-    setUser(_user)
     setAuthenticated(_user !== undefined)
     setLanguage(UserService.getLanguage())
+
+    let currentUser = _user
+    if (_user && _user.clientType && typeof _user.clientType === 'string') {
+      try {
+        const u = await UserService.getUser(_user._id as string)
+        if (u && typeof u.clientType !== 'string') {
+          currentUser = u
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    setUser(currentUser)
 
     const { state } = location
     if (!state) {
@@ -410,9 +432,34 @@ const Checkout = () => {
       }
 
       const priceChangeRate = _car.supplier.priceChangeRate || 0
-      const _price = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(_car, _from, _to, priceChangeRate))
+      let _price = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(_car, _from, _to, priceChangeRate))
       let _depositPrice = _car.deposit > 0 ? await PaymentService.convertPrice(_car.deposit) : 0
       _depositPrice += _depositPrice * (priceChangeRate / 100)
+
+      // Client Type Logic
+      let _clientTypeName = ''
+      if (currentUser && currentUser.clientType) {
+        if (typeof currentUser.clientType === 'string') {
+          // Should have been resolved by fetched user above
+        } else {
+          _clientTypeName = currentUser.clientType.name
+        }
+      }
+      setClientTypeName(_clientTypeName)
+
+      if (_clientTypeName === 'Internal') {
+        _depositPrice = 0
+      }
+
+      if (_clientTypeName === 'Insurance') {
+        const minDeductibleUSD = 100
+        const minDeductible = await bookcarsHelper.convertPrice(minDeductibleUSD, 'USD', PaymentService.getCurrency())
+        const calculatedDeductible = _price * 0.10
+        const _deductible = Math.max(minDeductible, calculatedDeductible)
+        setDeductible(_deductible)
+      } else {
+        setDeductible(0)
+      }
 
       const included = (val: number) => val === 0
 
@@ -428,7 +475,7 @@ const Checkout = () => {
       setValue('theftProtection', included(_car.theftProtection))
       setValue('collisionDamageWaiver', included(_car.collisionDamageWaiver))
       setValue('fullInsurance', included(_car.fullInsurance))
-      setLicense(_user?.license || null)
+      setLicense(currentUser?.license || null)
       setVisible(true)
     } catch (err) {
       helper.error(err)
@@ -468,6 +515,7 @@ const Checkout = () => {
                       sizeAuto
                       onLoad={() => setLoadingPage(false)}
                       hideSupplier={env.HIDE_SUPPLIERS}
+                      clientType={clientTypeName}
                     />
 
                     <CheckoutOptions
@@ -477,7 +525,9 @@ const Checkout = () => {
                       language={language}
                       clientSecret={clientSecret}
                       payPalLoaded={payPalLoaded}
-                      onPriceChange={(value) => setPrice(value)}
+                      onPriceChange={(value) => {
+                        setPrice(value)
+                      }}
                       onAdManuallyCheckedChange={(value) => setAdManuallyChecked(value)}
                       onCancellationChange={(value) => setValue('cancellation', value)}
                       onAmendmentsChange={(value) => setValue('amendments', value)}
@@ -486,6 +536,40 @@ const Checkout = () => {
                       onFullInsuranceChange={(value) => setValue('fullInsurance', value)}
                       onAdditionalDriverChange={(value) => setValue('additionalDriver', value)}
                     />
+
+                    {clientTypeName !== 'Internal' && (
+                      <div className="checkout-details-container">
+                        <div className="checkout-info">
+                          <CarIcon />
+                          <span>{strings.WARRANTY_DETAILS}</span>
+                        </div>
+                        <div className="checkout-details">
+                          <div className="checkout-detail" style={{ height: bookingDetailHeight }}>
+                            <span className="checkout-detail-title">{strings.DEPOSIT_ON_PICKUP}</span>
+                            <div className="checkout-detail-value">
+                              {bookcarsHelper.formatPrice(depositPrice, commonStrings.CURRENCY, language)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {clientTypeName === 'Insurance' && (
+                      <div className="checkout-details-container">
+                        <div className="checkout-info">
+                          <CarIcon />
+                          <span>{strings.INSURANCE_DETAILS}</span>
+                        </div>
+                        <div className="checkout-details">
+                          <div className="checkout-detail" style={{ height: bookingDetailHeight }}>
+                            <span className="checkout-detail-title">{strings.DEDUCTIBLE}</span>
+                            <div className="checkout-detail-value">
+                              {bookcarsHelper.formatPrice(deductible, commonStrings.CURRENCY, language)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="checkout-details-container">
                       <div className="checkout-info">
@@ -915,220 +999,203 @@ const Checkout = () => {
                         {
                           bookcarsHelper.formatPrice(
                             payDeposit ? depositPrice
-                              : payInFull ? (price + depositPrice)
-                                : price
+                              : payInFull ? (price + depositPrice - (clientTypeName === 'Insurance' ? deductible : 0))
+                                : (price - (clientTypeName === 'Insurance' ? deductible : 0))
                             , commonStrings.CURRENCY, language)
                         }
                       </div>
                     </div>
 
-                    {(!car.supplier.payLater || !payLater) && (
-                      env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe
-                        ? (
-                          clientSecret && (
-                            <div className="payment-options-container">
-                              <EmbeddedCheckoutProvider
-                                stripe={stripePromise}
-                                options={{ clientSecret }}
-                              >
-                                <EmbeddedCheckout />
-                              </EmbeddedCheckoutProvider>
-                            </div>
+                    {!payLater && (
+                      <div className="checkout-payment-buttons">
+                        {env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe
+                          ? (
+                            clientSecret && (
+                              <div className="payment-options-container">
+                                <EmbeddedCheckoutProvider
+                                  stripe={stripePromise}
+                                  options={{ clientSecret }}
+                                >
+                                  <EmbeddedCheckout />
+                                </EmbeddedCheckoutProvider>
+                              </div>
+                            )
                           )
-                        )
-                        : env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago
-                          ? (mercadoPagoReady && checkoutPayload && (
-                            <div className="payment-options-container">
-                              {qrCode ? (
-                                <div className="yape-qr-container" style={{ textAlign: 'center', padding: '20px' }}>
-                                  <h3>Escanea el QR con Yape</h3>
-                                  <img src={`data:image/png;base64,${qrCode}`} alt="Yape QR" style={{ width: '200px', display: 'block', margin: '0 auto 20px auto' }} />
-                                  <Button variant="contained" onClick={() => navigate('/')}>{commonStrings.CLOSE}</Button>
-                                </div>
-                              ) : (
-                                <Payment
-                                  initialization={{ amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice) : price }}
-                                  customization={{ paymentMethods: { ticket: 'all', creditCard: 'all', debitCard: 'all' } }}
-                                  locale={language === 'es' ? 'es-PE' : 'en-US'}
-                                  onSubmit={async ({ formData }) => {
-                                    try {
-                                      const paymentPayload = {
-                                        ...formData,
-                                        amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice) : price,
-                                        description: `${env.WEBSITE_NAME} - ${car.name}`,
-                                        currency: env.BASE_CURRENCY,
-                                        locale: language,
-                                        receiptEmail: checkoutPayload.driver?.email || user?.email || formData.payer.email,
-                                        customerName: checkoutPayload.driver?.fullName || user?.fullName || formData.payer.email,
-                                        name: car.name,
-                                        payer: {
-                                          email: checkoutPayload.driver?.email || user?.email || formData.payer.email,
-                                          identification: formData.payer.identification
+                          : env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago
+                            ? (mercadoPagoReady && checkoutPayload && (
+                              <div className="payment-options-container">
+                                {qrCode ? (
+                                  <div className="yape-qr-container" style={{ textAlign: 'center', padding: '20px' }}>
+                                    <h3>Escanea el QR con Yape</h3>
+                                    <img src={`data:image/png;base64,${qrCode}`} alt="Yape QR" style={{ width: '200px', display: 'block', margin: '0 auto 20px auto' }} />
+                                    <Button variant="contained" onClick={() => navigate('/')}>{commonStrings.CLOSE}</Button>
+                                  </div>
+                                ) : (
+                                  <Payment
+                                    initialization={{ amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice - (clientTypeName === 'Insurance' ? deductible : 0)) : (price - (clientTypeName === 'Insurance' ? deductible : 0)) }}
+                                    customization={{ paymentMethods: { ticket: 'all', creditCard: 'all', debitCard: 'all' } }}
+                                    locale={language === 'es' ? 'es-PE' : 'en-US'}
+                                    onSubmit={async ({ formData }) => {
+                                      try {
+                                        const paymentPayload = {
+                                          ...formData,
+                                          amount: payDeposit ? depositPrice : payInFull ? (price + depositPrice - (clientTypeName === 'Insurance' ? deductible : 0)) : (price - (clientTypeName === 'Insurance' ? deductible : 0)),
+                                          description: `${env.WEBSITE_NAME} - ${car.name}`,
+                                          currency: env.BASE_CURRENCY,
+                                          locale: language,
+                                          receiptEmail: checkoutPayload.driver?.email || user?.email || formData.payer.email,
+                                          customerName: checkoutPayload.driver?.fullName || user?.fullName || formData.payer.email,
+                                          name: car.name,
+                                          payer: {
+                                            email: checkoutPayload.driver?.email || user?.email || formData.payer.email,
+                                            identification: formData.payer.identification
+                                          }
                                         }
-                                      }
-                                      const res = await MercadoPagoService.createPayment(paymentPayload as any)
+                                        const res = await MercadoPagoService.createPayment(paymentPayload as any)
 
-                                      if (res.qr_code_base64) {
-                                        setQrCode(res.qr_code_base64)
-                                        // Create booking with Pending status
-                                        const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
-                                        await BookingService.checkout(finalPayload)
-                                      } else if (res.status === 'approved' || res.status === 'in_process') {
-                                        const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
-                                        const { status } = await BookingService.checkout(finalPayload)
-                                        if (status === 200) {
-                                          setVisible(false)
-                                          setSuccess(true)
-                                          setBookingId(res.id ? String(res.id) : undefined) // Use transaction ID as booking reference
+                                        if (res.qr_code_base64) {
+                                          setQrCode(res.qr_code_base64)
+                                          // Create booking with Pending status
+                                          const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
+                                          await BookingService.checkout(finalPayload)
+                                        } else if (res.status === 'approved' || res.status === 'in_process') {
+                                          const finalPayload = { ...checkoutPayload, sessionId: String(res.id) }
+                                          const { status } = await BookingService.checkout(finalPayload)
+                                          if (status === 200) {
+                                            setVisible(false)
+                                            setSuccess(true)
+                                            setBookingId(res.id ? String(res.id) : undefined) // Use transaction ID as booking reference
+                                          } else {
+                                            helper.error()
+                                          }
                                         } else {
-                                          helper.error()
+                                          setPaymentFailed(true)
                                         }
+                                      } catch (err) {
+                                        console.error(err)
+                                        setPaymentFailed(true)
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))
+                            : payPalLoaded ? (
+                              <div className="payment-options-container">
+                                <PayPalButtons
+                                  createOrder={async () => {
+                                    const name = bookcarsHelper.truncateString(car.name, PayPalService.ORDER_NAME_MAX_LENGTH)
+                                    const _description = `${car.name} - ${daysLabel} - ${pickupLocation._id === dropOffLocation._id ? pickupLocation.name : `${pickupLocation.name} - ${dropOffLocation.name}`}`
+                                    const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
+                                    let amount = price
+                                    if (payDeposit) {
+                                      amount = depositPrice
+                                    } else if (payInFull) {
+                                      amount = price + depositPrice
+                                    }
+                                    if (clientTypeName === 'Insurance' && !payDeposit) {
+                                      amount -= deductible
+                                    }
+                                    const orderId = await PayPalService.createOrder(bookingId!, amount, PaymentService.getCurrency(), name, description)
+                                    return orderId
+                                  }}
+                                  onApprove={async (data, actions) => {
+                                    try {
+                                      setPayPalProcessing(true)
+                                      await actions.order?.capture()
+                                      const { orderID } = data
+                                      const status = await PayPalService.checkOrder(bookingId!, orderID)
+
+                                      if (status === 200) {
+                                        setVisible(false)
+                                        setSuccess(true)
                                       } else {
                                         setPaymentFailed(true)
                                       }
                                     } catch (err) {
-                                      console.error(err)
-                                      setPaymentFailed(true)
+                                      helper.error(err)
+                                    } finally {
+                                      setPayPalProcessing(false)
                                     }
                                   }}
-                                />
-                              )}
-                            </div>
-                          ))
-                          : payPalLoaded ? (
-                            <div className="payment-options-container">
-                              <PayPalButtons
-                                createOrder={async () => {
-                                  const name = bookcarsHelper.truncateString(car.name, PayPalService.ORDER_NAME_MAX_LENGTH)
-                                  const _description = `${car.name} - ${daysLabel} - ${pickupLocation._id === dropOffLocation._id ? pickupLocation.name : `${pickupLocation.name} - ${dropOffLocation.name}`}`
-                                  const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
-                                  let amount = price
-                                  if (payDeposit) {
-                                    amount = depositPrice
-                                  } else if (payInFull) {
-                                    amount = price + depositPrice
-                                  }
-                                  const orderId = await PayPalService.createOrder(bookingId!, amount, PaymentService.getCurrency(), name, description)
-                                  return orderId
-                                }}
-                                onApprove={async (data, actions) => {
-                                  try {
-                                    setPayPalProcessing(true)
-                                    await actions.order?.capture()
-                                    const { orderID } = data
-                                    const status = await PayPalService.checkOrder(bookingId!, orderID)
-
-                                    if (status === 200) {
-                                      setVisible(false)
-                                      setSuccess(true)
-                                    } else {
-                                      setPaymentFailed(true)
-                                    }
-                                  } catch (err) {
-                                    helper.error(err)
-                                  } finally {
+                                  onInit={() => {
+                                    setPayPalInit(true)
+                                  }}
+                                  onCancel={() => {
                                     setPayPalProcessing(false)
-                                  }
-                                }}
-                                onInit={() => {
-                                  setPayPalInit(true)
-                                }}
-                                onCancel={() => {
-                                  setPayPalProcessing(false)
-                                }}
-                                onError={() => {
-                                  setPayPalProcessing(false)
-                                }}
-                              />
-                            </div>
-                          ) : null
+                                  }}
+                                  onError={() => {
+                                    setPayPalProcessing(false)
+                                  }}
+                                />
+                              </div>
+                            ) : null
+                        }
+                      </div>
                     )}
-                    <div className="checkout-buttons">
-                      {(
-                        (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe && !clientSecret)
-                        || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago && !mercadoPagoReady)
-                        || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.PayPal && !payPalInit)
-                        || payLater) && (
-                          <Button
-                            type="submit"
-                            variant="contained"
-                            className="btn-checkout btn-margin-bottom"
-                            aria-label="Checkout"
-                            disabled={isSubmitting || (payPalLoaded && !payPalInit)}
-                          >
-                            {
-                              (isSubmitting || (payPalLoaded && !payPalInit))
-                                ? <CircularProgress color="inherit" size={24} />
-                                : strings.BOOK
-                            }
-                          </Button>
-                        )}
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        className="btn-cancel btn-margin-bottom"
-                        aria-label="Cancel"
-                        onClick={async () => {
-                          try {
-                            if (bookingId && sessionId) {
-                              //
-                              // Delete temporary booking on cancel.
-                              // Otherwise, temporary bookings are
-                              // automatically deleted through a TTL index.
-                              //
-                              await BookingService.deleteTempBooking(bookingId, sessionId)
-                            }
-                            if (!authenticated && license) {
-                              await UserService.deleteTempLicense(license)
-                            }
-                          } catch (err) {
-                            helper.error(err)
-                          } finally {
-                            navigate('/')
-                          }
-                        }}
-                      >
-                        {commonStrings.CANCEL}
-                      </Button>
-                    </div>
                   </div>
+                  <div className="checkout-buttons">
+                    {((
+                      (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.Stripe && !clientSecret)
+                      || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago && !mercadoPagoReady)
+                      || (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.PayPal && !payPalInit)
+                    ) || payLater) && (
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          className="btn-checkout btn-margin-bottom"
+                          aria-label="Checkout"
+                          disabled={isSubmitting || (payPalLoaded && !payPalInit)}
+                        >
+                          {
+                            (isSubmitting || (payPalLoaded && !payPalInit))
+                              ? <CircularProgress color="inherit" size={24} />
+                              : strings.BOOK
+                          }
+                        </Button>
+                      )}
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      className="btn-cancel btn-margin-bottom"
+                      aria-label="Cancel"
+                      onClick={async () => {
+                        try {
+                          if (bookingId && sessionId) {
+                            //
+                            // Delete temporary booking on cancel.
+                            // Otherwise, temporary bookings are
+                            // automatically deleted through a TTL index.
+                            //
+                            await BookingService.deleteTempBooking(bookingId, sessionId)
+                          }
+                          if (!authenticated && license) {
+                            await UserService.deleteTempLicense(license)
+                          }
+                        } catch (err) {
+                          helper.error(err)
+                        } finally {
+                          navigate('/')
+                        }
+                      }}
+                    >
+                      {commonStrings.CANCEL}
+                    </Button>
+                  </div>
+
                   <div className="form-error">
                     {paymentFailed && <Error message={strings.PAYMENT_FAILED} />}
                     {recaptchaError && <Error message={commonStrings.RECAPTCHA_ERROR} />}
                     {licenseRequired && <Error message={strings.LICENSE_REQUIRED} />}
                   </div>
+
                 </form>
               </Paper>
-            </div>
-
-            <Footer />
+            </div >
           </>
         )}
-
-        {user?.blacklisted && <Unauthorized />}
-
-        {noMatch && <NoMatch hideHeader />}
-
-        {success && bookingId && (
-          <CheckoutStatus
-            bookingId={bookingId}
-            language={language}
-            payLater={payLater}
-            status="success"
-            className="status"
-          />
-        )}
-
-        {payPalProcessing && <Backdrop text={strings.CHECKING} />}
-
-        <MapDialog
-          pickupLocation={pickupLocation}
-          openMapDialog={openMapDialog}
-          onClose={() => setOpenMapDialog(false)}
-        />
-      </Layout>
-
-      {loadingPage && !noMatch && <Progress />}
+        <Footer />
+      </Layout >
     </>
   )
 }

@@ -50,6 +50,7 @@ interface CarProps {
   hideSupplier?: boolean
   sizeAuto?: boolean
   hidePrice?: boolean
+  clientType?: string
 }
 
 const Car = ({
@@ -64,6 +65,7 @@ const Car = ({
   hideSupplier,
   sizeAuto,
   hidePrice,
+  clientType,
 }: CarProps) => {
   const navigate = useNavigate()
 
@@ -92,7 +94,7 @@ const Car = ({
         setTotalPrice(_totalPrice)
 
         // Calculate original price (without discounts)
-        const originalCar = { ...car }
+        const originalCar: any = { ...car }
         originalCar.discountedDailyPrice = undefined
         originalCar.discountedWeeklyPrice = undefined
         originalCar.discountedBiWeeklyPrice = undefined
@@ -145,7 +147,7 @@ const Car = ({
         setTotalPrice(_totalPrice)
 
         // Calculate original price (without discounts)
-        const originalCar = { ...car }
+        const originalCar: any = { ...car }
         originalCar.discountedDailyPrice = undefined
         originalCar.discountedWeeklyPrice = undefined
         originalCar.discountedBiWeeklyPrice = undefined
@@ -413,7 +415,7 @@ const Car = ({
                 </Tooltip>
               </li>
             )}
-            {car.deposit > 0 && (
+            {car.deposit > 0 && clientType !== 'Internal' && (
               <li>
                 <div className="car-info-list-item">
                   <InfoIcon className="extra-info" />

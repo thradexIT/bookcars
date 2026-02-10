@@ -62,6 +62,8 @@ const CheckoutScreen = ({ navigation, route }: NativeStackScreenProps<StackParam
   const [additionalDriverPhone, setAdditionalDriverPhone] = useState('')
   const [addtionalDriverBirthDate, setAdditionalDriverBirthDate] = useState<Date>()
   const [payLater, setPayLater] = useState(false)
+  const [clientTypeName, setClientTypeName] = useState('')
+  const [deductible, setDeductible] = useState(0)
 
   const [fullNameRequired, setFullNameRequired] = useState(false)
   const [emailInfo, setEmailInfo] = useState(true)
@@ -254,6 +256,32 @@ const CheckoutScreen = ({ navigation, route }: NativeStackScreenProps<StackParam
 
       let _depositPrice = _car.deposit > 0 ? await StripeService.convertPrice(_car.deposit) : 0
       _depositPrice += _depositPrice * (priceChangeRate / 100)
+
+      // Client Type Logic
+      let _clientTypeName = ''
+      if (_user && _user.clientType) {
+        if (typeof _user.clientType === 'string') {
+          // Should have been resolved by fetched user above
+        } else {
+          _clientTypeName = _user.clientType.name
+        }
+      }
+      setClientTypeName(_clientTypeName)
+
+      if (_clientTypeName === 'Internal') {
+        _depositPrice = 0
+      }
+
+      if (_clientTypeName === 'Insurance') {
+        const minDeductibleUSD = 100
+        const minDeductible = await bookcarsHelper.convertPrice(minDeductibleUSD, 'USD', await StripeService.getCurrency())
+        const calculatedDeductible = _price * 0.10
+        const _deductible = Math.max(minDeductible, calculatedDeductible)
+        setDeductible(_deductible)
+      } else {
+        setDeductible(0)
+      }
+
       setDepositPrice(_depositPrice)
 
       const included = (val: number) => val === 0
@@ -909,6 +937,28 @@ const CheckoutScreen = ({ navigation, route }: NativeStackScreenProps<StackParam
                       <Text style={styles.extraText}>{additionalDriverText}</Text>
                     </View>
                   </View>
+
+                  {clientTypeName !== 'Internal' && (
+                    <View style={styles.section}>
+                      <View style={styles.sectionHeader}>
+                        <MaterialIcons name="directions-car" size={iconSize} color={iconColor} />
+                        <Text style={styles.sectionHeaderText}>{i18n.t('WARRANTY_DETAILS')}</Text>
+                      </View>
+                      <Text style={styles.detailTitle}>{i18n.t('DEPOSIT_ON_PICKUP')}</Text>
+                      <Text style={styles.detailText}>{bookcarsHelper.formatPrice(depositPrice, currencySymbol, language)}</Text>
+                    </View>
+                  )}
+
+                  {clientTypeName === 'Insurance' && (
+                    <View style={styles.section}>
+                      <View style={styles.sectionHeader}>
+                        <MaterialIcons name="directions-car" size={iconSize} color={iconColor} />
+                        <Text style={styles.sectionHeaderText}>{i18n.t('INSURANCE_DETAILS')}</Text>
+                      </View>
+                      <Text style={styles.detailTitle}>{i18n.t('DEDUCTIBLE')}</Text>
+                      <Text style={styles.detailText}>{bookcarsHelper.formatPrice(deductible, currencySymbol, language)}</Text>
+                    </View>
+                  )}
 
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
