@@ -115,7 +115,7 @@ const TextInputComponent = (
           }}
           secureTextEntry={props.secureTextEntry}
           placeholder={props.label}
-          placeholderTextColor={props.placeholderTextColor || "rgba(0, 0, 0, 0.6)"}
+          placeholderTextColor={props.placeholderTextColor || "rgba(0, 0, 0, 0.4)"}
           value={value}
           onChangeText={onChangeText}
           onKeyPress={props.onKeyPress}
@@ -128,7 +128,7 @@ const TextInputComponent = (
           maxLength={props.maxLength}
           // autoComplete={Platform.OS === 'web' ? 'none' : 'off'}
           autoCorrect={props.autoCorrect}
-          style={{ ...styles.input, ...props.inputStyle }}
+          style={{ color: '#000', ...styles.input, ...props.inputStyle }}
         />
         {!props.readOnly && value !== '' && !props.hideClearButton && (
           <MaterialIcons

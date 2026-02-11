@@ -11,13 +11,16 @@ import * as bookcarsTypes from ':bookcars-types'
  * @param {number} size
  * @returns {Promise<bookcarsTypes.Result<bookcarsTypes.Car>>}
  */
-export const getCars = async (data: bookcarsTypes.GetCarsPayload, page: number, size: number): Promise<bookcarsTypes.Result<bookcarsTypes.Car>> =>
-  axiosInstance
+export const getCars = async (data: bookcarsTypes.GetCarsPayload, page: number, size: number): Promise<bookcarsTypes.Result<bookcarsTypes.Car>> => {
+  const headers = await UserService.authHeader()
+  return axiosInstance
     .post(
       `/api/frontend-cars/${page}/${size}`,
-      data
+      data,
+      { headers }
     )
     .then((res) => res.data)
+}
 
 /**
  * Get a Car by ID.

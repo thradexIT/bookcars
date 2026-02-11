@@ -53,6 +53,7 @@
           "iCloudContainerEnvironment": "Production"
         }
       ],
+      "@react-native-google-signin/google-signin",
       "expo-asset",
       "expo-font"
     ],

@@ -4,6 +4,14 @@ import { useIsFocused } from '@react-navigation/native'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import validator from 'validator'
 import * as bookcarsTypes from ':bookcars-types'
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes,
+  isErrorWithCode,
+} from '@react-native-google-signin/google-signin'
+
+import * as env from '@/config/env.config'
 
 import TextInput from '@/components/TextInput'
 import Button from '@/components/Button'
@@ -60,6 +68,13 @@ const SignInScreen = ({ navigation, route }: NativeStackScreenProps<StackParams,
 
     clear()
   }
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: env.GG_APP_ID,
+      offlineAccess: true,
+    })
+  }, [])
 
   useEffect(() => {
     if (isFocused) {
@@ -182,6 +197,74 @@ const SignInScreen = ({ navigation, route }: NativeStackScreenProps<StackParams,
     }
   }
 
+  const onPressGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices()
+      const userInfo = await GoogleSignin.signIn()
+
+      if (userInfo.data?.idToken) {
+        const data: bookcarsTypes.SignInPayload = {
+          socialSignInType: bookcarsTypes.SocialSignInType.Google,
+          accessToken: userInfo.data.idToken,
+          email: userInfo.data.user.email,
+          fullName: userInfo.data.user.name || '',
+          avatar: userInfo.data.user.photo || undefined,
+          stayConnected,
+          mobile: true,
+        }
+
+        const res = await UserService.socialSignin(data)
+
+        if (res.status === 200) {
+          if (res.data) {
+            const user = res.data as bookcarsTypes.User
+
+            if (user.blacklisted) {
+              await UserService.signout(navigation, false)
+              setPasswordError(false)
+              setBlacklisted(true)
+            } else {
+              await helper.registerPushToken(user._id as string)
+              await UserService.setLanguage(user.language || UserService.getDefaultLanguage())
+
+              setPasswordError(false)
+              setBlacklisted(false)
+              clear()
+              navigation.navigate('Home', { d: new Date().getTime() })
+            }
+          } else {
+            helper.error()
+          }
+        } else if (res.status === 403) {
+          helper.toast(i18n.t('ACCOUNT_NOT_ACTIVATED'))
+        } else {
+          setPasswordError(true)
+          setBlacklisted(false)
+        }
+      }
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.SIGN_IN_CANCELLED:
+            // user cancelled the login flow
+            break
+          case statusCodes.IN_PROGRESS:
+            // operation (e.g. sign in) is in progress already
+            break
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            // play services not available or outdated
+            break
+          default:
+            // some other error happened
+            break
+        }
+      } else {
+        // an error that's not related to google sign in occurred
+        helper.error(error)
+      }
+    }
+  }
+
   const onPressSignUp = () => {
     navigation.navigate('SignUp', {})
   }
@@ -231,6 +314,14 @@ const SignInScreen = ({ navigation, route }: NativeStackScreenProps<StackParams,
 
           <Link style={styles.link} label={i18n.t('FORGOT_PASSWORD')} onPress={onPressForgotPassword} />
 
+          <View style={styles.googleContainer}>
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={onPressGoogleSignIn}
+            />
+          </View>
+
           {blacklisted && <Error style={styles.error} message={i18n.t('IS_BLACKLISTED')} />}
         </View>
       </ScrollView>
@@ -270,6 +361,12 @@ const styles = StyleSheet.create({
   },
   error: {
     marginTop: 15,
+  },
+  googleContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
   },
 })
 

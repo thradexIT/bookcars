@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native'
 import * as bookcarsTypes from ':bookcars-types'
 import * as bookcarsHelper from ':bookcars-helper'
 
+import * as UserService from '@/services/UserService'
 import * as helper from '@/utils/helper'
 import i18n from '@/lang/i18n'
 import Accordion from './Accordion'
@@ -30,17 +31,72 @@ const StatusFilter = ({
   )
   const [checkedStatuses, setCheckedStatuses] = useState<bookcarsTypes.BookingStatus[]>([])
   const [allChecked, setAllChecked] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (onLoad) {
-      onLoad(allStatuses)
+    const init = async () => {
+      const user = await UserService.getCurrentUser()
+      const isInternalUserType = user && (user.type === bookcarsTypes.UserType.Admin || user.type === bookcarsTypes.UserType.Supplier)
+
+      let isInternalClientType = false
+      if (user && user.clientType) {
+        if (typeof user.clientType === 'string') {
+          // Should be populated if needed, but assuming mobile stores basic info. 
+          // If clientType is just an ID string, we can't check the name easily without fetching.
+          // However, let's check if the user object has the populated clientType or if we need to fetch it.
+        } else {
+          if (user.clientType.name === 'Internal') {
+            isInternalClientType = true
+          }
+        }
+      }
+
+      // If we can't reliably get clientType name from local user, we might need to fetch it or rely on valid token check.
+      // But let's look at CheckoutScreen logic: it gets user from UserService.getUser(currentUser._id) which fetches fresh data.
+      // We should probably do the same here to be safe, or just check the type if that's sufficient for "Internal" in the user's mind.
+      // The user said "ClientType: Internal", identifying themselves as such.
+
+      // Let's try to fetch the full user to be sure about clientType
+      let fullUser = user
+      if (user && user._id) {
+        fullUser = await UserService.getUser(user._id)
+      }
+
+      let isInternal = false
+      if (fullUser) {
+        const typeInternal = fullUser.type === bookcarsTypes.UserType.Admin || fullUser.type === bookcarsTypes.UserType.Supplier
+        let clientTypeInternal = false
+        if (fullUser.clientType && typeof fullUser.clientType !== 'string' && fullUser.clientType.name === 'Internal') {
+          clientTypeInternal = true
+        }
+        isInternal = typeInternal || clientTypeInternal
+      }
+
+      let _statuses = helper.getBookingStatuses()
+
+      if (isInternal) {
+        _statuses = _statuses.filter(status => status.value !== bookcarsTypes.BookingStatus.Deposit)
+      }
+
+      setStatuses(_statuses.map((status) => ({ ...status, checked: false })))
+
+      if (onLoad) {
+        onLoad(_statuses.map((status) => status.value))
+      }
+      setLoaded(true)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+
+    init()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (_checkedStatuses: bookcarsTypes.BookingStatus[]) => {
     if (onChange) {
-      onChange(_checkedStatuses.length === 0 ? allStatuses : bookcarsHelper.clone(_checkedStatuses))
+      if (_checkedStatuses.length === 0) {
+        const currentStatuses = statuses.map((status) => status.value)
+        onChange(currentStatuses)
+      } else {
+        onChange(bookcarsHelper.clone(_checkedStatuses))
+      }
     }
   }
 

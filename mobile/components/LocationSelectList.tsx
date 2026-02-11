@@ -141,13 +141,14 @@ const LocationSelectList = ({
         }}
         textInputProps={{
           placeholder: label || '',
-          placeholderTextColor,
+          placeholderTextColor: 'rgba(0, 0, 0, 0.6)',
           autoCorrect: false,
           autoCapitalize: 'none',
           style: {
             borderRadius: 10,
             // paddingLeft: 15,
             fontSize: small ? 14 : 16,
+            color: '#000',
           },
         }}
         rightButtonsContainerStyle={{
@@ -164,6 +165,7 @@ const LocationSelectList = ({
         }}
         suggestionsListContainerStyle={{
           display: close ? 'none' : 'flex',
+          backgroundColor: '#fff',
         }}
         renderItem={(item) => (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -174,6 +176,7 @@ const LocationSelectList = ({
                 paddingRight: 5,
                 paddingBottom: 15,
                 paddingLeft: 5,
+                color: '#000',
               }}
             >
               {item.title}

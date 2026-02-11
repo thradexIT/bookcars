@@ -1,10 +1,12 @@
 import { Request } from 'express'
-import axios from 'axios'
 import { jwtVerify, SignJWT } from 'jose'
 import bcrypt from 'bcrypt'
 import * as bookcarsTypes from ':bookcars-types'
 import * as helper from './helper'
+import { OAuth2Client } from 'google-auth-library'
 import * as env from '../config/env.config'
+
+const client = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
 const jwtSecret = new TextEncoder().encode(env.JWT_SECRET)
 const jwtAlg = 'HS256'
@@ -133,14 +135,14 @@ export const validateAccessToken = async (socialSignInType: bookcarsTypes.Social
 
   if (socialSignInType === bookcarsTypes.SocialSignInType.Google) {
     try {
-      const res = await axios.get(
-        'https://www.googleapis.com/oauth2/v3/tokeninfo',
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      )
-      return res.data.email === email
-    } catch {
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: env.GOOGLE_CLIENT_ID,
+      })
+      const payload = ticket.getPayload()
+      return payload?.email === email
+    } catch (err) {
+      console.error(err)
       return false
     }
   }

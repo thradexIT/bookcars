@@ -593,14 +593,12 @@ export const socialSignin = async (req: Request, res: Response) => {
       throw new Error('body.email is not valid')
     }
 
-    if (!mobile) {
-      if (!accessToken) {
-        throw new Error('body.accessToken not found')
-      }
+    if (!accessToken) {
+      throw new Error('body.accessToken not found')
+    }
 
-      if (!(await authHelper.validateAccessToken(socialSignInType, accessToken, email))) {
-        throw new Error('body.accessToken is not valid')
-      }
+    if (!(await authHelper.validateAccessToken(socialSignInType, accessToken, email))) {
+      throw new Error('body.accessToken is not valid')
     }
 
     let user = await User.findOne({ email })
@@ -610,7 +608,7 @@ export const socialSignin = async (req: Request, res: Response) => {
         email,
         fullName,
         active: true,
-        verified: true,
+        verified: false,
         language: 'en',
         enableEmailNotifications: true,
         type: bookcarsTypes.UserType.User,
@@ -618,6 +616,43 @@ export const socialSignin = async (req: Request, res: Response) => {
         avatar,
       })
       await user.save()
+    }
+
+    if (!user.verified) {
+      //
+      // Send confirmation email
+      //
+      // generate token and save
+      const token = new Token({ user: user._id, token: helper.generateToken() })
+      await token.save()
+
+      // Send email
+      i18n.locale = user.language || 'en'
+
+      const activationLink = `http${env.HTTPS ? 's' : ''}://${req.headers.host}/api/confirm-email/${user.email}/${token.token}`
+
+      const mailOptions: nodemailer.SendMailOptions = {
+        from: env.SMTP_FROM,
+        to: user.email,
+        subject: i18n.t('ACCOUNT_ACTIVATION_SUBJECT'),
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <p style="font-size: 16px; color: #555;">
+            ${i18n.t('HELLO')} ${user.fullName},<br><br>
+            ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
+            <a href="${activationLink}" target="_blank">${activationLink}</a><br><br>
+            ${i18n.t('REGARDS')}<br>
+          </p>
+        </div>`,
+      }
+      await mailHelper.sendMail(mailOptions)
+
+      res.status(403).send('ACCOUNT_NOT_ACTIVATED')
+      return
+    }
+
+    if (user.blacklisted) {
+      res.sendStatus(204)
+      return
     }
 
     //
@@ -678,6 +713,7 @@ export const socialSignin = async (req: Request, res: Response) => {
       .status(200)
       .send(loggedUser)
   } catch (err) {
+    console.error(`[user.socialSignin] ${emailFromBody}`, err)
     logger.error(`[user.socialSignin] ${i18n.t('DB_ERROR')} ${emailFromBody}`, err)
     res.status(400).send(i18n.t('DB_ERROR') + err)
   }

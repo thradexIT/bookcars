@@ -486,6 +486,13 @@ export const SENTRY_DSN_BACKEND = __env__('BC_SENTRY_DSN_BACKEND', ENABLE_SENTRY
 export const SENTRY_TRACES_SAMPLE_RATE = Number.parseFloat(__env__('BC_SENTRY_TRACES_SAMPLE_RATE', false, '1.0'))
 
 /**
+ * Google Client ID for SSO.
+ *
+ * @type {string}
+ */
+export const GOOGLE_CLIENT_ID = __env__('BC_GG_APP_ID', false)
+
+/**
  * User Document.
  *
  * @export

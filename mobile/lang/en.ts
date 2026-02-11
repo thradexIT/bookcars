@@ -208,6 +208,7 @@ export const en = {
   PAYMENT_FAILED: 'Payment failed.',
   ERROR: 'Error',
   LOGIN_ERROR: 'Authentication failed.',
+  ACCOUNT_NOT_ACTIVATED: 'This account is not activated. Please check your email for the activation link.',
   OR: 'or',
   CAR_RANGE: 'Range',
   CAR_RANGE_MINI: 'Car',

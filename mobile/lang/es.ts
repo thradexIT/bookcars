@@ -208,6 +208,7 @@ export const es = {
   PAYMENT_FAILED: 'Pago fallido.',
   ERROR: 'Error',
   LOGIN_ERROR: 'Autenticación fallida.',
+  ACCOUNT_NOT_ACTIVATED: 'Esta cuenta no está activada. Por favor, revise su correo electrónico para ver el enlace de activación.',
   OR: 'o',
   CAR_RANGE: 'Gama',
   CAR_RANGE_MINI: 'Auto',

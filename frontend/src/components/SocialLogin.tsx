@@ -30,6 +30,7 @@ interface SocialLoginProps {
   onError?: (error: any) => void
   onSignInError?: () => void
   onBlackListed?: () => void
+  onAccountNotActivated?: () => void
 }
 
 const SocialLogin = ({
@@ -41,7 +42,9 @@ const SocialLogin = ({
   className,
   onError,
   onSignInError,
-  onBlackListed }: SocialLoginProps) => {
+  onBlackListed,
+  onAccountNotActivated
+}: SocialLoginProps) => {
   const navigate = useNavigate()
 
   const { setUser, setUserLoaded } = useUserContext() as UserContextType
@@ -75,6 +78,10 @@ const SocialLogin = ({
         if (reloadPage) {
           navigate(0)
         }
+      }
+    } else if (res.status === 403) {
+      if (onAccountNotActivated) {
+        onAccountNotActivated()
       }
     } else if (onSignInError) {
       onSignInError()

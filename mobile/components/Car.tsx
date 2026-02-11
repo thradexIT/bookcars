@@ -11,6 +11,7 @@ import * as helper from '@/utils/helper'
 import * as env from '@/config/env.config'
 import i18n from '@/lang/i18n'
 import * as StripeService from '@/services/StripeService'
+import * as UserService from '@/services/UserService'
 
 interface CarProps {
   navigation: NativeStackNavigationProp<StackParams, keyof StackParams>
@@ -57,6 +58,33 @@ const Car = ({
   const [theftProtection, setTheftProtection] = useState('')
   const [fullInsurance, setFullInsurance] = useState('')
   const [additionalDriver, setAdditionalDriver] = useState('')
+  const [user, setUser] = useState<bookcarsTypes.User | null>(null)
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const currentUser = await UserService.getCurrentUser()
+        if (currentUser && currentUser._id) {
+          try {
+            const _user = await UserService.getUser(currentUser._id)
+            if (_user) {
+              setUser(_user)
+            } else {
+              setUser(currentUser)
+            }
+          } catch (err) {
+            console.log("Error fetching full user:", err)
+            setUser(currentUser)
+          }
+        } else {
+          setUser(currentUser)
+        }
+      } catch (err) {
+        console.log("Error getting current user:", err)
+      }
+    }
+    init()
+  }, [])
 
   useEffect(() => {
     const init = async () => {
@@ -65,19 +93,24 @@ const Car = ({
         setCurrencySymbol(await StripeService.getCurrencySymbol())
         setDays(bookcarsHelper.days(from, to))
         setTotalPrice(await StripeService.convertPrice(bookcarsHelper.calculateTotalPrice(car, from as Date, to as Date, priceChangeRate)))
-        setDeposit(await StripeService.convertPrice(car.deposit))
+        if (!user || !(user.clientType && typeof user.clientType !== 'string' && user.clientType.name === 'Internal')) {
+          setDeposit(await StripeService.convertPrice(car.deposit))
+        } else {
+          setDeposit(0)
+        }
         setCancellation(await helper.getCancellation(car.cancellation, language, priceChangeRate))
         setAmendments(await helper.getAmendments(car.amendments, language, priceChangeRate))
         setCollisionDamageWaiver(await helper.getCollisionDamageWaiver(car.collisionDamageWaiver, language, priceChangeRate))
         setTheftProtection(await helper.getTheftProtection(car.theftProtection, language, priceChangeRate))
         setFullInsurance(await helper.getFullInsurance(car.fullInsurance, language, priceChangeRate))
         setAdditionalDriver(await helper.getAdditionalDriver(car.additionalDriver, language, priceChangeRate))
+
         setLoading(false)
       }
     }
 
     init()
-  }, [car, from, language, to])
+  }, [car, from, language, to, user])
 
   const styles = StyleSheet.create({
     carContainer: {
@@ -380,12 +413,17 @@ const Car = ({
               <Text style={styles.text}>{additionalDriver}</Text>
             </View>
           )}
-          {car.deposit > 0 && (
-            <View style={styles.extra}>
-              <MaterialIcons name="info" color="rgba(0, 0, 0, 0.35)" size={iconSize} style={styles.infoIcon} />
-              <Text style={styles.text}>{`${i18n.t('DEPOSIT')}: ${bookcarsHelper.formatPrice(deposit, currencySymbol, language)}`}</Text>
-            </View>
-          )}
+          {car.deposit > 0 &&
+            (!user || (
+              user.type !== bookcarsTypes.UserType.Admin
+              && user.type !== bookcarsTypes.UserType.Supplier
+              && !(user.clientType && typeof user.clientType !== 'string' && user.clientType.name === 'Internal')
+            )) && (
+              <View style={styles.extra}>
+                <MaterialIcons name="info" color="rgba(0, 0, 0, 0.35)" size={iconSize} style={styles.infoIcon} />
+                <Text style={styles.text}>{`${i18n.t('DEPOSIT')}: ${bookcarsHelper.formatPrice(deposit, currencySymbol, language)}`}</Text>
+              </View>
+            )}
         </View>
 
         <View style={styles.footer}>
