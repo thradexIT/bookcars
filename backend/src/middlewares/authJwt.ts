@@ -22,9 +22,13 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   if (isAdmin) {
     token = req.signedCookies[env.ADMIN_AUTH_COOKIE_NAME] as string // admin
   } else if (isFrontend) {
-    token = req.signedCookies[env.FRONTEND_AUTH_COOKIE_NAME] as string // frontend
+    token =
+      (req.signedCookies[env.FRONTEND_AUTH_COOKIE_NAME] as string) ||
+      (req.headers[env.X_ACCESS_TOKEN] as string) // frontend
   } else {
-    token = req.headers[env.X_ACCESS_TOKEN] as string // mobile app and unit tests
+    token =
+      (req.headers[env.X_ACCESS_TOKEN] as string) ||
+      (req.signedCookies[env.FRONTEND_AUTH_COOKIE_NAME] as string) // mobile app and unit tests
   }
 
   if (token) {

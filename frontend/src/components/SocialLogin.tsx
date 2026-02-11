@@ -18,7 +18,7 @@ import GoogleIcon from '@/assets/img/google-icon.png'
 
 import '@/assets/css/social-login.css'
 
-const REDIRECT_URI = window.location.href
+const REDIRECT_URI = window.location.origin + window.location.pathname
 
 interface SocialLoginProps {
   facebook?: boolean

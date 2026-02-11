@@ -6,6 +6,9 @@ import * as logger from '../utils/logger'
 const whitelist = [
   helper.trimEnd(env.ADMIN_HOST, '/'),
   helper.trimEnd(env.FRONTEND_HOST, '/'),
+  'http://localhost:3002',
+  'http://localhost:3001',
+  'https://seisable-segmentally-jolyn.ngrok-free.dev',
 ]
 
 /**

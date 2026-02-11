@@ -504,6 +504,7 @@ export const signin = async (req: Request, res: Response) => {
       // Authentication cookies are protected against XST attacks as well via allowedMethods middleware.
       //
       const cookieOptions: CookieOptions = helper.clone(env.COOKIE_OPTIONS)
+      cookieOptions.domain = undefined
 
       if (stayConnected) {
         //
@@ -598,12 +599,14 @@ export const socialSignin = async (req: Request, res: Response) => {
     }
 
     if (!(await authHelper.validateAccessToken(socialSignInType, accessToken, email))) {
+      console.log('Token validation failed for:', email)
       throw new Error('body.accessToken is not valid')
     }
+    console.log('Token validation success for:', email)
 
     let user = await User.findOne({ email })
-
     if (!user) {
+      console.log('User not found, creating new user for:', email)
       user = new User({
         email,
         fullName,
@@ -616,6 +619,8 @@ export const socialSignin = async (req: Request, res: Response) => {
         avatar,
       })
       await user.save()
+    } else {
+      console.log('User found:', user._id, 'Verified:', user.verified)
     }
 
     if (!user.verified) {
@@ -661,6 +666,7 @@ export const socialSignin = async (req: Request, res: Response) => {
     // Authentication cookies are protected against XST attacks as well via allowedMethods middleware.
     //
     const cookieOptions: CookieOptions = helper.clone(env.COOKIE_OPTIONS)
+    cookieOptions.domain = undefined
 
     if (stayConnected) {
       //
@@ -707,6 +713,7 @@ export const socialSignin = async (req: Request, res: Response) => {
     //
     const cookieName = authHelper.getAuthCookieName(req)
 
+    console.log('Sending success response with cookie:', cookieName)
     res
       .clearCookie(cookieName)
       .cookie(cookieName, token, cookieOptions)
