@@ -10,13 +10,16 @@ const run = async () => {
         }
         await mongoose.connect(dbUri)
         console.log('Connected to DB')
+        if (!mongoose.connection.db) {
+            throw new Error('Database not connected')
+        }
         const db = mongoose.connection.db
 
         const clients = await db.collection('ClientType').find({}).toArray()
 
         // 1. Fetch the user (from license filename)
         // The user provided license file: 698a13376c2d4a60763b76ec.jpeg. UUID is likely the ID.
-        const userId = "698a13376c2d4a60763b76ec"
+        const userId = '698a13376c2d4a60763b76ec'
         // Use raw collection access
         const user = await db.collection('User').findOne({ _id: new mongoose.Types.ObjectId(userId) })
 
@@ -93,7 +96,6 @@ const run = async () => {
         console.log('Final Display Price (Discounted):', finalDiscountedPrice)
 
         console.log('Percent Drop:', (finalOriginalPrice - finalDiscountedPrice) / finalOriginalPrice * 100, '%')
-
     } catch (err) {
         console.error(err)
     } finally {

@@ -10,6 +10,9 @@ const run = async () => {
         }
         await mongoose.connect(dbUri)
         console.log('Connected to DB')
+        if (!mongoose.connection.db) {
+            throw new Error('Database not connected')
+        }
         const db = mongoose.connection.db
 
         const clientTypes = await db.collection('ClientType').find({}).toArray()
@@ -28,14 +31,14 @@ const run = async () => {
                     }
                 }
                 update.$unset = {
-                    discount: ""
+                    discount: ''
                 }
                 updated = true
             } else if (ct.privileges && ct.discount !== undefined) {
                 // Cleanup if both exist (rare)
                 console.log(`Cleaning up ${ct.name} (${ct._id})...`)
                 update.$unset = {
-                    discount: ""
+                    discount: ''
                 }
                 updated = true
             }
@@ -49,7 +52,6 @@ const run = async () => {
         }
 
         console.log('Migration complete.')
-
     } catch (err) {
         console.error(err)
     } finally {

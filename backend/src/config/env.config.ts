@@ -671,6 +671,9 @@ export interface Car extends Document {
   monthlyPrice: number | null
   discountedMonthlyPrice: number | null
 
+  // client discount (set dynamically, not stored in DB)
+  clientDiscount?: number
+
   isDateBasedPrice: boolean
   dateBasedPrices: Types.ObjectId[]
 

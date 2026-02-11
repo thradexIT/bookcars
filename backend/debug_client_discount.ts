@@ -2,7 +2,7 @@ import 'dotenv/config'
 import mongoose from 'mongoose'
 import User from './src/models/User.js'
 import Car from './src/models/Car.js'
-import * as authHelper from './src/common/authHelper.js'
+import * as authHelper from './src/utils/authHelper.js'
 import * as env from './src/config/env.config.js'
 
 const run = async () => {
@@ -42,7 +42,6 @@ const run = async () => {
 
         console.log('\nFinal car object has clientDiscount?', 'clientDiscount' in (car || {}))
         console.log('Value:', (car as any)?.clientDiscount)
-
     } catch (err) {
         console.error(err)
     } finally {

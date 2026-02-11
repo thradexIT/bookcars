@@ -1067,7 +1067,11 @@ export const update = async (req: Request, res: Response) => {
     user.notifyAdminOnNewCar = notifyAdminOnNewCar
     user.blacklisted = !!blacklisted
     if (clientType) {
-      user.clientType = clientType
+      if (helper.isValidObjectId(clientType)) {
+        user.clientType = new mongoose.Types.ObjectId(clientType)
+      } else {
+        logger.error('[user.update] Invalid clientType:', clientType)
+      }
     }
     if (type) {
       user.type = type as bookcarsTypes.UserType
