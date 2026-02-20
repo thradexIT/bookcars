@@ -46,6 +46,7 @@ const Pricing = lazy(() => import('@/pages/Pricing'))
 const ClientTypes = lazy(() => import('@/pages/ClientTypes'))
 const CreateClientType = lazy(() => import('@/pages/CreateClientType'))
 const UpdateClientType = lazy(() => import('@/pages/UpdateClientType'))
+const PurchaseOrders = lazy(() => import('@/pages/PurchaseOrders'))
 
 const AppLayout = () => {
   const location = useLocation()
@@ -115,6 +116,7 @@ const router = createBrowserRouter([
       { path: 'client-types', element: <ClientTypes /> },
       { path: 'create-client-type', element: <CreateClientType /> },
       { path: 'update-client-type', element: <UpdateClientType /> },
+      { path: 'purchase-orders', element: <PurchaseOrders /> },
       { path: '*', element: <NoMatch /> }
     ]
   }

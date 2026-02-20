@@ -362,6 +362,34 @@ export const STRIPE_SECRET_KEY = __env__('BC_STRIPE_SECRET_KEY', false, 'STRIPE_
 export const MERCADO_PAGO_ACCESS_TOKEN = __env__('BC_MERCADO_PAGO_ACCESS_TOKEN', false, 'MERCADO_PAGO_ACCESS_TOKEN')
 
 /**
+ * Odoo URL.
+ *
+ * @type {string}
+ */
+export const ODOO_URL = __env__('BC_ODOO_URL', false, '')
+
+/**
+ * Odoo Database Name.
+ *
+ * @type {string}
+ */
+export const ODOO_DB = __env__('BC_ODOO_DB', false, '')
+
+/**
+ * Odoo Username.
+ *
+ * @type {string}
+ */
+export const ODOO_USERNAME = __env__('BC_ODOO_USERNAME', false, '')
+
+/**
+ * Odoo Password.
+ *
+ * @type {string}
+ */
+export const ODOO_PASSWORD = __env__('BC_ODOO_PASSWORD', false, '')
+
+/**
  * Mercado Pago Public Key.
  *
  * @type {string}

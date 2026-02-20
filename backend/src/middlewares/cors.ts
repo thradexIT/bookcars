@@ -9,6 +9,9 @@ const whitelist = [
   'http://localhost:3002',
   'http://localhost:3001',
   'https://seisable-segmentally-jolyn.ngrok-free.dev',
+  'http://192.168.1.139:4002',
+  'http://192.168.1.139:3001',
+  'http://192.168.1.139:8080',
 ]
 
 /**

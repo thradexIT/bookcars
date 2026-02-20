@@ -21,6 +21,66 @@ import * as mailHelper from '../utils/mailHelper'
 import * as env from '../config/env.config'
 import * as logger from '../utils/logger'
 import stripeAPI from '../payment/stripe'
+import odooService from '../services/odooService'
+
+/**
+ * Creates an Odoo Purchase Order for a given booking.
+ */
+const createOdooOrderForBooking = async (booking: any) => {
+  try {
+    const companies = await odooService.searchCompanies()
+    if (!companies.length) {
+      logger.error('No companies found in Odoo')
+      return
+    }
+
+    const mecanica = companies.find((c: any) => c.name === 'MECANICA SA')
+    if (!mecanica || !mecanica.partner_id) {
+      logger.error('MECANICA SA company or partner not found in Odoo')
+      return
+    }
+
+    // partner_id is returned as [id, name] since it's a many2one field
+    const partner_id = mecanica.partner_id[0]
+
+    // Use THRADEX or the first available company that is not MECANICA as the buyer
+    const buyerCompany = companies.find((c: any) => c.name.includes('THRADEX')) || companies[0]
+    const company_id = buyerCompany.id
+
+    const products = await odooService.getProducts()
+    let product_id = null
+    if (products.length > 0) {
+      // Intentar encontrar un servicio que se llame algo relacionado a MECANICA o Servicio
+      const serviceProd = products.find((p: any) => p.name && (p.name.toUpperCase().includes('MECANICA') || p.name.toUpperCase().includes('REPARACION') || p.name.toUpperCase().includes('SERVICIO')))
+      product_id = serviceProd ? serviceProd.id : products[0].id
+    }
+
+    if (!product_id) {
+      logger.error('No products found in Odoo')
+      return
+    }
+
+    const car = await Car.findById(booking.car)
+    const description = car ? `Reserva ${booking._id} (${car.name})` : `Reserva ${booking._id}`
+
+    const orderId = await odooService.createOrder({
+      partner_id,
+      company_id,
+      product_id,
+      qty: 1,
+      price: booking.price, // Assuming the PO takes the full price for now
+      description,
+    })
+
+    await odooService.confirmOrder(orderId)
+
+    booking.odooOrderId = orderId
+    await booking.save()
+    logger.info(`Odoo purchase order ${orderId} created and confirmed for booking ${booking._id}`)
+  } catch (err) {
+    logger.error('Error creating Odoo purchase order for booking ' + booking._id, err)
+  }
+}
 
 /**
  * Create a Booking.
@@ -43,6 +103,10 @@ export const create = async (req: Request, res: Response) => {
     const booking = new Booking(body.booking)
 
     await booking.save()
+
+    // Create Odoo order asynchronously
+    createOdooOrderForBooking(booking)
+
     res.json(booking)
   } catch (err) {
     logger.error(`[booking.create] ${i18n.t('DB_ERROR')} ${JSON.stringify(req.body)}`, err)
@@ -347,6 +411,9 @@ export const checkout = async (req: Request, res: Response) => {
     }
 
     if (body.payLater || (booking.status === bookcarsTypes.BookingStatus.Paid && body.paymentIntentId && body.customerId)) {
+      // Create Odoo order asynchronously
+      createOdooOrderForBooking(booking)
+
       // Mark car as fully booked
       // if (env.MARK_CAR_AS_FULLY_BOOKED_ON_CHECKOUT) {
       //   await Car.updateOne({ _id: booking.car }, { fullyBooked: false })
@@ -1095,5 +1162,35 @@ export const cancelBooking = async (req: Request, res: Response) => {
   } catch (err) {
     logger.error(`[booking.cancelBooking] ${i18n.t('DB_ERROR')} ${id}`, err)
     res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+
+/**
+ * Download Purchase Order PDF for a booking
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const downloadPurchaseOrder = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking || !booking.odooOrderId) {
+      res.status(404).send('Purchase Order not found')
+      return
+    }
+
+    const pdfBuffer = await odooService.generatePdf(booking.odooOrderId)
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename=purchase_order_${booking.odooOrderId}.pdf`)
+    res.send(pdfBuffer)
+  } catch (err) {
+    logger.error(`[booking.downloadPurchaseOrder] Error generating PDF for booking ${id}`, err)
+    res.status(500).send('Error generating PDF')
   }
 }

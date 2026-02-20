@@ -18,7 +18,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material'
-import { Edit as EditIcon, Delete as DeleteIcon, Check as CheckIcon } from '@mui/icons-material'
+import { Edit as EditIcon, Delete as DeleteIcon, Check as CheckIcon, Receipt as ReceiptIcon } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { fr as dfnsFR, enUS as dfnsENUS } from 'date-fns/locale'
 import * as bookcarsTypes from ':bookcars-types'
@@ -275,6 +275,16 @@ const BookingList = ({
                   <DeleteIcon />
                 </IconButton>
               </Tooltip>
+              {row.odooOrderId && (
+                <Tooltip title="Descargar Orden de Compra">
+                  <IconButton onClick={(e) => {
+                    e.stopPropagation()
+                    window.open(`${env.API_HOST}/api/bookings/purchase-order/${row._id}`, '_blank')
+                  }}>
+                    <ReceiptIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </div>
           )
         },
@@ -612,6 +622,19 @@ const BookingList = ({
                     >
                       {commonStrings.DELETE}
                     </Button>
+                    {booking.odooOrderId && (
+                      <Button
+                        variant="contained"
+                        className="btn-primary"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.open(`${env.API_HOST}/api/bookings/purchase-order/${booking._id}`, '_blank')
+                        }}
+                      >
+                        O.C.
+                      </Button>
+                    )}
                   </div>
                 </div>
               )
@@ -636,7 +659,7 @@ const BookingList = ({
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
             onRowSelectionModelChange={(_selectedIds) => {
-              if(_selectedIds.type === 'exclude' && _selectedIds.ids.size === 0){
+              if (_selectedIds.type === 'exclude' && _selectedIds.ids.size === 0) {
                 _selectedIds = { type: 'include', ids: new Set(rows.map((row) => row._id as GridRowId)) }
               }
               setSelectedIds(Array.from(new Set(_selectedIds.ids)).map((id) => id.toString()))

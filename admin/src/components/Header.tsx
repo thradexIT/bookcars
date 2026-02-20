@@ -34,6 +34,7 @@ import {
   CalendarMonth as SchedulerIcon,
   AccountBalance as BankDetailsIcon,
   MonetizationOn as PricingIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import * as bookcarsTypes from ':bookcars-types'
@@ -394,6 +395,15 @@ const Header = ({
                     <ListItemText primary={strings.BANK_DETAILS} />
                   </ListItem>
                 )}
+                <ListItem
+                  onClick={() => {
+                    navigate('/purchase-orders')
+                    handleSideMenuClose()
+                  }}
+                >
+                  <ListItemIcon><ReceiptIcon /></ListItemIcon>
+                  <ListItemText primary="Purchase Orders" />
+                </ListItem>
                 <ListItem
                   onClick={() => {
                     navigate('/settings')

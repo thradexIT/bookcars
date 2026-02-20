@@ -110,6 +110,7 @@ export interface Booking {
   isDeposit?: boolean
   isPayedInFull?: boolean
   paypalOrderId?: string
+  odooOrderId?: number
 }
 
 export interface CheckoutPayload {

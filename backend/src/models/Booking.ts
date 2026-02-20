@@ -111,6 +111,9 @@ const bookingSchema = new Schema<env.Booking>(
     paypalOrderId: {
       type: String,
     },
+    odooOrderId: {
+      type: Number,
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

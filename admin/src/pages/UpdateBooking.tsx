@@ -885,6 +885,31 @@ const UpdateBooking = () => {
               language={language}
               hidePrice
             />
+            {booking.odooOrderId && (
+              <div className="order-box">
+                <div className="order-box-header">
+                  <span className="order-box-title">Orden de Compra</span>
+                </div>
+                <div className="order-box-content">
+                  <div className="order-box-detail">
+                    <span className="order-box-detail-title">Estado:</span>
+                    <span className="order-box-detail-value">
+                      <span className="order-box-status">Confirmada / Enviada</span>
+                    </span>
+                  </div>
+                  <Button
+                    variant="contained"
+                    className="btn-primary"
+                    style={{ marginTop: '15px', width: '100%' }}
+                    onClick={() => {
+                      window.open(`${env.API_HOST}/api/bookings/purchase-order/${booking._id}`, '_blank')
+                    }}
+                  >
+                    Descargar PDF
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <Dialog disableEscapeKeyDown maxWidth="xs" open={openDeleteDialog}>

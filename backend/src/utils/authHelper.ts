@@ -66,7 +66,6 @@ export const isAdmin = (req: Request): boolean => {
   return (
     trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
     trimmedOrigin === 'http://localhost:3001' ||
-    trimmedOrigin.startsWith('http://192.168.') ||
     trimmedOrigin.includes('ngrok-free.dev')
   )
 }
