@@ -31,8 +31,6 @@ services:
       dockerfile: ./backend/Dockerfile
     env_file: ./backend/.env.docker
     restart: always
-    ports:
-      - 4002:4002
     depends_on:
       - mongo
     volumes:
@@ -45,8 +43,6 @@ services:
       dockerfile: ./admin/Dockerfile
     depends_on:
       - bc-backend
-    ports:
-      - 3001:3001
 
   bc-frontend:
     build: 
@@ -54,11 +50,22 @@ services:
       dockerfile: ./frontend/Dockerfile
     depends_on:
       - bc-backend
-    ports:
-      - 8080:80
-      - 8443:443
     volumes:
       - cdn:/var/www/cdn/bookcars
+
+  proxy:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - cdn:/var/www/cdn/bookcars
+    depends_on:
+      - bc-frontend
+      - bc-backend
+      - bc-admin
 
 volumes:
   cdn:

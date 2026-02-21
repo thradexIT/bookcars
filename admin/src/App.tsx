@@ -120,7 +120,7 @@ const router = createBrowserRouter([
       { path: '*', element: <NoMatch /> }
     ]
   }
-])
+], { basename: '/admin/' })
 
 const App = () => <RouterProvider router={router} />
 
