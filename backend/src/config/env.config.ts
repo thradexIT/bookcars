@@ -639,6 +639,7 @@ export interface Booking extends Document {
   isDeposit: boolean
   isPayedInFull?: boolean
   paypalOrderId?: string
+  odooOrderId?: number
 }
 
 /**
