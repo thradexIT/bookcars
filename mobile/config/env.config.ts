@@ -103,7 +103,7 @@ export const API_HOST: string = BC_API_HOST
  *
  * @type {number}
  */
-export const AXIOS_TIMEOUT: number = 5000
+export const AXIOS_TIMEOUT: number = 10000
 
 /**
  * Number of maximum axiosInstance retries.
