@@ -50,24 +50,26 @@ export const decryptJWT = async (input: string) => {
   return payload as SessionData
 }
 
-/**
- * Check whether the request is from the admin or not.
- *
- * @export
- * @param {Request} req
- * @returns {boolean}
- */
 export const isAdmin = (req: Request): boolean => {
   const origin = req.headers.origin
-  if (!origin) {
-    return false
+  const referer = req.headers.referer
+
+  if (origin) {
+    const trimmedOrigin = helper.trimEnd(origin, '/')
+    if (
+      trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
+      trimmedOrigin === 'http://localhost:3001' ||
+      trimmedOrigin.includes('ngrok-free.dev')
+    ) {
+      return true
+    }
   }
-  const trimmedOrigin = helper.trimEnd(origin, '/')
-  return (
-    trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
-    trimmedOrigin === 'http://localhost:3001' ||
-    trimmedOrigin.includes('ngrok-free.dev')
-  )
+
+  if (referer && referer.includes('/admin')) {
+    return true
+  }
+
+  return false
 }
 
 /**
@@ -79,16 +81,25 @@ export const isAdmin = (req: Request): boolean => {
  */
 export const isFrontend = (req: Request): boolean => {
   const origin = req.headers.origin
-  if (!origin) {
-    return false
+  const referer = req.headers.referer
+
+  if (origin) {
+    const trimmedOrigin = helper.trimEnd(origin, '/')
+    if (
+      trimmedOrigin === helper.trimEnd(env.FRONTEND_HOST, '/') ||
+      trimmedOrigin === 'http://localhost:3002' ||
+      trimmedOrigin.startsWith('http://192.168.') ||
+      trimmedOrigin.includes('ngrok-free.dev')
+    ) {
+      return true
+    }
   }
-  const trimmedOrigin = helper.trimEnd(origin, '/')
-  return (
-    trimmedOrigin === helper.trimEnd(env.FRONTEND_HOST, '/') ||
-    trimmedOrigin === 'http://localhost:3002' ||
-    trimmedOrigin.startsWith('http://192.168.') ||
-    trimmedOrigin.includes('ngrok-free.dev')
-  )
+
+  if (referer && !referer.includes('/admin')) {
+    return true
+  }
+
+  return false
 }
 
 /**
