@@ -420,7 +420,7 @@ export const convertPrice = async (amount: number, from: string, to: string): Pr
  * @param {string} currency
  * @returns {boolean}
  */
-export const checkCurrency = (currency: string) => currencies.findIndex((c) => c === currency) > -1
+export const checkCurrency = (currency: string) => currencies.findIndex((c: string) => c === currency) > -1
 
 /**
  * Check whether language is french
