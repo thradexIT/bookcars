@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import * as bookcarsTypes from ':bookcars-types'
 import { useForm, useFieldArray, useWatch } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Layout from '@/components/Layout'
 import { strings as commonStrings } from '@/lang/common'
@@ -30,6 +31,7 @@ import '@/assets/css/create-location.css'
 
 const CreateLocation = () => {
   const { user } = useUserContext() as UserContextType
+  const navigate = useNavigate()
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -155,7 +157,7 @@ const CreateLocation = () => {
     if (watchImage) {
       await LocationService.deleteTempImage(watchImage)
     }
-    window.location.href = '/admin/locations'
+    navigate('/locations')
   }
 
   return (

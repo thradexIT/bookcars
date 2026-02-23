@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import * as bookcarsTypes from ':bookcars-types'
 import * as bookcarsHelper from ':bookcars-helper'
 import env from '@/config/env.config'
@@ -15,9 +16,9 @@ const SupplierBadge = ({ supplier }: SupplierBadgeProps) => {
             <span className="supplier-badge-logo">
                 <img src={bookcarsHelper.joinURL(env.CDN_USERS, supplier.avatar)} alt={supplier.fullName} />
             </span>
-            <a href={`/admin/supplier?c=${supplier._id}`} className="supplier-badge-info">
+            <RouterLink to={`/supplier?c=${supplier._id}`} className="supplier-badge-info">
                 {supplier.fullName}
-            </a>
+            </RouterLink>
         </div>
     )
 }

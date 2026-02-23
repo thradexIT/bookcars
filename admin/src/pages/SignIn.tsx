@@ -105,14 +105,14 @@ const SignIn = () => {
             if (user) {
               navigate(`/${window.location.search}`)
             } else {
-              await UserService.signout()
+              await UserService.signout(true, navigate)
             }
           }
         } else {
           setVisible(true)
         }
       } catch {
-        await UserService.signout()
+        await UserService.signout(true, navigate)
       }
     }
 

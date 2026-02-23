@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import {
   DataGrid,
   GridColDef,
@@ -9,7 +9,6 @@ import {
 import {
   Tooltip,
   IconButton,
-  Link,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -218,10 +217,10 @@ const UserList = ({
           }
 
           return (
-            <Link href={`/admin/user?u=${row._id}`} className="us-user">
+            <RouterLink to={`/user?u=${row._id}`} className="us-user">
               <span className="us-avatar">{userAvatar}</span>
               <span>{value}</span>
-            </Link>
+            </RouterLink>
           )
         },
         valueGetter: (value: string) => value,

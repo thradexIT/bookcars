@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import {
   DataGrid,
   GridPaginationModel,
   GridColDef,
   GridRowId,
   GridRenderCellParams,
-  GridRowSelectionModel
 } from '@mui/x-data-grid'
 import {
   Tooltip,
@@ -222,7 +221,7 @@ const BookingList = ({
         field: 'driver',
         headerName: strings.DRIVER,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/admin/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <RouterLink to={`/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</RouterLink>,
         valueGetter: (value: bookcarsTypes.User) => value?.fullName,
       },
       {
@@ -324,7 +323,7 @@ const BookingList = ({
         field: 'car',
         headerName: strings.CAR,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/admin/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <RouterLink to={`/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</RouterLink>,
         valueGetter: (value: bookcarsTypes.Car) => value?.name,
       })
     }
@@ -508,13 +507,13 @@ const BookingList = ({
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.CAR}</span>
                     <div className="booking-detail-value">
-                      <Link href={`/admin/car/?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</Link>
+                      <RouterLink to={`/car?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</RouterLink>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.DRIVER}</span>
                     <div className="booking-detail-value">
-                      <Link href={`/admin/user/?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</Link>
+                      <RouterLink to={`/user?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</RouterLink>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>

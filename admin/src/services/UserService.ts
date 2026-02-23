@@ -126,15 +126,16 @@ export const signin = (data: bookcarsTypes.SignInPayload): Promise<{ status: num
  * Sign out.
  *
  * @param {boolean} [redirect=true]
+ * @param {NavigateFunction} [navigate] - react-router navigate function (optional)
  */
-export const signout = async (redirect = true) => {
+export const signout = async (redirect = true, navigate?: (path: string) => void) => {
   const deleteAllCookies = () => {
-    const cookies = document.cookie.split('')
+    const cookies = document.cookie.split(';')
 
     for (const cookie of cookies) {
       const eqPos = cookie.indexOf('=')
-      const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie
-      document.cookie = `${name}=expires=Thu, 01 Jan 1970 00:00:00 GMT`
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim()
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
     }
   }
 
@@ -150,7 +151,14 @@ export const signout = async (redirect = true) => {
     )
 
   if (redirect) {
-    window.location.href = '/admin/sign-in'
+    if (navigate) {
+      // Use react-router navigate — basename (/admin/) is handled automatically
+      navigate('/sign-in')
+    } else {
+      // Fallback: reload the SPA root so Nginx serves index.html and
+      // React Router redirects unauthenticated users to /sign-in
+      window.location.replace('/admin/')
+    }
   }
 }
 

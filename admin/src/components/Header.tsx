@@ -168,7 +168,7 @@ const Header = ({
 
   const handleSignout = async () => {
     handleMenuClose()
-    await UserService.signout()
+    await UserService.signout(true, navigate)
   }
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {

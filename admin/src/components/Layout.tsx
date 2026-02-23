@@ -1,4 +1,5 @@
 import React, { useState, useEffect, CSSProperties, ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@mui/material'
 import * as bookcarsTypes from ':bookcars-types'
 import { strings } from '@/lang/master'
@@ -23,13 +24,14 @@ const Layout = ({
   onLoad
 }: LayoutProps) => {
   const { user, userLoaded, setUnauthorized, unauthorized } = useUserContext() as UserContextType
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const currentUser = UserService.getCurrentUser()
 
     if (!currentUser && strict) {
-      UserService.signout(true)
+      UserService.signout(true, navigate)
     } else if (userLoaded) {
       setLoading(false)
 
