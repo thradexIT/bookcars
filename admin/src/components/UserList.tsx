@@ -218,7 +218,7 @@ const UserList = ({
           }
 
           return (
-            <Link href={`/user?u=${row._id}`} className="us-user">
+            <Link href={`/admin/user?u=${row._id}`} className="us-user">
               <span className="us-avatar">{userAvatar}</span>
               <span>{value}</span>
             </Link>

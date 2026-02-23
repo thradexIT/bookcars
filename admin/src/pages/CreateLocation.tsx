@@ -155,7 +155,7 @@ const CreateLocation = () => {
     if (watchImage) {
       await LocationService.deleteTempImage(watchImage)
     }
-    window.location.href = '/locations'
+    window.location.href = '/admin/locations'
   }
 
   return (

@@ -15,7 +15,7 @@ const SupplierBadge = ({ supplier }: SupplierBadgeProps) => {
             <span className="supplier-badge-logo">
                 <img src={bookcarsHelper.joinURL(env.CDN_USERS, supplier.avatar)} alt={supplier.fullName} />
             </span>
-            <a href={`/supplier?c=${supplier._id}`} className="supplier-badge-info">
+            <a href={`/admin/supplier?c=${supplier._id}`} className="supplier-badge-info">
                 {supplier.fullName}
             </a>
         </div>

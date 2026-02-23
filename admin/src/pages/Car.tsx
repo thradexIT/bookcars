@@ -103,7 +103,7 @@ const Car = () => {
         const status = await CarService.deleteCar(car._id)
 
         if (status === 200) {
-          window.location.href = '/cars'
+          window.location.href = '/admin/cars'
         } else {
           helper.error()
           setLoading(false)

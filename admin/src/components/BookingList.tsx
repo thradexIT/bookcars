@@ -222,7 +222,7 @@ const BookingList = ({
         field: 'driver',
         headerName: strings.DRIVER,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/admin/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</Link>,
         valueGetter: (value: bookcarsTypes.User) => value?.fullName,
       },
       {
@@ -324,7 +324,7 @@ const BookingList = ({
         field: 'car',
         headerName: strings.CAR,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/admin/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</Link>,
         valueGetter: (value: bookcarsTypes.Car) => value?.name,
       })
     }
@@ -335,7 +335,7 @@ const BookingList = ({
         headerName: commonStrings.SUPPLIER,
         flex: 1,
         renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => (
-          <Link href={`/supplier?c=${(row.supplier as bookcarsTypes.User)._id}`} className="cell-supplier">
+          <Link href={`/admin/supplier?c=${(row.supplier as bookcarsTypes.User)._id}`} className="cell-supplier">
             <img src={bookcarsHelper.joinURL(env.CDN_USERS, (row.supplier as bookcarsTypes.User).avatar)} alt={value} />
           </Link>
         ),
@@ -508,13 +508,13 @@ const BookingList = ({
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.CAR}</span>
                     <div className="booking-detail-value">
-                      <Link href={`car/?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</Link>
+                      <Link href={`/admin/car/?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</Link>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.DRIVER}</span>
                     <div className="booking-detail-value">
-                      <Link href={`user/?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</Link>
+                      <Link href={`/admin/user/?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</Link>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
