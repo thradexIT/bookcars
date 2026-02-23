@@ -44,8 +44,9 @@ export const SettingProvider = ({ children }: { children: React.ReactNode }) => 
 
   if (!settings) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{i18n.t('SETTINGS_NOT_LOADED')}</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ textAlign: 'center', color: '#ff0000', marginBottom: 10 }}>{i18n.t('SETTINGS_NOT_LOADED')}</Text>
+        <Text style={{ textAlign: 'center', fontSize: 12, color: '#666' }}>Verifica la conexión con: http://165.1.122.9</Text>
       </View>
     )
   }
