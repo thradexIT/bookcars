@@ -28,17 +28,22 @@ const Layout = ({
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const currentUser = UserService.getCurrentUser()
+    const handleAuth = async () => {
+      const currentUser = UserService.getCurrentUser()
 
-    if (!currentUser && strict) {
-      UserService.signout(true, navigate)
-    } else if (userLoaded) {
-      setLoading(false)
+      if (!currentUser && strict) {
+        await UserService.signout(false) // clear session, no redirect
+        navigate('/sign-in') // navigate via router (basename handled)
+      } else if (userLoaded) {
+        setLoading(false)
 
-      if (onLoad) {
-        onLoad(user || undefined)
+        if (onLoad) {
+          onLoad(user || undefined)
+        }
       }
     }
+
+    handleAuth()
   }, [user, userLoaded, strict]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
