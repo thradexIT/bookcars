@@ -59,6 +59,7 @@ export const isAdmin = (req: Request): boolean => {
     if (
       trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
       trimmedOrigin === 'http://localhost:3001' ||
+      trimmedOrigin.includes('admin.thradex.com') ||
       trimmedOrigin.includes('ngrok-free.dev')
     ) {
       return true
@@ -88,6 +89,8 @@ export const isFrontend = (req: Request): boolean => {
     if (
       trimmedOrigin === helper.trimEnd(env.FRONTEND_HOST, '/') ||
       trimmedOrigin === 'http://localhost:3002' ||
+      trimmedOrigin.includes('rentacar.thradex.com') ||
+      trimmedOrigin.includes('165.1.122.9') ||
       trimmedOrigin.startsWith('http://192.168.') ||
       trimmedOrigin.includes('ngrok-free.dev')
     ) {

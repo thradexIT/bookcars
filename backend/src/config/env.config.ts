@@ -143,7 +143,7 @@ export const COOKIE_SECRET = __env__('BC_COOKIE_SECRET', false, 'bookcars')
  *
  * @type {string}
  */
-export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, 'localhost')
+export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, '')
 
 /**
  * Cookie options.
@@ -156,7 +156,16 @@ export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, 'local
  *
  * @type {CookieOptions}
  */
-export const COOKIE_OPTIONS: CookieOptions = { httpOnly: true, secure: HTTPS, signed: true, sameSite: 'strict', domain: AUTH_COOKIE_DOMAIN }
+export const COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: HTTPS,
+  signed: true,
+  sameSite: HTTPS ? 'none' : 'lax',
+}
+
+if (AUTH_COOKIE_DOMAIN) {
+  COOKIE_OPTIONS.domain = AUTH_COOKIE_DOMAIN
+}
 
 /**
  * frontend authentication cookie name.
