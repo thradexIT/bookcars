@@ -106,7 +106,7 @@ export const create = async (req: Request, res: Response) => {
                 html: `<p>
 ${i18n.t('HELLO')}${admin.fullName},<br><br>
 ${message}<br><br>
-${helper.joinURL(env.ADMIN_HOST, `update-car?cr=${car._id.toString()}`)}<br><br>
+${helper.joinURL(helper.getAdminHost(req), `update-car?cr=${car._id.toString()}`)}<br><br>
 ${i18n.t('REGARDS')}<br>
 </p>`,
               }

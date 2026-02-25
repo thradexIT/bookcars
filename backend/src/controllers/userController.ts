@@ -93,7 +93,7 @@ const _signup = async (req: Request, res: Response, userType: bookcarsTypes.User
     // Send email
     i18n.locale = user.language
 
-    const activationLink = `http${env.HTTPS ? 's' : ''}://${req.headers.host}/api/confirm-email/${user.email}/${token.token}`
+    const activationLink = `${helper.joinURL(helper.getFrontendHost(req), `api/confirm-email/${user.email}/${token.token}`)}`
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: env.SMTP_FROM,
@@ -244,7 +244,7 @@ export const create = async (req: Request, res: Response) => {
         ${i18n.t('HELLO')}${user.fullName},<br><br>
         ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
         ${helper.joinURL(
-          user.type === bookcarsTypes.UserType.User ? env.FRONTEND_HOST : env.ADMIN_HOST,
+          user.type === bookcarsTypes.UserType.User ? helper.getFrontendHost(req) : helper.getAdminHost(req),
           'activate',
         )}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
         ${i18n.t('REGARDS')}<br>
@@ -382,7 +382,7 @@ export const resend = async (req: Request, res: Response) => {
       const reset = req.params.reset === 'true'
 
       const activationOrResetLink = `${helper.joinURL(
-        user.type === bookcarsTypes.UserType.User ? env.FRONTEND_HOST : env.ADMIN_HOST,
+        user.type === bookcarsTypes.UserType.User ? helper.getFrontendHost(req) : helper.getAdminHost(req),
         reset ? 'reset-password' : 'activate',
       )}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}`
 
@@ -634,7 +634,7 @@ export const socialSignin = async (req: Request, res: Response) => {
       // Send email
       i18n.locale = user.language || 'en'
 
-      const activationLink = `http${env.HTTPS ? 's' : ''}://${req.headers.host}/api/confirm-email/${user.email}/${token.token}`
+      const activationLink = `${helper.joinURL(helper.getFrontendHost(req), `api/confirm-email/${user.email}/${token.token}`)}`
 
       const mailOptions: nodemailer.SendMailOptions = {
         from: env.SMTP_FROM,

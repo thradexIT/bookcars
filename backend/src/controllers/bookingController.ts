@@ -124,7 +124,7 @@ export const create = async (req: Request, res: Response) => {
  * @param {boolean} notificationMessage
  * @returns {void}
  */
-export const notify = async (driver: env.User, bookingId: string, user: env.User, notificationMessage: string) => {
+export const notify = async (driver: env.User, bookingId: string, user: env.User, notificationMessage: string, req?: Request) => {
   i18n.locale = user.language
 
   // notification
@@ -154,7 +154,7 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
       html: `<p>
     ${i18n.t('HELLO')}${user.fullName},<br><br>
     ${message}<br><br>
-    ${helper.joinURL(env.ADMIN_HOST, `update-booking?b=${bookingId}`)}<br><br>
+    ${helper.joinURL(helper.getAdminHost(req), `update-booking?b=${bookingId}`)}<br><br>
     ${i18n.t('REGARDS')}<br>
     </p>`,
     }
@@ -172,7 +172,7 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
  * @param {boolean} payLater
  * @returns {unknown}
  */
-export const confirm = async (user: env.User, supplier: env.User, booking: env.Booking, payLater: boolean) => {
+export const confirm = async (user: env.User, supplier: env.User, booking: env.Booking, payLater: boolean, req?: Request) => {
   const { language } = user
   const locale = language === 'fr' ? 'fr-FR' : 'en-US'
   const options: Intl.DateTimeFormatOptions = {
@@ -228,7 +228,7 @@ export const confirm = async (user: env.User, supplier: env.User, booking: env.B
       + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART8')}<br><br>`
       + `${i18n.t('BOOKING_CONFIRMED_PART9')}${car.supplier.fullName}${i18n.t('BOOKING_CONFIRMED_PART10')}${dropOffLocationName}${i18n.t('BOOKING_CONFIRMED_PART11')}`
       + `${to} ${i18n.t('BOOKING_CONFIRMED_PART12')}`
-      + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART13')}<br><br>${i18n.t('BOOKING_CONFIRMED_PART14')}${env.FRONTEND_HOST}<br><br>
+      + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART13')}<br><br>${i18n.t('BOOKING_CONFIRMED_PART14')}${helper.getFrontendHost(req)}<br><br>
         ${i18n.t('REGARDS')}<br>
         </p>`,
   }
@@ -307,7 +307,7 @@ export const checkout = async (req: Request, res: Response) => {
         html: `<p>
         ${i18n.t('HELLO')}${user.fullName},<br><br>
         ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
-        ${helper.joinURL(env.FRONTEND_HOST, 'activate')}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
+        ${helper.joinURL(helper.getFrontendHost(req), 'activate')}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
         ${i18n.t('REGARDS')}<br>
         </p>`,
       }
@@ -420,7 +420,7 @@ export const checkout = async (req: Request, res: Response) => {
       // }
 
       // Send confirmation email to customer
-      if (!(await confirm(user, supplier, booking, body.payLater))) {
+      if (!(await confirm(user, supplier, booking, body.payLater, req))) {
         res.sendStatus(400)
         return
       }
@@ -428,14 +428,14 @@ export const checkout = async (req: Request, res: Response) => {
       // Notify supplier
       i18n.locale = supplier.language
       let message = body.payLater ? i18n.t('BOOKING_PAY_LATER_NOTIFICATION') : i18n.t('BOOKING_PAID_NOTIFICATION')
-      await notify(user, booking._id.toString(), supplier, message)
+      await notify(user, booking._id.toString(), supplier, message, req)
 
       // Notify admin
       const admin = !!env.ADMIN_EMAIL && (await User.findOne({ email: env.ADMIN_EMAIL, type: bookcarsTypes.UserType.Admin }))
       if (admin) {
         i18n.locale = admin.language
         message = body.payLater ? i18n.t('BOOKING_PAY_LATER_NOTIFICATION') : i18n.t('BOOKING_PAID_NOTIFICATION')
-        await notify(user, booking._id.toString(), admin, message)
+        await notify(user, booking._id.toString(), admin, message, req)
       }
     }
 
@@ -451,9 +451,10 @@ export const checkout = async (req: Request, res: Response) => {
  *
  * @async
  * @param {env.Booking} booking
+ * @param {Request} [req]
  * @returns {void}
  */
-const notifyDriver = async (booking: env.Booking) => {
+const notifyDriver = async (booking: env.Booking, req?: Request) => {
   const driver = await User.findById(booking.driver)
   if (!driver) {
     logger.info(`Driver ${booking.driver} not found`)
@@ -488,7 +489,7 @@ const notifyDriver = async (booking: env.Booking) => {
       html: `<p>
     ${i18n.t('HELLO')}${driver.fullName},<br><br>
     ${message}<br><br>
-    ${helper.joinURL(env.FRONTEND_HOST, `booking?b=${booking._id}`)}<br><br>
+    ${helper.joinURL(helper.getFrontendHost(req), `booking?b=${booking._id}`)}<br><br>
     ${i18n.t('REGARDS')}<br>
     </p>`,
     }
@@ -657,7 +658,7 @@ export const update = async (req: Request, res: Response) => {
 
       if (previousStatus !== status) {
         // notify driver
-        await notifyDriver(booking)
+        await notifyDriver(booking, req)
       }
 
       res.json(booking)
@@ -694,7 +695,7 @@ export const updateStatus = async (req: Request, res: Response) => {
 
     for (const booking of bookings) {
       if (booking.status !== status) {
-        await notifyDriver(booking)
+        await notifyDriver(booking, req)
       }
     }
 
