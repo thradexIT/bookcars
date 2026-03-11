@@ -654,6 +654,7 @@ export interface Booking extends Document {
   picturesOut?: string[]
   signatureDriver?: string
   signatureRep?: string
+  remarksOut?: string
 }
 
 /**

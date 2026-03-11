@@ -18,6 +18,7 @@ routes.route(routeNames.getBookings).post(authJwt.verifyToken, bookingController
 routes.route(routeNames.hasBookings).get(authJwt.verifyToken, bookingController.hasBookings)
 routes.route(routeNames.cancelBooking).post(authJwt.verifyToken, bookingController.cancelBooking)
 routes.route(routeNames.purchaseOrder).get(bookingController.downloadPurchaseOrder)
+routes.route(routeNames.checkoutReportPdf).get(bookingController.downloadCheckoutReport)
 routes.route(routeNames.checkoutDeparture).post(
   [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
   bookingController.checkoutDeparture

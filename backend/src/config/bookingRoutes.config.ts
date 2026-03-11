@@ -11,6 +11,7 @@ const routes = {
   hasBookings: '/api/has-bookings/:driver',
   cancelBooking: '/api/cancel-booking/:id',
   purchaseOrder: '/api/bookings/purchase-order/:id',
+  checkoutReportPdf: '/api/bookings/checkout-report/:id',
   checkoutDeparture: '/api/checkout-departure/:id',
   saveSignatures: '/api/booking-signatures/:id',
 }

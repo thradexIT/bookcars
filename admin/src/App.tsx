@@ -64,7 +64,7 @@ const AppLayout = () => {
           <ScrollToTop />
           <div className="app">
             <Suspense fallback={<NProgressIndicator />}>
-              <Header />
+              <Header hidden={location.pathname.includes('/checkout-report')} />
               <Outlet />
             </Suspense>
           </div>

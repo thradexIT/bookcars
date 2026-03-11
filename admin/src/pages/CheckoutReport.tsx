@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as BookingService from '@/services/BookingService'
 import * as bookcarsTypes from ':bookcars-types'
 import env from '@/config/env.config'
+import html2pdf from 'html2pdf.js'
 
 // ─── Print CSS ───────────────────────────────────────────────────────────────
 const PRINT_STYLE = `
@@ -68,16 +69,35 @@ const PRINT_STYLE = `
   .sig-name-label { font-size:11px; color:#607d8b; margin-top:6px; border-top:1px solid #e3eaf5; padding-top:6px; }
   .saving-indicator { font-size:11px; color:#90a4ae; }
   .saved-indicator { font-size:11px; color:#43a047; }
-  @media print {
-    body { background:#fff !important; }
-    .no-print { display:none !important; }
-    .report-wrapper { border-radius:0; box-shadow:none; margin:0; max-width:100%; }
-    .photo-grid { grid-template-columns:repeat(3,1fr); }
-    .info-grid { grid-template-columns:repeat(3,1fr); }
-    .sig-canvas-container { border:1px solid #cfd8dc; background:#fff; }
-    .sig-wrap { border:1px solid #b0bec5; }
-    @page { size:A4; margin:12mm 12mm 10mm; }
-  }
+    @page {
+      size: A4;
+      margin: 0mm; /* Disables default browser headers/footers */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+    }
+    @media print {
+      body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print { display:none !important; }
+      .report-wrapper {
+        border-radius: 0;
+        box-shadow: none;
+        margin: 0 !important;
+        padding: 15mm !important; /* Internal padding for the paper */
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      .photo-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .info-grid { grid-template-columns: repeat(3, 1fr); }
+      .sig-canvas-container { border: 1px solid #cfd8dc; background: #fff; }
+      .sig-wrap { border: 1px solid #b0bec5; }
+    }
   .print-btn-wrap { max-width:860px; margin:0 auto 16px; display:flex; justify-content:flex-end; gap:10px; padding:0 4px; }
   .print-btn { padding:10px 24px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:inherit; }
   .print-btn.primary { background:#1565c0; color:#fff; }
@@ -336,7 +356,28 @@ const CheckoutReport = () => {
 
       <div className="print-btn-wrap no-print" style={{ marginTop: 24 }}>
         <button className="print-btn secondary" type="button" onClick={() => window.close()}>← Volver</button>
-        <button className="print-btn primary" type="button" onClick={() => window.print()}>🖨 Imprimir / Descargar PDF</button>
+        <button className="print-btn primary" type="button" onClick={() => window.print()}>🖨 Imprimir</button>
+        <button
+          className="print-btn primary"
+          type="button"
+          style={{ background: '#2e7d32' }}
+          onClick={() => {
+            const element = document.querySelector('.report-wrapper') as HTMLElement
+            if (!element) {
+              return
+            }
+            const opt = {
+              margin: 10,
+              filename: `inspeccion_salida_${bookingId.slice(-6)}.pdf`,
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }
+            html2pdf().set(opt as any).from(element).save()
+          }}
+        >
+          📄 Descargar PDF
+        </button>
       </div>
 
       <div className="report-wrapper">

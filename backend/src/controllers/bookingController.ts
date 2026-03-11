@@ -5,6 +5,7 @@ import { Request, Response } from 'express'
 import nodemailer from 'nodemailer'
 import path from 'node:path'
 import asyncFs from 'node:fs/promises'
+import PDFDocument from 'pdfkit'
 import * as bookcarsTypes from ':bookcars-types'
 import i18n from '../lang/i18n'
 import Booking from '../models/Booking'
@@ -1193,6 +1194,202 @@ export const downloadPurchaseOrder = async (req: Request, res: Response) => {
   } catch (err) {
     logger.error(`[booking.downloadPurchaseOrder] Error generating PDF for booking ${id}`, err)
     res.status(500).send('Error generating PDF')
+  }
+}
+
+/**
+ * Download Checkout Report PDF.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const downloadCheckoutReport = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id)
+      .populate<{ car: env.CarInfo }>('car')
+      .populate<{ driver: env.User }>('driver')
+      .populate<{ pickupLocation: env.LocationInfo }>({
+        path: 'pickupLocation',
+        populate: { path: 'values', model: 'LocationValue' },
+      })
+
+    if (!booking || booking.kmOut === undefined) {
+      res.status(404).send('Checkout report not found')
+      return
+    }
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4' })
+    const buffers: Buffer[] = []
+
+    doc.on('data', buffers.push.bind(buffers))
+    doc.on('end', () => {
+      const pdfData = Buffer.concat(buffers)
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename=inspeccion_salida_${id.slice(-6)}.pdf`)
+      res.send(pdfData)
+    })
+
+    // --- Draw Header Gradient ---
+    const gradient = doc.linearGradient(0, 0, 612, 120)
+    gradient.stop(0, '#1565c0')
+    gradient.stop(1, '#0d47a1')
+    doc.rect(0, 0, 612, 130).fill(gradient)
+    
+    // Header Content
+    doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('ACTA DE INSPECCIÓN DE SALIDA', 50, 45, { characterSpacing: 1 })
+    doc.fontSize(28).font('Helvetica-Bold').text('Reporte de Entrega', 50, 60)
+    doc.fillColor('#e3f2fd').fontSize(10).font('Helvetica').text('Thradex SAC • Gestión de Flota Automotriz', 50, 95)
+
+    // Meta Box
+    doc.fillColor('#ffffff').fontSize(9).font('Helvetica').text('RESERVA:', 420, 50)
+    doc.font('Helvetica-Bold').text(id.toUpperCase(), 420, 62)
+    doc.font('Helvetica').text('FECHA:', 420, 80)
+    doc.font('Helvetica-Bold').text(new Date().toLocaleDateString('es-PE'), 420, 92)
+
+    doc.moveDown(6)
+
+    // --- Content Card (Rounded White Area) ---
+    const contentY = 145
+    doc.fillColor('#f0f2f5').rect(30, contentY, 552, 650).fill() // Background under cards if needed
+
+    // --- Data Cards ---
+    const startY = 160
+    doc.fillColor('#1565c0').fontSize(9).font('Helvetica-Bold').text('INFORMACIÓN GENERAL', 50, startY, { characterSpacing: 1 })
+    
+    // Conductor Card
+    doc.roundedRect(50, startY + 15, 160, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').lineWidth(0.5).stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('CONDUCTOR', 65, startY + 28)
+    doc.fillColor('#1a1a2e').fontSize(10).font('Helvetica-Bold').text(booking.driver?.fullName || '---', 65, startY + 40, { width: 130 })
+
+    // Vehiculo Card
+    doc.roundedRect(220, startY + 15, 160, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('VEHÍCULO / MODELO', 235, startY + 28)
+    doc.fillColor('#1a1a2e').fontSize(10).font('Helvetica-Bold').text(booking.car?.name || '---', 235, startY + 40, { width: 130 })
+
+    // Placa Card
+    doc.roundedRect(390, startY + 15, 172, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('PLACA DE RODAJE', 405, startY + 28)
+    doc.fillColor('#1565c0').fontSize(14).font('Helvetica-Bold').text(booking.car?.licensePlate || '---', 405, startY + 40)
+
+    doc.moveDown(6)
+
+    // --- Metrics Section ---
+    const metricsY = doc.y + 20
+    doc.fillColor('#1565c0').fontSize(9).font('Helvetica-Bold').text('MÉTRICAS DEL VEHÍCULO', 50, metricsY, { characterSpacing: 1 })
+    
+    // KM Card
+    doc.roundedRect(50, metricsY + 15, 250, 70, 10).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(8).font('Helvetica-Bold').text('KILOMETRAJE DE SALIDA', 70, metricsY + 35)
+    doc.fillColor('#1565c0').fontSize(24).font('Helvetica-Bold').text(`${booking.kmOut.toLocaleString('es-PE')} km`, 70, metricsY + 50)
+
+    // Fuel Card
+    doc.roundedRect(310, metricsY + 15, 252, 70, 10).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(8).font('Helvetica-Bold').text('NIVEL DE COMBUSTIBLE', 330, metricsY + 35)
+    doc.fillColor('#1565c0').fontSize(24).font('Helvetica-Bold').text(`${booking.fuelOut}%`, 330, metricsY + 50)
+    
+    // Fuel Bar
+    const fuelVal = parseInt(booking.fuelOut || '0', 10)
+    doc.roundedRect(330, metricsY + 68, 210, 5, 2).fill('#eceff1')
+    doc.roundedRect(330, metricsY + 68, (210 * fuelVal) / 100, 5, 2).fill('#4caf50')
+
+    // --- Remarks Section ---
+    if (booking.remarksOut) {
+      doc.moveDown(7)
+      const remarksY = doc.y
+      doc.rect(50, remarksY, 512, 45).fill('#fff3e0').strokeColor('#ffe0b2').stroke()
+      doc.fillColor('#e65100').fontSize(7).font('Helvetica-Bold').text('OBSERVACIÓN DE RESPONSABILIDAD', 60, remarksY + 10)
+      doc.fillColor('#455a64').fontSize(9).font('Helvetica-Oblique').text(booking.remarksOut, 60, remarksY + 22, { width: 490, lineHeight: 1.2 })
+    }
+
+    // --- Photo Grid ---
+    doc.moveDown(5)
+    const photoY = doc.y + 10
+    doc.fillColor('#1565c0').fontSize(10).font('Helvetica-Bold').text('REGISTRO FOTOGRÁFICO', 50, photoY, { characterSpacing: 1 })
+    
+    if (booking.picturesOut && booking.picturesOut.length > 0) {
+      let currentX = 50
+      let currentY = photoY + 20
+      const photoWidth = 164
+      const photoHeight = 124
+      const labels = ['Frontal', 'Trasera', 'Lat. Izqu.', 'Lat. Der.', 'Interior', 'Tablero', 'Km Tablero']
+
+      for (let i = 0; i < booking.picturesOut.length; i++) {
+        const pic = booking.picturesOut[i]
+        const [field, filename] = pic.includes('|') ? pic.split('|') : [null, pic]
+        const filepath = path.join(env.CDN_CARS, filename)
+
+        try {
+          doc.rect(currentX, currentY, photoWidth, photoHeight).fill('#fff').strokeColor('#e3eaf5').lineWidth(1).stroke()
+          doc.image(filepath, currentX + 2, currentY + 2, { width: photoWidth - 4, height: photoHeight - 4, fit: [photoWidth - 4, photoHeight - 4] })
+          
+          let label = 'Foto'
+          if (field) {
+            const index = field.startsWith('photo_') ? (field === 'photo_km' ? 6 : parseInt(field.split('_')[1], 10)) : -1
+            label = labels[index] || 'Foto'
+          }
+          
+          doc.rect(currentX, currentY + photoHeight - 14, photoWidth, 14).fill('#1565c0')
+          doc.fillColor('#ffffff').fontSize(7).font('Helvetica-Bold').text(label.toUpperCase(), currentX + 5, currentY + photoHeight - 9, { characterSpacing: 1 })
+
+          currentX += photoWidth + 10
+          if (currentX > 500) {
+            currentX = 50
+            currentY += photoHeight + 15
+            if (currentY > 700) {
+              doc.addPage()
+              currentY = 50
+            }
+          }
+        } catch {
+          // Skip if image missing
+        }
+      }
+    }
+
+    // --- Signatures Page ---
+    doc.addPage()
+    doc.fillColor('#1565c0').fontSize(10).font('Helvetica-Bold').text('FIRMAS Y CONFORMIDAD', 50, 50, { characterSpacing: 1 })
+    doc.moveTo(50, 65).lineTo(562, 65).strokeColor('#e3eaf5').stroke()
+    
+    const sigY = 90
+    const sigW = 240
+    const sigH = 120
+
+    // Conductor
+    doc.rect(50, sigY, sigW, sigH).strokeColor('#e3eaf5').dash(2, { space: 2 }).stroke().undash()
+    if (booking.signatureDriver) {
+      try {
+        const base64Data = booking.signatureDriver.replace(/^data:image\/png;base64,/, '')
+        doc.image(Buffer.from(base64Data, 'base64'), 60, sigY + 10, { width: sigW - 20, height: sigH - 20 })
+      } catch {
+        // ignore
+      }
+    }
+    doc.fillColor('#1a1a2e').fontSize(9).font('Helvetica-Bold').text('FIRMA DEL CONDUCTOR', 50, sigY + sigH + 10, { width: sigW, align: 'center' })
+
+    // Representante
+    doc.rect(310, sigY, sigW, sigH).strokeColor('#e3eaf5').dash(2, { space: 2 }).stroke().undash()
+    if (booking.signatureRep) {
+      try {
+        const base64Data = booking.signatureRep.replace(/^data:image\/png;base64,/, '')
+        doc.image(Buffer.from(base64Data, 'base64'), 320, sigY + 10, { width: sigW - 20, height: sigH - 20 })
+      } catch {
+        // ignore
+      }
+    }
+    doc.fillColor('#1a1a2e').fontSize(9).font('Helvetica-Bold').text('FIRMA REPRESENTANTE', 310, sigY + sigH + 10, { width: sigW, align: 'center' })
+
+    doc.fillColor('#90a4ae').fontSize(8).font('Helvetica').text('Este documento es una copia digital del acta de inspección original. Las firmas digitales son legalmente vinculantes.', 50, 750, { align: 'center' })
+
+    doc.end()
+  } catch (err) {
+    logger.error(`[booking.downloadCheckoutReport] Error generating PDF for booking ${id}`, err)
+    res.status(500).send('Error generating PDF report')
   }
 }
 
