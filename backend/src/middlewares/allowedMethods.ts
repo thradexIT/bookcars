@@ -5,7 +5,7 @@ import { NextFunction, Request, Response } from 'express'
  *
  * @type {string[]}
  */
-const ALLOWED_METHODS = ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE']
+const ALLOWED_METHODS = ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 
 /**
  * Allowed methods middleware.

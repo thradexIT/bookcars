@@ -81,9 +81,6 @@ export enum PaymentGateway {
   Stripe = 'stripe',
   MercadoPago = 'mercadopago',
 }
-
-
-
 export interface Booking {
   _id?: string
   supplier: string | User
@@ -114,6 +111,9 @@ export interface Booking {
   kmOut?: number
   fuelOut?: string
   picturesOut?: string[]
+  signatureDriver?: string
+  signatureRep?: string
+  remarksOut?: string
 }
 
 export interface CheckoutPayload {

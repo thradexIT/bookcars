@@ -12,6 +12,7 @@ const routes = {
   cancelBooking: '/api/cancel-booking/:id',
   purchaseOrder: '/api/bookings/purchase-order/:id',
   checkoutDeparture: '/api/checkout-departure/:id',
+  saveSignatures: '/api/booking-signatures/:id',
 }
 
 export default routes

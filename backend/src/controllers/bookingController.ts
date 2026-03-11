@@ -1217,10 +1217,12 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
 
     const kmOut = Number(req.body.kmOut)
     const fuelOut = req.body.fuelOut
+    const remarksOut = req.body.remarksOut
     const files = req.files as any
 
     booking.kmOut = kmOut
     booking.fuelOut = fuelOut
+    booking.remarksOut = remarksOut
     
     // Process files
     if (files && files.length > 0) {
@@ -1233,7 +1235,8 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
         const filepath = path.join(env.CDN_CARS, filename)
         
         await asyncFs.writeFile(filepath, file.buffer)
-        picturesOut.push(filename)
+        // Guardamos el fieldname para saber qué slot es (ej: photo_0|nombre.jpg)
+        picturesOut.push(`${file.fieldname}|${filename}`)
       }
       
       booking.picturesOut = picturesOut
@@ -1251,3 +1254,39 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
     res.status(400).send(i18n.t('DB_ERROR') + err)
   }
 }
+
+/**
+ * Save digital signatures for a booking checkout.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const saveSignatures = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const { signatureDriver, signatureRep } = req.body as { signatureDriver?: string; signatureRep?: string }
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    if (signatureDriver !== undefined) {
+      booking.signatureDriver = signatureDriver
+    }
+    if (signatureRep !== undefined) {
+      booking.signatureRep = signatureRep
+    }
+
+    await booking.save()
+    res.json({ ok: true })
+  } catch (err) {
+    logger.error(`[booking.saveSignatures] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+

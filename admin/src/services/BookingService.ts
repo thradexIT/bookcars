@@ -111,3 +111,20 @@ export const checkoutDeparture = (id: string, payload: FormData): Promise<bookca
       }
     )
     .then((res) => res.data)
+
+/**
+ * Save digital signatures for a booking.
+ *
+ * @param {string} id
+ * @param {{ signatureDriver?: string; signatureRep?: string }} payload
+ * @returns {Promise<{ ok: boolean }>}
+ */
+export const saveSignatures = (id: string, payload: { signatureDriver?: string; signatureRep?: string }): Promise<{ ok: boolean }> =>
+  axiosInstance
+    .patch(
+      `/api/booking-signatures/${encodeURIComponent(id)}`,
+      payload,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+

@@ -1,201 +1,277 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as BookingService from '@/services/BookingService'
 import * as bookcarsTypes from ':bookcars-types'
 import env from '@/config/env.config'
 
-// ─── Print CSS injected into the document ────────────────────────────────────
+// ─── Print CSS ───────────────────────────────────────────────────────────────
 const PRINT_STYLE = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    background: #f0f2f5;
-    color: #1a1a2e;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    font-family: 'Inter','Segoe UI',Arial,sans-serif;
+    background: #f0f2f5; color: #1a1a2e;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-
   .report-wrapper {
-    max-width: 860px;
-    margin: 32px auto;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 32px rgba(0,0,0,.12);
-    overflow: hidden;
+    max-width: 860px; margin: 32px auto; background: #fff;
+    border-radius: 12px; box-shadow: 0 4px 32px rgba(0,0,0,.12); overflow: hidden;
   }
-
-  /* ── Header ── */
   .report-header {
-    background: linear-gradient(135deg, #1565c0, #0d47a1);
-    color: #fff;
-    padding: 32px 40px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    background: linear-gradient(135deg,#1565c0,#0d47a1); color:#fff;
+    padding:32px 40px 28px; display:flex; justify-content:space-between; align-items:flex-start;
   }
-  .report-header .brand { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: .7; margin-bottom: 6px; }
-  .report-header .doc-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
-  .report-header .doc-subtitle { font-size: 13px; opacity: .8; margin-top: 4px; }
-  .report-header .doc-meta { text-align: right; font-size: 13px; }
-  .report-header .doc-meta strong { display: block; font-size: 11px; opacity: .7; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
-  .report-header .doc-meta .doc-id { font-size: 15px; font-weight: 600; font-family: monospace; letter-spacing: 1px; }
-
-  /* ── Status banner ── */
+  .report-header .brand { font-size:11px; letter-spacing:3px; text-transform:uppercase; opacity:.7; margin-bottom:6px; }
+  .report-header .doc-title { font-size:26px; font-weight:700; letter-spacing:-0.5px; }
+  .report-header .doc-subtitle { font-size:13px; opacity:.8; margin-top:4px; }
+  .report-header .doc-meta { text-align:right; font-size:13px; }
+  .report-header .doc-meta strong { display:block; font-size:11px; opacity:.7; letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
+  .report-header .doc-meta .doc-id { font-size:15px; font-weight:600; font-family:monospace; letter-spacing:1px; }
   .status-banner {
-    background: #e8f5e9;
-    border-bottom: 1px solid #c8e6c9;
-    padding: 10px 40px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: #2e7d32;
-    font-weight: 600;
+    background:#e8f5e9; border-bottom:1px solid #c8e6c9; padding:10px 40px;
+    display:flex; align-items:center; gap:10px; font-size:13px; color:#2e7d32; font-weight:600;
   }
-  .status-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: #43a047; flex-shrink: 0;
-  }
-
-  /* ── Body ── */
-  .report-body { padding: 36px 40px; }
-
-  /* ── Sections ── */
-  .section { margin-bottom: 30px; }
+  .status-dot { width:10px; height:10px; border-radius:50%; background:#43a047; flex-shrink:0; }
+  .report-body { padding:36px 40px; }
+  .section { margin-bottom:30px; }
   .section-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
-    color: #1565c0; font-weight: 700; margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
+    font-size:11px; text-transform:uppercase; letter-spacing:2px;
+    color:#1565c0; font-weight:700; margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
   }
-  .section-title::after {
-    content: ''; flex: 1; height: 1px; background: #e3eaf5;
-  }
-
-  /* ── Info Grid ── */
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-  }
-  .info-grid.two-col { grid-template-columns: repeat(2, 1fr); }
-  .info-card {
-    background: #f8fafd;
-    border: 1px solid #e3eaf5;
-    border-radius: 10px;
-    padding: 14px 18px;
-  }
-  .info-card .label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
-    color: #90a4ae; font-weight: 600; margin-bottom: 5px;
-  }
-  .info-card .value {
-    font-size: 16px; font-weight: 700; color: #1a1a2e;
-  }
-  .info-card .value.highlight {
-    font-size: 22px; color: #1565c0;
-  }
-  .info-card .value.small {
-    font-size: 13px; font-weight: 500; color: #455a64;
-  }
-
-  /* ── Fuel bar ── */
-  .fuel-bar-wrap { margin-top: 8px; }
-  .fuel-bar-track {
-    height: 8px; background: #e3eaf5; border-radius: 4px; overflow: hidden;
-  }
-  .fuel-bar-fill {
-    height: 100%; border-radius: 4px;
-    background: linear-gradient(90deg, #ef5350, #ffa726, #66bb6a);
-    transition: width .3s;
-  }
-  .fuel-bar-label { font-size: 10px; color: #90a4ae; margin-top: 4px; }
-
-  /* ── Photos ── */
-  .photo-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-  }
-  .photo-item {
-    border-radius: 10px; overflow: hidden;
-    border: 1px solid #e3eaf5;
-    position: relative;
-    break-inside: avoid;
-  }
-  .photo-item img {
-    width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
-  }
+  .section-title::after { content:''; flex:1; height:1px; background:#e3eaf5; }
+  .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .info-grid.two-col { grid-template-columns:repeat(2,1fr); }
+  .info-card { background:#f8fafd; border:1px solid #e3eaf5; border-radius:10px; padding:14px 18px; }
+  .info-card .label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#90a4ae; font-weight:600; margin-bottom:5px; }
+  .info-card .value { font-size:16px; font-weight:700; color:#1a1a2e; }
+  .info-card .value.highlight { font-size:22px; color:#1565c0; }
+  .info-card .value.small { font-size:13px; font-weight:500; color:#455a64; }
+  .fuel-bar-wrap { margin-top:8px; }
+  .fuel-bar-track { height:8px; background:#e3eaf5; border-radius:4px; overflow:hidden; }
+  .fuel-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#ef5350,#ffa726,#66bb6a); }
+  .fuel-bar-label { font-size:10px; color:#90a4ae; margin-top:4px; }
+  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .photo-item { border-radius:10px; overflow:hidden; border:1px solid #e3eaf5; position:relative; break-inside:avoid; }
+  .photo-item img { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; }
   .photo-item .photo-label {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: rgba(21,101,192,.85); color: #fff;
-    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-    padding: 5px 8px; font-weight: 600;
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(21,101,192,.85); color:#fff;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:5px 8px; font-weight:600;
   }
-
-  /* ── Signature area ── */
-  .signature-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
-    margin-top: 8px;
-  }
-  .signature-box {
-    border: 1px dashed #b0bec5; border-radius: 10px; padding: 20px 20px 14px;
-    min-height: 100px;
-  }
-  .signature-box .sig-label {
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
-    color: #90a4ae; font-weight: 600; margin-bottom: 10px;
-  }
-  .signature-box .sig-line {
-    border-bottom: 1px solid #cfd8dc; margin-top: 32px; margin-bottom: 6px;
-  }
-  .signature-box .sig-name {
-    font-size: 11px; color: #607d8b;
-  }
-
-  /* ── Footer ── */
-  .report-footer {
-    background: #f8fafd; border-top: 1px solid #e3eaf5;
-    padding: 14px 40px; display: flex; justify-content: space-between;
-    align-items: center; font-size: 11px; color: #90a4ae;
-  }
-  .report-footer strong { color: #607d8b; }
-
-  /* ── Print button (hidden in print) ── */
-  .print-btn-wrap {
-    max-width: 860px; margin: 0 auto 16px;
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding: 0 4px;
-  }
-  .print-btn {
-    padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
-    cursor: pointer; border: none; font-family: inherit;
-  }
-  .print-btn.primary { background: #1565c0; color: #fff; }
-  .print-btn.secondary { background: #fff; color: #455a64; border: 1px solid #cdd5e0; }
-
-  /* ── Print media ── */
+  .signature-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:8px; }
+  .sig-wrap { border:1px dashed #b0bec5; border-radius:10px; padding:14px 16px 12px; }
+  .sig-label-title { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#90a4ae; font-weight:600; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+  .sig-canvas-container { position:relative; background:#fafcff; border-radius:6px; border:1px solid #e3eaf5; cursor:crosshair; overflow:hidden; }
+  .sig-canvas { display:block; width:100%; touch-action:none; }
+  .sig-actions { display:flex; gap:6px; margin-top:8px; align-items:center; }
+  .sig-btn { border:none; border-radius:5px; font-size:11px; font-weight:600; padding:5px 12px; cursor:pointer; font-family:inherit; }
+  .sig-name-label { font-size:11px; color:#607d8b; margin-top:6px; border-top:1px solid #e3eaf5; padding-top:6px; }
+  .saving-indicator { font-size:11px; color:#90a4ae; }
+  .saved-indicator { font-size:11px; color:#43a047; }
   @media print {
-    body { background: #fff !important; }
-    .print-btn-wrap { display: none !important; }
-    .report-wrapper { border-radius: 0; box-shadow: none; margin: 0; max-width: 100%; }
-    .photo-grid { grid-template-columns: repeat(3, 1fr); }
-    .info-grid { grid-template-columns: repeat(3, 1fr); }
-    @page {
-      size: A4;
-      margin: 12mm 12mm 10mm;
-    }
+    body { background:#fff !important; }
+    .no-print { display:none !important; }
+    .report-wrapper { border-radius:0; box-shadow:none; margin:0; max-width:100%; }
+    .photo-grid { grid-template-columns:repeat(3,1fr); }
+    .info-grid { grid-template-columns:repeat(3,1fr); }
+    .sig-canvas-container { border:1px solid #cfd8dc; background:#fff; }
+    .sig-wrap { border:1px solid #b0bec5; }
+    @page { size:A4; margin:12mm 12mm 10mm; }
   }
+  .print-btn-wrap { max-width:860px; margin:0 auto 16px; display:flex; justify-content:flex-end; gap:10px; padding:0 4px; }
+  .print-btn { padding:10px 24px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:none; font-family:inherit; }
+  .print-btn.primary { background:#1565c0; color:#fff; }
+  .print-btn.secondary { background:#fff; color:#455a64; border:1px solid #cdd5e0; }
 `
 
-const SLOT_LABELS = ['Frontal', 'Trasera', 'Lateral Izqu.', 'Lateral Der.', 'Interior', 'Tablero']
 
 const fmt = (d: string | Date) =>
   new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' })
 
+// ─── Signature Pad ───────────────────────────────────────────────────────────
+type SigStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+interface SignaturePadProps {
+  label: string
+  signerName?: string
+  initialDataUrl?: string
+  onSave: (dataUrl: string) => Promise<void>
+}
+
+const SignaturePad = ({ label, signerName, initialDataUrl, onSave }: SignaturePadProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drawing = useRef(false)
+  const lastPos = useRef<{ x: number; y: number } | null>(null)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isEmpty, setIsEmpty] = useState(!initialDataUrl)
+  const [status, setStatus] = useState<SigStatus>('idle')
+
+  const getDPR = () => window.devicePixelRatio || 1
+
+  // Draw initial signature from DB
+  useEffect(() => {
+    if (!initialDataUrl) {
+      return
+    }
+    const canvas = canvasRef.current
+    if (!canvas) {
+      return
+    }
+    const dpr = getDPR()
+    const rect = canvas.getBoundingClientRect()
+    canvas.width = Math.round(rect.width * dpr)
+    canvas.height = Math.round(rect.height * dpr)
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(dpr, dpr)
+    const img = new Image()
+    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
+    img.src = initialDataUrl
+    setIsEmpty(false)
+  }, [initialDataUrl])
+
+  const ensureCanvasSize = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      return
+    }
+    const dpr = getDPR()
+    const rect = canvas.getBoundingClientRect()
+    const targetW = Math.round(rect.width * dpr)
+    const targetH = Math.round(rect.height * dpr)
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      const snapshot = canvas.toDataURL()
+      canvas.width = targetW
+      canvas.height = targetH
+      const ctx = canvas.getContext('2d')!
+      ctx.scale(dpr, dpr)
+      const img = new Image()
+      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
+      img.src = snapshot
+    }
+  }, [])
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    if ('touches' in e) {
+      const t = e.touches[0]
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top }
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top }
+  }
+
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    ensureCanvasSize()
+    drawing.current = true
+    lastPos.current = getPos(e)
+    setIsEmpty(false)
+  }
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    if (!drawing.current || !lastPos.current) {
+      return
+    }
+    const canvas = canvasRef.current!
+    const ctx = canvas.getContext('2d')!
+    const cur = getPos(e)
+    ctx.beginPath()
+    ctx.moveTo(lastPos.current.x, lastPos.current.y)
+    ctx.lineTo(cur.x, cur.y)
+    ctx.strokeStyle = '#1a1a2e'
+    ctx.lineWidth = 2.2
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.stroke()
+    lastPos.current = cur
+  }
+
+  const stopDraw = () => {
+    drawing.current = false
+    lastPos.current = null
+    // Debounced auto-save 800ms after pen lifts
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current)
+    }
+    saveTimer.current = setTimeout(async () => {
+      const canvas = canvasRef.current
+      if (!canvas || isEmpty) {
+        return
+      }
+      const dataUrl = canvas.toDataURL('image/png')
+      setStatus('saving')
+      try {
+        await onSave(dataUrl)
+        setStatus('saved')
+      } catch {
+        setStatus('error')
+      }
+    }, 800)
+  }
+
+  const clearPad = () => {
+    const canvas = canvasRef.current!
+    const dpr = getDPR()
+    const ctx = canvas.getContext('2d')!
+    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
+    setIsEmpty(true)
+    setStatus('idle')
+  }
+
+  return (
+    <div className="sig-wrap">
+      <div className="sig-label-title">
+        <span>{label}</span>
+        {status === 'saving' && <span className="saving-indicator no-print">Guardando…</span>}
+        {status === 'saved' && <span className="saved-indicator no-print">✓ Guardado</span>}
+        {status === 'error' && <span style={{ fontSize: 11, color: '#e53935' }} className="no-print">Error al guardar</span>}
+      </div>
+      <div className="sig-canvas-container" style={{ height: 130 }}>
+        <canvas
+          ref={canvasRef}
+          className="sig-canvas"
+          style={{ height: 130 }}
+          onMouseDown={startDraw}
+          onMouseMove={draw}
+          onMouseUp={stopDraw}
+          onMouseLeave={stopDraw}
+          onTouchStart={startDraw}
+          onTouchMove={draw}
+          onTouchEnd={stopDraw}
+        />
+        {isEmpty && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            pointerEvents: 'none',
+          }}>
+            <span style={{ color: '#b0bec5', fontSize: 12 }}>✍ Firme aquí con el ratón, dedo o lápiz digital</span>
+          </div>
+        )}
+      </div>
+      <div className="sig-actions no-print">
+        <button
+          className="sig-btn"
+          style={{ background: '#ffebee', color: '#c62828' }}
+          onClick={clearPad}
+          type="button"
+        >
+          ✕ Borrar
+        </button>
+        {!isEmpty && status === 'idle' && (
+          <span style={{ fontSize: 11, color: '#78909c' }}>Levante el lápiz para guardar</span>
+        )}
+      </div>
+      {signerName && <div className="sig-name-label">{signerName}</div>}
+    </div>
+  )
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────────
 const CheckoutReport = () => {
   const [booking, setBooking] = useState<bookcarsTypes.Booking | null>(null)
+  const [bookingId, setBookingId] = useState('')
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -207,11 +283,11 @@ const CheckoutReport = () => {
       setLoading(false)
       return
     }
+    setBookingId(id)
     BookingService.getBooking(id)
       .then((b) => {
         setBooking(b)
         setLoading(false)
-        // auto-trigger print if ?print=1
         if (params.get('print') === '1') {
           setTimeout(() => window.print(), 800)
         }
@@ -222,10 +298,18 @@ const CheckoutReport = () => {
       })
   }, [])
 
+  const handleSaveDriver = useCallback(async (dataUrl: string) => {
+    await BookingService.saveSignatures(bookingId, { signatureDriver: dataUrl })
+  }, [bookingId])
+
+  const handleSaveRep = useCallback(async (dataUrl: string) => {
+    await BookingService.saveSignatures(bookingId, { signatureRep: dataUrl })
+  }, [bookingId])
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'Inter, sans-serif', color: '#607d8b' }}>
-        <div>Cargando reporte…</div>
+        Cargando reporte…
       </div>
     )
   }
@@ -233,7 +317,7 @@ const CheckoutReport = () => {
   if (error || !booking) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'Inter, sans-serif', color: '#e53935' }}>
-        <div>No se pudo cargar la reserva.</div>
+        No se pudo cargar la reserva.
       </div>
     )
   }
@@ -242,25 +326,21 @@ const CheckoutReport = () => {
   const driver = booking.driver as bookcarsTypes.User
   const pickupLoc = booking.pickupLocation as bookcarsTypes.Location
   const dropoffLoc = booking.dropOffLocation as bookcarsTypes.Location
-  const bookingId = booking._id || ''
   const docNumber = `CHK-${bookingId.slice(-8).toUpperCase()}`
   const fuelPct = Number(booking.fuelOut || 0)
-  const pictures = booking.picturesOut || []
   const today = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: PRINT_STYLE }} />
 
-      {/* Action buttons */}
-      <div className="print-btn-wrap" style={{ marginTop: 24 }}>
-        <button className="print-btn secondary" onClick={() => window.close()}>← Volver</button>
-        <button className="print-btn primary" onClick={() => window.print()}>🖨 Imprimir / Descargar PDF</button>
+      <div className="print-btn-wrap no-print" style={{ marginTop: 24 }}>
+        <button className="print-btn secondary" type="button" onClick={() => window.close()}>← Volver</button>
+        <button className="print-btn primary" type="button" onClick={() => window.print()}>🖨 Imprimir / Descargar PDF</button>
       </div>
 
       <div className="report-wrapper">
 
-        {/* ── Header ── */}
         <div className="report-header">
           <div>
             <div className="brand">Inspección vehicular</div>
@@ -277,16 +357,13 @@ const CheckoutReport = () => {
           </div>
         </div>
 
-        {/* ── Status ── */}
         <div className="status-banner">
           <div className="status-dot" />
           Vehículo entregado y registrado — Inspección de salida completada
         </div>
 
-        {/* ── Body ── */}
         <div className="report-body">
 
-          {/* Vehículo */}
           <div className="section">
             <div className="section-title">Vehículo</div>
             <div className="info-grid">
@@ -305,7 +382,6 @@ const CheckoutReport = () => {
             </div>
           </div>
 
-          {/* Reserva */}
           <div className="section">
             <div className="section-title">Datos de la Reserva</div>
             <div className="info-grid">
@@ -336,7 +412,6 @@ const CheckoutReport = () => {
             </div>
           </div>
 
-          {/* Métricas salida */}
           <div className="section">
             <div className="section-title">Métricas de Salida</div>
             <div className="info-grid two-col">
@@ -361,66 +436,111 @@ const CheckoutReport = () => {
             </div>
           </div>
 
-          {/* Fotografías */}
-          {pictures.length > 0 && (
+          {booking.picturesOut && booking.picturesOut.length > 0 && (
             <div className="section">
-              <div className="section-title">Registro Fotográfico ({pictures.length} imágenes)</div>
+              <div className="section-title">Registro Fotográfico</div>
               <div className="photo-grid">
-                {pictures.map((pic, idx) => (
-                  <div key={pic} className="photo-item">
-                    <img
-                      src={`${env.CDN_CARS}/${pic}`}
-                      alt={`Foto ${idx + 1}`}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none'
-                      }}
-                    />
-                    <div className="photo-label">{SLOT_LABELS[idx] || `Vista ${idx + 1}`}</div>
-                  </div>
-                ))}
+                {(() => {
+                  const slots = [
+                    { key: 'photo_0', label: 'Frontal' },
+                    { key: 'photo_1', label: 'Trasera' },
+                    { key: 'photo_2', label: 'Lateral Izqu.' },
+                    { key: 'photo_3', label: 'Lateral Der.' },
+                    { key: 'photo_4', label: 'Interior' },
+                    { key: 'photo_5', label: 'Tablero' },
+                    { key: 'photo_km', label: 'Tablero (Km)' },
+                  ]
+
+                  const slotMap: Record<string, string> = {}
+                  booking.picturesOut.forEach((p) => {
+                    if (p.includes('|')) {
+                      const [field, file] = p.split('|')
+                      slotMap[field] = file
+                    } else {
+                      // Legacy support: just use as the next available slot
+                    }
+                  })
+
+                  // If it's legacy (no pipes), we just show them in order
+                  const isLegacy = !booking.picturesOut.some(p => p.includes('|'))
+                  if (isLegacy) {
+                    return booking.picturesOut.map((pic, idx) => (
+                      <div key={pic} className="photo-item">
+                        <img src={`${env.CDN_CARS}/${pic}`} alt="Foto" />
+                        <div className="photo-label">{idx === 0 ? 'Tablero (Km)' : ['Frontal', 'Trasera', 'Lateral Izqu.', 'Lateral Der.', 'Interior', 'Tablero'][idx - 1] || 'Vista'}</div>
+                      </div>
+                    ))
+                  }
+
+                  return slots.map((s) => {
+                    const filename = slotMap[s.key]
+                    if (!filename) {
+                      return null
+                    }
+                    return (
+                      <div key={s.key} className="photo-item">
+                        <img
+                          src={`${env.CDN_CARS}/${filename}`}
+                          alt={s.label}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                        />
+                        <div className="photo-label">{s.label}</div>
+                      </div>
+                    )
+                  }).filter(Boolean)
+                })()}
               </div>
             </div>
           )}
 
-          {/* Firmas */}
+          {/* ── Firmas digitales ── */}
           <div className="section">
-            <div className="section-title">Firmas y Conformidad</div>
+            <div className="section-title">Firmas Digitales y Conformidad</div>
             <div className="signature-grid">
-              <div className="signature-box">
-                <div className="sig-label">Firma del Conductor</div>
-                <div className="sig-line" />
-                <div className="sig-name">{driver?.fullName || '...........................'}</div>
-              </div>
-              <div className="signature-box">
-                <div className="sig-label">Firma del Representante</div>
-                <div className="sig-line" />
-                <div className="sig-name">Autorizado por la empresa</div>
-              </div>
+              <SignaturePad
+                label="Firma del Conductor"
+                signerName={driver?.fullName}
+                initialDataUrl={booking.signatureDriver}
+                onSave={handleSaveDriver}
+              />
+              <SignaturePad
+                label="Firma del Representante"
+                signerName="Autorizado por la empresa"
+                initialDataUrl={booking.signatureRep}
+                onSave={handleSaveRep}
+              />
             </div>
+            <p
+              className="no-print"
+              style={{ fontSize: 11, color: '#90a4ae', marginTop: 10, textAlign: 'center' }}
+            >
+              ✍ La firma se guarda automáticamente al levantar el lápiz o soltar el botón del ratón
+            </p>
           </div>
 
-          {/* Observaciones */}
           <div className="section">
             <div className="section-title">Observaciones</div>
-            <div style={{
-              border: '1px dashed #b0bec5', borderRadius: 10,
-              padding: '16px 20px', minHeight: 60, color: '#90a4ae',
-              fontSize: 12, fontStyle: 'italic',
-            }}>
-              Sin observaciones adicionales registradas en este documento.
+            <div
+              contentEditable
+              suppressContentEditableWarning
+              style={{
+                border: '1px dashed #b0bec5', borderRadius: 10,
+                padding: '16px 20px', minHeight: 60, color: '#455a64',
+                fontSize: 12, outline: 'none', lineHeight: 1.6,
+                background: booking.remarksOut ? '#fff3e0' : 'transparent',
+              }}
+            >
+              {booking.remarksOut || 'Sin observaciones adicionales.'}
             </div>
           </div>
 
         </div>
 
-        {/* Footer */}
         <div className="report-footer">
-          <div>
-            Documento generado el <strong>{today}</strong> · Ref: <strong>{docNumber}</strong>
-          </div>
-          <div>
-            Reserva #<strong>{bookingId.slice(-8).toUpperCase()}</strong> · Sistema de Gestión de Vehículos
-          </div>
+          <div>Documento generado el <strong>{today}</strong> · Ref: <strong>{docNumber}</strong></div>
+          <div>Reserva #<strong>{bookingId.slice(-8).toUpperCase()}</strong> · Sistema de Gestión de Vehículos</div>
         </div>
 
       </div>

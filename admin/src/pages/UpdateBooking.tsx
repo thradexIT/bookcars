@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   FormControl,
@@ -169,6 +169,36 @@ const UpdateBooking = () => {
   const [fromError, setFromError] = useState(false)
   const [toError, setToError] = useState(false)
   const [price, setPrice] = useState<number>()
+
+  // ── Auto-refresh when CarCheckout reports completion ──────────────────────
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null
+    try {
+      bc = new BroadcastChannel('bookcars-checkout')
+      bc.onmessage = async (e) => {
+        const params = new URLSearchParams(window.location.search)
+        const currentId = params.get('b')
+        if (currentId && e.data?.type === 'checkout-completed' && e.data?.bookingId === currentId) {
+          try {
+            const refreshed = await BookingService.getBooking(currentId as string)
+            if (refreshed) {
+              setBooking(refreshed)
+            }
+          } catch {
+            // silent — user can still F5 manually
+          }
+        }
+      }
+    } catch {
+      // BroadcastChannel not supported in this browser — no-op
+    }
+    return () => {
+      if (bc) {
+        bc.close()
+      }
+    }
+  }, [])
+  // ─────────────────────────────────────────────────────────────────────────
 
   const {
     register,
@@ -887,6 +917,7 @@ const UpdateBooking = () => {
             />
             {booking.odooOrderId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
+                {/* ── Orden de Compra (siempre visible si hay odooOrderId) ── */}
                 <div className="order-box">
                   <div className="order-box-header">
                     <span className="order-box-title">Orden de Compra</span>
@@ -910,107 +941,111 @@ const UpdateBooking = () => {
                     </Button>
                   </div>
                 </div>
-                <div className="order-box">
-                  <div className="order-box-header">
-                    <span className="order-box-title">Registrar Salida</span>
-                  </div>
-                  <div className="order-box-content">
-                    {/* <div className="order-box-detail">
-                      <span className="order-box-detail-title">Estado:</span>
-                      <span className="order-box-detail-value">
-                        <span className="order-box-status">Confirmada / Enviada</span>
+
+                {/* ── Checkout: solo si el pago lo permite O ya hay checkout ── */}
+                {(
+                  booking.kmOut !== undefined
+                  || booking.status === bookcarsTypes.BookingStatus.Deposit
+                  || booking.status === bookcarsTypes.BookingStatus.Paid
+                  || booking.status === bookcarsTypes.BookingStatus.PaidInFull
+                  || booking.status === bookcarsTypes.BookingStatus.Reserved
+                ) && (
+                  <div className="order-box">
+                    <div className="order-box-header">
+                      <span className="order-box-title">
+                        {booking.kmOut !== undefined ? '✅ Inspección Registrada' : 'Registrar Salida'}
                       </span>
-                    </div> */}
-                    <Button
-                      variant="contained"
-                      className="btn-primary"
-                      style={{ marginTop: '15px', width: '100%' }}
-                      onClick={() => {
-                        window.open(`/admin/checkout_car?b=${booking._id}`, '_blank')
-                      }}
-                    >
-                      Registrar Salida
-                    </Button>
+                    </div>
+                    <div className="order-box-content">
+                      {booking.kmOut !== undefined ? (
+                        <>
+                          <div className="order-box-detail" style={{ marginBottom: 6 }}>
+                            <span className="order-box-detail-title">Km salida:</span>
+                            <span className="order-box-detail-value" style={{ fontWeight: 700 }}>
+                              {booking.kmOut.toLocaleString()} km
+                            </span>
+                          </div>
+                          <div className="order-box-detail" style={{ marginBottom: 12 }}>
+                            <span className="order-box-detail-title">Combustible:</span>
+                            <span className="order-box-detail-value" style={{ fontWeight: 700 }}>
+                              {booking.fuelOut || '—'}%
+                            </span>
+                          </div>
+                          {booking.remarksOut && (
+                            <div style={{ fontSize: 12, color: '#e65100', marginBottom: 12, fontStyle: 'italic', background: '#fff3e0', padding: '8px', borderRadius: '4px' }}>
+                              {booking.remarksOut}
+                            </div>
+                          )}
+                          <Button
+                            variant="contained"
+                            className="btn-primary"
+                            style={{ marginTop: '4px', width: '100%' }}
+                            onClick={() => {
+                              window.open(`/admin/checkout-report?b=${booking._id}`, '_blank')
+                            }}
+                          >
+                            Ver Reporte PDF
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          className="btn-primary"
+                          style={{ marginTop: '15px', width: '100%' }}
+                          onClick={() => {
+                            window.open(`/admin/checkout_car?b=${booking._id}`, '_blank')
+                          }}
+                        >
+                          Registrar Salida
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
           </div>
 
-          {/* ── REPORTE DE INSPECCIÓN DE SALIDA ── */}
-          {booking.kmOut !== undefined && (
+          {/* ── FOTOS DE INSPECCIÓN DE SALIDA ── */}
+          {booking.kmOut !== undefined && booking.picturesOut && booking.picturesOut.length > 0 && (
             <div
-              id="checkout-report"
               style={{
                 background: '#fff',
                 border: '1px solid #e0e0e0',
                 borderRadius: 12,
-                padding: '24px',
+                padding: '20px 24px',
                 marginTop: '16px',
                 width: '100%',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#1976d2' }}>🔍 Inspección de Salida</span>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => window.open(`/admin/checkout-report?b=${booking._id}`, '_blank')}
-                  style={{ borderColor: '#1976d2', color: '#1976d2', fontSize: 12 }}
-                >
-                  Ver Reporte PDF
-                </Button>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#616161', marginBottom: 12 }}>
+                📸 Fotografías de salida ({booking.picturesOut.length} imágenes)
               </div>
-
-              {/* Datos básicos */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: 20 }}>
-                <div style={{ background: '#f5f7fa', borderRadius: 8, padding: '12px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: 1 }}>Kilometraje salida</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#212121', marginTop: 4 }}>
-                    {booking.kmOut?.toLocaleString()} km
-                  </div>
-                </div>
-                <div style={{ background: '#f5f7fa', borderRadius: 8, padding: '12px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: 1 }}>Nivel de combustible</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#212121', marginTop: 4 }}>
-                    {booking.fuelOut || '—'}%
-                  </div>
-                </div>
-              </div>
-
-              {/* Fotos */}
-              {booking.picturesOut && booking.picturesOut.length > 0 && (
-                <>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#616161', marginBottom: 10 }}>
-                    Fotografías ({booking.picturesOut.length})
-                  </div>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                      gap: 10,
-                    }}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                  gap: 10,
+                }}
+              >
+                {booking.picturesOut.map((pic, idx) => (
+                  <a
+                    key={pic}
+                    href={`${env.CDN_CARS}/${pic}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0' }}
+                    title={`Imagen ${idx + 1}`}
                   >
-                    {booking.picturesOut.map((pic, idx) => (
-                      <a
-                        key={pic}
-                        href={`${env.CDN_CARS}/${pic}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0' }}
-                        title={`Imagen ${idx + 1}`}
-                      >
-                        <img
-                          src={`${env.CDN_CARS}/${pic}`}
-                          alt={`checkout-${idx}`}
-                          style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }}
-                        />
-                      </a>
-                    ))}
-                  </div>
-                </>
-              )}
+                    <img
+                      src={`${env.CDN_CARS}/${pic}`}
+                      alt={`checkout-${idx}`}
+                      style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }}
+                    />
+                  </a>
+                ))}
+              </div>
             </div>
           )}
 

@@ -45,11 +45,11 @@ const CarouselSlot = ({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 4px' }}>
             {viewerOpen && (
-                <div 
+                <div
                     onClick={() => setViewerOpen(false)}
                     style={{
-                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
-                        background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', 
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex',
                         alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out',
                         padding: 20, boxSizing: 'border-box'
                     }}
@@ -67,7 +67,7 @@ const CarouselSlot = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
                 {/* Imagen referencial */}
-                <div 
+                <div
                     onClick={() => setViewerOpen(true)}
                     style={{
                         borderRadius: 10, overflow: 'hidden', background: '#f0f4fa',
@@ -276,7 +276,7 @@ const KmSlot = ({
             background: '#f8faff', marginBottom: 20,
         }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#1976d2', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
-                📊 Tablero — Kilometraje de Salida
+                Tablero — Kilometraje de Salida
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -362,6 +362,7 @@ const CarCheckout = () => {
     const [done, setDone] = useState(false)
     const [loading, setLoading] = useState(false)
     const [bookingId, setBookingId] = useState('')
+    const [acceptedResponsibility, setAcceptedResponsibility] = useState(false)
 
     const onLoad = async (_user?: bookcarsTypes.User) => {
         if (_user) {
@@ -432,6 +433,12 @@ const CarCheckout = () => {
         if (step === 1) {
             return carouselFiles.filter(Boolean).length >= 1
         }
+        if (step === 2) {
+            const hasMissingPhotos = carouselFiles.some(f => f === null)
+            if (hasMissingPhotos) {
+                return acceptedResponsibility
+            }
+        }
         return true
     }
 
@@ -444,16 +451,31 @@ const CarCheckout = () => {
                 const formData = new FormData()
                 formData.append('kmOut', mileage)
                 formData.append('fuelOut', fuel)
+
+                const missingPhotos = CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label)
+                if (missingPhotos.length > 0) {
+                    const observation = `Bajo la responsabilidad de la persona que está llenando la data, se omitieron las imágenes ${missingPhotos.join(', ')} cuando se realizó la salida de taller.`
+                    formData.append('remarksOut', observation)
+                }
+
                 if (kmPhoto) {
-                    formData.append('files', kmPhoto)
+                    formData.append('photo_km', kmPhoto)
                 }
                 for (let i = 0; i < carouselFiles.length; i++) {
                     const file = carouselFiles[i]
                     if (file) {
-                        formData.append('files', file)
+                        formData.append(`photo_${i}`, file)
                     }
                 }
                 await BookingService.checkoutDeparture(bookingId, formData)
+                // Notify UpdateBooking tab to refresh
+                try {
+                    const bc = new BroadcastChannel('bookcars-checkout')
+                    bc.postMessage({ type: 'checkout-completed', bookingId })
+                    bc.close()
+                } catch {
+                    // BroadcastChannel not supported — no-op
+                }
                 setDone(true)
             } catch (err) {
                 helper.error(err)
@@ -493,6 +515,11 @@ const CarCheckout = () => {
                                 <div style={{ fontSize: 14, color: '#616161', marginTop: 2 }}>
                                     Fotos: {carouselFiles.filter(Boolean).length + (kmPhoto ? 1 : 0)}/{CAROUSEL_SLOTS.length + 1}
                                 </div>
+                                {carouselFiles.some(f => !f) && (
+                                    <div style={{ fontSize: 13, color: '#e65100', marginTop: 8, fontStyle: 'italic', lineHeight: 1.4 }}>
+                                        <strong>Obs:</strong> Bajo la responsabilidad de la persona que está llenando la data, se omitieron las imágenes {CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label).join(', ')} cuando se realizó la salida de taller.
+                                    </div>
+                                )}
                             </div>
                             <button style={S.btnPrimary} onClick={() => window.close()}>Cerrar</button>
                         </div>
@@ -600,6 +627,37 @@ const CarCheckout = () => {
                                         <span style={{ fontSize: 14, fontWeight: 600, color: '#212121', textAlign: 'right', maxWidth: '60%' }}>{row.value}</span>
                                     </div>
                                 ))}
+
+                                {carouselFiles.some(f => !f) && (
+                                    <div style={{
+                                        marginTop: 24,
+                                        padding: 16,
+                                        background: '#fff3e0',
+                                        border: '1px solid #ffe0b2',
+                                        borderRadius: 8,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 12
+                                    }}>
+                                        <div style={{ color: '#e65100', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            ⚠️ ATENCIÓN: FOTOS FALTANTES
+                                        </div>
+                                        <div style={{ fontSize: 13, color: '#5d4037', lineHeight: 1.5 }}>
+                                            No se han subido las siguientes fotografías: <strong>{CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label).join(', ')}</strong>.
+                                            <br /><br />
+                                            Al continuar, el usuario declara que <strong>bajo la responsabilidad de la persona que está llenando la data</strong> se está omitiendo la captura de estas imágenes.
+                                        </div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '8px 0' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={acceptedResponsibility}
+                                                onChange={e => setAcceptedResponsibility(e.target.checked)}
+                                                style={{ width: 18, height: 18, cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontSize: 13, fontWeight: 600, color: '#212121' }}>Entiendo y acepto la responsabilidad</span>
+                                        </label>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>

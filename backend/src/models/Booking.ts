@@ -123,6 +123,15 @@ const bookingSchema = new Schema<env.Booking>(
     picturesOut: {
       type: [String],
     },
+    signatureDriver: {
+      type: String,
+    },
+    signatureRep: {
+      type: String,
+    },
+    remarksOut: {
+      type: String,
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

@@ -652,6 +652,8 @@ export interface Booking extends Document {
   kmOut?: number
   fuelOut?: string
   picturesOut?: string[]
+  signatureDriver?: string
+  signatureRep?: string
 }
 
 /**
