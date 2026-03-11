@@ -30,6 +30,7 @@ import * as helper from '@/utils/helper'
 import * as BookingService from '@/services/BookingService'
 import StatusList from './StatusList'
 import BookingStatus from './BookingStatus'
+import { io } from 'socket.io-client'
 
 import '@/assets/css/booking-list.css'
 
@@ -93,6 +94,22 @@ const BookingList = ({
     page: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => {
+    const socket = io(env.API_HOST)
+    const handleUpdate = () => {
+      setRefreshKey((prev) => prev + 1)
+    }
+
+    socket.on('booking-created', handleUpdate)
+    socket.on('booking-updated', handleUpdate)
+    socket.on('booking-deleted', handleUpdate)
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     if (!env.isMobile) {
@@ -192,7 +209,7 @@ const BookingList = ({
     if (suppliers && statuses && loggedUser) {
       fetchData(page, user)
     }
-  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (suppliers && statuses && loggedUser) {

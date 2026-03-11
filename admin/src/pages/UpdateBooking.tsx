@@ -46,6 +46,7 @@ import DateTimePicker from '@/components/DateTimePicker'
 import DatePicker from '@/components/DatePicker'
 import { Option } from '@/models/common'
 import { schema, FormFields } from '@/models/BookingForm'
+import { io } from 'socket.io-client'
 
 import '@/assets/css/booking.css'
 
@@ -192,9 +193,30 @@ const UpdateBooking = () => {
     } catch {
       // BroadcastChannel not supported in this browser — no-op
     }
+    
+    // Listen via Websockets for any change to UI (e.g., checkout completion from another device)
+    const socket = io(env.API_HOST)
+    socket.on('booking-updated', async (data: any) => {
+      const params = new URLSearchParams(window.location.search)
+      const currentId = params.get('b')
+      if (currentId && data?.bookingId === currentId) {
+        try {
+          const refreshed = await BookingService.getBooking(currentId as string)
+          if (refreshed) {
+            setBooking(refreshed)
+          }
+        } catch {
+          // silent error
+        }
+      }
+    })
+
     return () => {
       if (bc) {
         bc.close()
+      }
+      if (socket) {
+        socket.disconnect()
       }
     }
   }, [])
@@ -945,10 +967,10 @@ const UpdateBooking = () => {
                 {/* ── Checkout: solo si el pago lo permite O ya hay checkout ── */}
                 {(
                   booking.kmOut !== undefined
-                  || booking.status === bookcarsTypes.BookingStatus.Deposit
-                  || booking.status === bookcarsTypes.BookingStatus.Paid
-                  || booking.status === bookcarsTypes.BookingStatus.PaidInFull
-                  || booking.status === bookcarsTypes.BookingStatus.Reserved
+                  || status === bookcarsTypes.BookingStatus.Deposit
+                  || status === bookcarsTypes.BookingStatus.Paid
+                  || status === bookcarsTypes.BookingStatus.PaidInFull
+                  || status === bookcarsTypes.BookingStatus.Reserved
                 ) && (
                   <div className="order-box">
                     <div className="order-box-header">

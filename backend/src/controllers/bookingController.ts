@@ -23,6 +23,7 @@ import * as env from '../config/env.config'
 import * as logger from '../utils/logger'
 import stripeAPI from '../payment/stripe'
 import odooService from '../services/odooService'
+import * as socketService from '../services/socketService'
 
 /**
  * Creates an Odoo Purchase Order for a given booking.
@@ -95,6 +96,28 @@ const createOdooOrderForBooking = async (booking: any) => {
 export const create = async (req: Request, res: Response) => {
   try {
     const { body }: { body: bookcarsTypes.UpsertBookingPayload } = req
+
+    const activeStatuses = [
+      bookcarsTypes.BookingStatus.Pending,
+      bookcarsTypes.BookingStatus.Deposit,
+      bookcarsTypes.BookingStatus.Paid,
+      bookcarsTypes.BookingStatus.PaidInFull,
+      bookcarsTypes.BookingStatus.Reserved,
+    ]
+    const conflictingBooking = await Booking.findOne({
+      car: new mongoose.Types.ObjectId(body.booking.car as string),
+      status: { $in: activeStatuses },
+      $and: [
+        { from: { $lt: new Date(body.booking.to) } },
+        { to: { $gt: new Date(body.booking.from) } }
+      ]
+    })
+    
+    if (conflictingBooking) {
+      res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+      return
+    }
+
     if (body.booking.additionalDriver) {
       const additionalDriver = new AdditionalDriver(body.additionalDriver)
       await additionalDriver.save()
@@ -104,6 +127,9 @@ export const create = async (req: Request, res: Response) => {
     const booking = new Booking(body.booking)
 
     await booking.save()
+
+    // Notify connected clients that a booking was created to refresh grids
+    socketService.notifyBookingCreated(booking._id.toString())
 
     // Create Odoo order asynchronously
     createOdooOrderForBooking(booking)
@@ -145,6 +171,9 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
     counter = new NotificationCounter({ user: user._id, count: 1 })
     await counter.save()
   }
+
+  // send real-time notification
+  socketService.notifyUser(user._id.toString(), message)
 
   // mail
   if (user.enableEmailNotifications) {
@@ -263,6 +292,27 @@ export const checkout = async (req: Request, res: Response) => {
 
     if (!body.booking) {
       throw new Error('Booking not found')
+    }
+
+    const activeStatuses = [
+      bookcarsTypes.BookingStatus.Pending,
+      bookcarsTypes.BookingStatus.Deposit,
+      bookcarsTypes.BookingStatus.Paid,
+      bookcarsTypes.BookingStatus.PaidInFull,
+      bookcarsTypes.BookingStatus.Reserved,
+    ]
+    const conflictingBooking = await Booking.findOne({
+      car: new mongoose.Types.ObjectId(body.booking.car as string),
+      status: { $in: activeStatuses },
+      $and: [
+        { from: { $lt: new Date(body.booking.to) } },
+        { to: { $gt: new Date(body.booking.from) } }
+      ]
+    })
+    
+    if (conflictingBooking) {
+      res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+      return
     }
 
     const supplier = await User.findById(body.booking.supplier)
@@ -401,6 +451,9 @@ export const checkout = async (req: Request, res: Response) => {
     const booking = new Booking(body.booking)
 
     await booking.save()
+    
+    // Notify connected clients that a booking was created/updated (during checkout)
+    socketService.notifyBookingUpdated(booking._id.toString())
 
     if (booking.status === bookcarsTypes.BookingStatus.Paid && body.paymentIntentId && body.customerId) {
       const car = await Car.findById(booking.car)
@@ -480,6 +533,9 @@ const notifyDriver = async (booking: env.Booking, req?: Request) => {
     counter = new NotificationCounter({ user: driver._id, count: 1 })
     await counter.save()
   }
+
+  // send real-time notification
+  socketService.notifyUser(driver._id.toString(), message)
 
   // mail
   if (driver.enableEmailNotifications) {
@@ -573,6 +629,31 @@ export const update = async (req: Request, res: Response) => {
     const booking = await Booking.findById(body.booking._id)
 
     if (booking) {
+      const activeStatuses = [
+        bookcarsTypes.BookingStatus.Pending,
+        bookcarsTypes.BookingStatus.Deposit,
+        bookcarsTypes.BookingStatus.Paid,
+        bookcarsTypes.BookingStatus.PaidInFull,
+        bookcarsTypes.BookingStatus.Reserved,
+      ]
+      
+      if (activeStatuses.includes(body.booking.status as bookcarsTypes.BookingStatus)) {
+        const conflictingBooking = await Booking.findOne({
+          _id: { $ne: booking._id },
+          car: new mongoose.Types.ObjectId(body.booking.car as string),
+          status: { $in: activeStatuses },
+          $and: [
+            { from: { $lt: new Date(body.booking.to) } },
+            { to: { $gt: new Date(body.booking.from) } }
+          ]
+        })
+        
+        if (conflictingBooking) {
+          res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+          return
+        }
+      }
+
       if (!body.booking.additionalDriver && booking._additionalDriver) {
         await AdditionalDriver.deleteOne({ _id: booking._additionalDriver })
       }
@@ -656,6 +737,9 @@ export const update = async (req: Request, res: Response) => {
       }
 
       await booking.save()
+      
+      // Notify connected clients that a booking was updated
+      socketService.notifyBookingUpdated(booking._id.toString())
 
       if (previousStatus !== status) {
         // notify driver
@@ -699,6 +783,11 @@ export const updateStatus = async (req: Request, res: Response) => {
         await notifyDriver(booking, req)
       }
     }
+    
+    // Notify connected clients
+    for (const id of ids) {
+      socketService.notifyBookingUpdated(id.toString())
+    }
 
     res.sendStatus(200)
   } catch (err) {
@@ -729,6 +818,11 @@ export const deleteBookings = async (req: Request, res: Response) => {
     await Booking.deleteMany({ _id: { $in: ids } })
     const additionalDivers = bookings.map((booking) => new mongoose.Types.ObjectId(booking._additionalDriver))
     await AdditionalDriver.deleteMany({ _id: { $in: additionalDivers } })
+
+    // Notify connected clients
+    for (const id of ids) {
+      socketService.notifyBookingDeleted(id.toString())
+    }
 
     res.sendStatus(200)
   } catch (err) {
@@ -1303,7 +1397,7 @@ export const downloadCheckoutReport = async (req: Request, res: Response) => {
       const remarksY = doc.y
       doc.rect(50, remarksY, 512, 45).fill('#fff3e0').strokeColor('#ffe0b2').stroke()
       doc.fillColor('#e65100').fontSize(7).font('Helvetica-Bold').text('OBSERVACIÓN DE RESPONSABILIDAD', 60, remarksY + 10)
-      doc.fillColor('#455a64').fontSize(9).font('Helvetica-Oblique').text(booking.remarksOut, 60, remarksY + 22, { width: 490, lineHeight: 1.2 })
+      doc.fillColor('#455a64').fontSize(9).font('Helvetica-Oblique').text(booking.remarksOut, 60, remarksY + 22, { width: 490, lineGap: 1.2 })
     }
 
     // --- Photo Grid ---

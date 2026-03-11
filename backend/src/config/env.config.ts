@@ -757,6 +757,7 @@ export interface Car extends Document {
 export interface CarInfo {
   _id?: Types.ObjectId
   name: string
+  licensePlate?: string
   supplier: UserInfo
   minimumAge: number
   locations: Types.ObjectId[]
