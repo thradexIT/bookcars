@@ -14,7 +14,6 @@ import {
   Input
 } from '@mui/material'
 import {
-  Info as InfoIcon,
   Person as DriverIcon
 } from '@mui/icons-material'
 import { DateTimeValidationError } from '@mui/x-date-pickers'
@@ -50,7 +49,7 @@ import { io } from 'socket.io-client'
 
 import '@/assets/css/booking.css'
 
-// Create a separate component to avoid re-renders
+// ─── Additional Driver sub-form ───────────────────────────────────────────────
 interface AdditionalDriverFormProps {
   control: Control<FormFields>
   register: UseFormRegister<FormFields>
@@ -62,7 +61,6 @@ interface AdditionalDriverFormProps {
 }
 
 const AdditionalDriverForm = ({ control, register, errors, clearErrors, trigger, setValue, language }: AdditionalDriverFormProps) => {
-  // Only watch the fields needed in this component
   const additionalDriverBirthDate = useWatch({ control, name: 'additionalDriverBirthDate' })
   const additionalEmail = useWatch({ control, name: 'additionalDriverEmail' })
   const additionalDriverPhone = useWatch({ control, name: 'additionalDriverPhone' })
@@ -92,12 +90,9 @@ const AdditionalDriverForm = ({ control, register, errors, clearErrors, trigger,
             if (errors.additionalDriverEmail) {
               clearErrors('additionalDriverEmail')
             }
-
             setValue('additionalDriverEmail', e.target.value)
           }}
-          onBlur={() => {
-            trigger('additionalDriverEmail')
-          }}
+          onBlur={() => trigger('additionalDriverEmail')}
           type="text"
           error={!!errors.additionalDriverEmail}
           required
@@ -118,15 +113,13 @@ const AdditionalDriverForm = ({ control, register, errors, clearErrors, trigger,
             if (errors.additionalDriverPhone) {
               clearErrors('additionalDriverPhone')
             }
-
             setValue('additionalDriverPhone', e.target.value)
           }}
-          onBlur={() => {
-            trigger('additionalDriverPhone')
-          }}
+          onBlur={() => trigger('additionalDriverPhone')}
         />
         {errors.additionalDriverPhone && <FormHelperText error>{errors.additionalDriverPhone.message}</FormHelperText>}
       </FormControl>
+
       <FormControl fullWidth margin="dense">
         <DatePicker
           label={commonStrings.BIRTH_DATE}
@@ -153,6 +146,7 @@ const AdditionalDriverForm = ({ control, register, errors, clearErrors, trigger,
   )
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
 const UpdateBooking = () => {
   const navigate = useNavigate()
 
@@ -171,7 +165,7 @@ const UpdateBooking = () => {
   const [toError, setToError] = useState(false)
   const [price, setPrice] = useState<number>()
 
-  // ── Auto-refresh when CarCheckout reports completion ──────────────────────
+  // ── Auto-refresh via BroadcastChannel + WebSocket ──────────────────────────
   useEffect(() => {
     let bc: BroadcastChannel | null = null
     try {
@@ -181,74 +175,49 @@ const UpdateBooking = () => {
         const currentId = params.get('b')
         if (currentId && e.data?.type === 'checkout-completed' && e.data?.bookingId === currentId) {
           try {
-            const refreshed = await BookingService.getBooking(currentId as string)
+            const refreshed = await BookingService.getBooking(currentId)
             if (refreshed) {
               setBooking(refreshed)
             }
-          } catch {
-            // silent — user can still F5 manually
-          }
+          } catch { /* silent */ }
         }
       }
-    } catch {
-      // BroadcastChannel not supported in this browser — no-op
-    }
-    
-    // Listen via Websockets for any change to UI (e.g., checkout completion from another device)
+    } catch { /* BroadcastChannel not supported */ }
+
     const socket = io(env.API_HOST)
     socket.on('booking-updated', async (data: any) => {
       const params = new URLSearchParams(window.location.search)
       const currentId = params.get('b')
       if (currentId && data?.bookingId === currentId) {
         try {
-          const refreshed = await BookingService.getBooking(currentId as string)
+          const refreshed = await BookingService.getBooking(currentId)
           if (refreshed) {
             setBooking(refreshed)
           }
-        } catch {
-          // silent error
-        }
+        } catch { /* silent */ }
       }
     })
 
     return () => {
-      if (bc) {
-        bc.close()
-      }
-      if (socket) {
-        socket.disconnect()
-      }
+      bc?.close()
+      socket?.disconnect()
     }
   }, [])
-  // ─────────────────────────────────────────────────────────────────────────
 
   const {
-    register,
-    control,
-    handleSubmit,
-    setValue,
+    register, control, handleSubmit, setValue,
     formState: { errors, isSubmitting },
-    clearErrors,
-    trigger,
+    clearErrors, trigger,
   } = useForm<FormFields>({
     resolver: zodResolver(schema),
     mode: 'onSubmit',
     defaultValues: {
-      supplier: undefined,
-      driver: undefined,
-      pickupLocation: undefined,
-      dropOffLocation: undefined,
-      car: undefined,
-      status: undefined,
-      cancellation: false,
-      amendments: false,
-      theftProtection: false,
-      collisionDamageWaiver: false,
-      fullInsurance: false,
-      additionalDriver: false,
-      additionalDriverFullName: '',
-      additionalDriverEmail: '',
-      additionalDriverPhone: '',
+      supplier: undefined, driver: undefined, pickupLocation: undefined,
+      dropOffLocation: undefined, car: undefined, status: undefined,
+      cancellation: false, amendments: false, theftProtection: false,
+      collisionDamageWaiver: false, fullInsurance: false,
+      additionalDriver: false, additionalDriverFullName: '',
+      additionalDriverEmail: '', additionalDriverPhone: '',
     }
   })
 
@@ -266,28 +235,21 @@ const UpdateBooking = () => {
   const fullInsurance = useWatch({ control, name: 'fullInsurance' })
   const additionalDriver = useWatch({ control, name: 'additionalDriver' })
 
-  const toastErr = (err?: unknown, hideLoading?: boolean): void => {
+  const toastErr = (err?: unknown, hideLoading?: boolean) => {
     helper.error(err)
     if (hideLoading) {
       setLoading(false)
     }
   }
 
-  const handleDelete = () => {
-    setOpenDeleteDialog(true)
-  }
-
-  const handleCancelDelete = () => {
-    setOpenDeleteDialog(false)
-  }
+  const handleDelete = () => setOpenDeleteDialog(true)
+  const handleCancelDelete = () => setOpenDeleteDialog(false)
 
   const handleConfirmDelete = async () => {
-    if (booking && booking._id) {
+    if (booking?._id) {
       try {
         setOpenDeleteDialog(false)
-
         const _status = await BookingService.deleteBookings([booking._id])
-
         if (_status === 200) {
           navigate('/')
         } else {
@@ -309,7 +271,6 @@ const UpdateBooking = () => {
         helper.error()
         return
       }
-
       if (fromError || toError) {
         return
       }
@@ -321,40 +282,28 @@ const UpdateBooking = () => {
         driver: data.driver?._id,
         pickupLocation: data.pickupLocation?._id!,
         dropOffLocation: data.dropOffLocation?._id!,
-        from: data.from!,
-        to: data.to!,
+        from: data.from!, to: data.to!,
         status: data.status as bookcarsTypes.BookingStatus,
-        cancellation: data.cancellation,
-        amendments: data.amendments,
-        theftProtection: data.theftProtection,
-        collisionDamageWaiver: data.collisionDamageWaiver,
-        fullInsurance: data.fullInsurance,
-        additionalDriver: additionalDriverSet,
-        price,
-        isDeposit: booking.isDeposit,
-        isPayedInFull: booking.isPayedInFull,
+        cancellation: data.cancellation, amendments: data.amendments,
+        theftProtection: data.theftProtection, collisionDamageWaiver: data.collisionDamageWaiver,
+        fullInsurance: data.fullInsurance, additionalDriver: additionalDriverSet,
+        price, isDeposit: booking.isDeposit, isPayedInFull: booking.isPayedInFull,
       }
 
       let payload: bookcarsTypes.UpsertBookingPayload
-      let _additionalDriver: bookcarsTypes.AdditionalDriver
       if (additionalDriverSet) {
-        _additionalDriver = {
+        const _additionalDriver: bookcarsTypes.AdditionalDriver = {
           fullName: data.additionalDriverFullName!,
           email: data.additionalDriverEmail!,
           phone: data.additionalDriverPhone!,
           birthDate: data.additionalDriverBirthDate!,
         }
-
-        payload = {
-          booking: _booking,
-          additionalDriver: _additionalDriver,
-        }
+        payload = { booking: _booking, additionalDriver: _additionalDriver }
       } else {
         payload = { booking: _booking }
       }
 
       const _status = await BookingService.update(payload)
-
       if (_status === 200) {
         if (!additionalDriverSet) {
           setValue('additionalDriverFullName', '')
@@ -383,18 +332,12 @@ const UpdateBooking = () => {
         if (id && id !== '') {
           try {
             const _booking = await BookingService.getBooking(id)
-
             if (_booking) {
               if (!helper.admin(_user) && (_booking.supplier as bookcarsTypes.User)._id !== _user._id) {
-                setLoading(false)
-                setNoMatch(true)
-                return
+                setLoading(false); setNoMatch(true); return
               }
-
               if (!_booking.driver) {
-                setLoading(false)
-                setNoMatch(true)
-                return
+                setLoading(false); setNoMatch(true); return
               }
 
               setBooking(_booking)
@@ -402,36 +345,22 @@ const UpdateBooking = () => {
               setLoading(false)
               setVisible(true)
               setIsSupplier(_user.type === bookcarsTypes.RecordType.Supplier)
+
               const cmp = _booking.supplier as bookcarsTypes.User
-              setValue('supplier', {
-                _id: cmp._id as string,
-                name: cmp.fullName,
-                image: cmp.avatar,
-              })
+              setValue('supplier', { _id: cmp._id as string, name: cmp.fullName, image: cmp.avatar })
               setValue('car', _booking.car as bookcarsTypes.Car)
               setCarObj(_booking.car as bookcarsTypes.Car)
               const drv = _booking.driver as bookcarsTypes.User
-              setValue('driver', {
-                _id: drv._id as string,
-                name: drv.fullName,
-                image: drv.avatar,
-              })
+              setValue('driver', { _id: drv._id as string, name: drv.fullName, image: drv.avatar })
               const pul = _booking.pickupLocation as bookcarsTypes.Location
-              setValue('pickupLocation', {
-                _id: pul._id,
-                name: pul.name || '',
-              })
+              setValue('pickupLocation', { _id: pul._id, name: pul.name || '' })
               const dol = _booking.dropOffLocation as bookcarsTypes.Location
-              setValue('dropOffLocation', {
-                _id: dol._id,
-                name: dol.name || '',
-              })
+              setValue('dropOffLocation', { _id: dol._id, name: dol.name || '' })
               setValue('from', new Date(_booking.from))
               const _minDate = new Date(_booking.from)
               _minDate.setDate(_minDate.getDate() + 1)
               setMinDate(_minDate)
               setValue('to', new Date(_booking.to))
-
               setValue('status', _booking.status)
               setValue('cancellation', _booking.cancellation || false)
               setValue('amendments', _booking.amendments || false)
@@ -440,49 +369,78 @@ const UpdateBooking = () => {
               setValue('fullInsurance', _booking.fullInsurance || false)
               setValue('additionalDriver', (_booking.additionalDriver && !!_booking._additionalDriver) || false)
               if (_booking.additionalDriver && _booking._additionalDriver) {
-                const _additionalDriver = _booking._additionalDriver as bookcarsTypes.AdditionalDriver
-                setValue('additionalDriverFullName', _additionalDriver.fullName)
-                setValue('additionalDriverEmail', _additionalDriver.email)
-                setValue('additionalDriverPhone', _additionalDriver.phone)
-                setValue('additionalDriverBirthDate', new Date(_additionalDriver.birthDate))
+                const _ad = _booking._additionalDriver as bookcarsTypes.AdditionalDriver
+                setValue('additionalDriverFullName', _ad.fullName)
+                setValue('additionalDriverEmail', _ad.email)
+                setValue('additionalDriverPhone', _ad.phone)
+                setValue('additionalDriverBirthDate', new Date(_ad.birthDate))
               }
             } else {
-              setLoading(false)
-              setNoMatch(true)
+              setLoading(false); setNoMatch(true)
             }
           } catch {
-            setLoading(false)
-            setFormError(true)
-            setVisible(false)
+            setLoading(false); setFormError(true); setVisible(false)
           }
         } else {
-          setLoading(false)
-          setNoMatch(true)
+          setLoading(false); setNoMatch(true)
         }
       } else {
-        setLoading(false)
-        setNoMatch(true)
+        setLoading(false); setNoMatch(true)
       }
     }
   }
 
   const days = bookcarsHelper.days(from, to)
 
+  // ── Helper: build options object from current watched values ──
+  const currentOptions = (): bookcarsTypes.CarOptions => ({
+    cancellation,
+    amendments,
+    theftProtection,
+    collisionDamageWaiver,
+    fullInsurance,
+    additionalDriver,
+  })
+
+  const recalcPrice = async (overrides: Partial<bookcarsTypes.CarOptions> = {}) => {
+    if (!carObj || !from || !to) {
+      return
+    }
+    const opts = { ...currentOptions(), ...overrides }
+    const p = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, opts)
+    setPrice(p)
+  }
+
+  // ── Checkbox toggle factory ────────────────────────────────────
+  const makeToggle = (field: keyof bookcarsTypes.CarOptions) => async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!booking || !carObj || !from || !to) {
+      return
+    }
+    const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
+      ; (_booking as any)[field] = e.target.checked
+    setBooking(_booking)
+    setValue(field as any, e.target.checked)
+    await recalcPrice({ [field]: e.target.checked })
+  }
+
   return (
     <Layout onLoad={onLoad} strict>
       {visible && booking && (
-        <div className="booking">
-          <div className="col-1">
-            <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} className="booking-container">
+          <div className="booking-3col-grid">
+
+            {/* ══ COL 1: IZQUIERDA (Configuración) ══════════════════ */}
+            <div className="booking-col booking-col-1">
+              <div className="section-title">Información Principal</div>
+
               {!isSupplier && (
-                <FormControl fullWidth margin="dense">
+                <FormControl fullWidth size="small">
                   <SupplierSelectList
                     label={blStrings.SUPPLIER}
                     required
                     variant="standard"
                     onChange={(values) => {
-                      const supplier = values.length > 0 ? values[0] as Option : undefined
-                      setValue('supplier', supplier)
+                      setValue('supplier', values.length > 0 ? values[0] as Option : undefined)
                       setValue('car', undefined)
                       setCarObj(undefined)
                     }}
@@ -499,21 +457,19 @@ const UpdateBooking = () => {
                 value={driver}
               />
 
-              <FormControl fullWidth margin="dense">
+              <FormControl fullWidth size="small">
                 <LocationSelectList
                   label={bfStrings.PICK_UP_LOCATION}
-                  required
-                  variant="standard"
+                  required variant="standard"
                   onChange={(values) => setValue('pickupLocation', values.length > 0 ? values[0] as Option : undefined)}
                   value={pickupLocation}
                 />
               </FormControl>
 
-              <FormControl fullWidth margin="dense">
+              <FormControl fullWidth size="small">
                 <LocationSelectList
                   label={bfStrings.DROP_OFF_LOCATION}
-                  required
-                  variant="standard"
+                  required variant="standard"
                   onChange={(values) => setValue('dropOffLocation', values.length > 0 ? values[0] as Option : undefined)}
                   value={dropOffLocation}
                 />
@@ -527,27 +483,13 @@ const UpdateBooking = () => {
                 onChange={async (values) => {
                   try {
                     const newCar = values.length > 0 ? values[0] : undefined
-
                     if ((!carObj && newCar) || (carObj && newCar && carObj._id !== newCar._id)) {
-                      // car changed
                       const _car = await CarService.getCar(newCar._id)
-
                       if (_car && from && to) {
                         const _booking = bookcarsHelper.clone(booking)
                         _booking.car = _car
-
-                        const options: bookcarsTypes.CarOptions = {
-                          cancellation,
-                          amendments,
-                          theftProtection,
-                          collisionDamageWaiver,
-                          fullInsurance,
-                          additionalDriver,
-                        }
-
-                        const _price = await bookcarsHelper.calculateTotalPrice(_car, from, to, _car.supplier.priceChangeRate || 0, options)
-                        setPrice(_price)
-
+                        const p = await bookcarsHelper.calculateTotalPrice(_car, from, to, _car.supplier.priceChangeRate || 0, currentOptions())
+                        setPrice(p)
                         setBooking(_booking)
                         setCarObj(newCar)
                         setValue('car', newCar)
@@ -569,100 +511,43 @@ const UpdateBooking = () => {
                 required
               />
 
-              <FormControl fullWidth margin="dense">
-                <DateTimePicker
-                  label={commonStrings.FROM}
-                  value={from}
-                  showClear
-                  required
-                  onChange={async (date) => {
-                    if (date) {
-                      const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                      _booking.from = date
-
-                      const options: bookcarsTypes.CarOptions = {
-                        cancellation,
-                        amendments,
-                        theftProtection,
-                        collisionDamageWaiver,
-                        fullInsurance,
-                        additionalDriver,
+              <div style={{ display: 'flex', gap: 12 }}>
+                <FormControl fullWidth size="small">
+                  <DateTimePicker
+                    label={commonStrings.FROM}
+                    value={from} required
+                    onChange={async (date) => {
+                      if (date) {
+                        const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
+                        _booking.from = date
+                        const p = await bookcarsHelper.calculateTotalPrice(carObj!, date, to!, carObj!.supplier.priceChangeRate || 0, currentOptions())
+                        setBooking(_booking); setPrice(p); setValue('from', date); setFromError(false)
+                        if (to && date > to) {
+                          setValue('to', undefined)
+                        }
                       }
-
-                      const _price = await bookcarsHelper.calculateTotalPrice(carObj!, date, to!, carObj!.supplier.priceChangeRate || 0, options)
-                      setBooking(_booking)
-                      setPrice(_price)
-                      setValue('from', date)
-
-                      const _minDate = new Date(date)
-                      _minDate.setDate(_minDate.getDate() + 1)
-                      setMinDate(_minDate)
-                      setFromError(false)
-
-                      if (to && date > to) {
-                        setValue('to', undefined)
+                    }}
+                    language={UserService.getLanguage()}
+                  />
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <DateTimePicker
+                    label={commonStrings.TO}
+                    value={to} minDate={minDate} required
+                    onChange={async (date) => {
+                      if (date) {
+                        const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
+                        _booking.to = date
+                        const p = await bookcarsHelper.calculateTotalPrice(carObj!, from!, date, carObj!.supplier.priceChangeRate || 0, currentOptions())
+                        setBooking(_booking); setPrice(p); setValue('to', date); setToError(false)
                       }
-                    } else {
-                      setValue('from', undefined)
-                      setMinDate(undefined)
-                    }
-                  }}
-                  onError={(err: DateTimeValidationError) => {
-                    if (err) {
-                      setFromError(true)
-                    } else {
-                      setFromError(false)
-                    }
-                  }}
-                  language={UserService.getLanguage()}
-                />
-              </FormControl>
+                    }}
+                    language={UserService.getLanguage()}
+                  />
+                </FormControl>
+              </div>
 
-              <FormControl fullWidth margin="dense">
-                <DateTimePicker
-                  label={commonStrings.TO}
-                  value={to}
-                  minDate={minDate}
-                  showClear
-                  required
-                  onChange={async (date) => {
-                    if (date) {
-                      const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                      _booking.to = date
-
-                      const options: bookcarsTypes.CarOptions = {
-                        cancellation,
-                        amendments,
-                        theftProtection,
-                        collisionDamageWaiver,
-                        fullInsurance,
-                        additionalDriver,
-                      }
-
-                      const _price = await bookcarsHelper.calculateTotalPrice(carObj!, from!, date, carObj!.supplier.priceChangeRate || 0, options)
-                      setBooking(_booking)
-                      setPrice(_price)
-                      setValue('to', date)
-
-                      const _maxDate = new Date(date)
-                      _maxDate.setDate(_maxDate.getDate() - 1)
-                      setToError(false)
-                    } else {
-                      setValue('to', undefined)
-                    }
-                  }}
-                  onError={(err: DateTimeValidationError) => {
-                    if (err) {
-                      setToError(true)
-                    } else {
-                      setToError(false)
-                    }
-                  }}
-                  language={UserService.getLanguage()}
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense">
+              <FormControl fullWidth size="small">
                 <StatusList
                   label={blStrings.STATUS}
                   value={status}
@@ -675,296 +560,95 @@ const UpdateBooking = () => {
                 />
               </FormControl>
 
-              <div className="info">
-                <InfoIcon />
-                <span>{commonStrings.OPTIONAL}</span>
+              <div className="switches-list">
+                {[
+                  { field: 'cancellation', label: csStrings.CANCELLATION, value: cancellation },
+                  { field: 'amendments', label: csStrings.AMENDMENTS, value: amendments },
+                  { field: 'theftProtection', label: csStrings.THEFT_PROTECTION, value: theftProtection },
+                  { field: 'collisionDamageWaiver', label: csStrings.COLLISION_DAMAGE_WAVER, value: collisionDamageWaiver },
+                  { field: 'fullInsurance', label: csStrings.FULL_INSURANCE, value: fullInsurance },
+                  { field: 'additionalDriver', label: csStrings.ADDITIONAL_DRIVER, value: additionalDriver },
+                ].map(({ field, label, value }) => (
+                  <FormControl key={field} fullWidth className="switch-item">
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={value}
+                          color="primary"
+                          size="small"
+                          disabled={!carObj || !helper.carOptionAvailable(carObj, field as any)}
+                          onChange={makeToggle(field as any)}
+                        />
+                      }
+                      label={<span>{label}</span>}
+                    />
+                  </FormControl>
+                ))}
               </div>
 
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('cancellation')}
-                      checked={cancellation}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'cancellation')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.cancellation = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation: _booking.cancellation,
-                            amendments,
-                            theftProtection,
-                            collisionDamageWaiver,
-                            fullInsurance,
-                            additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('cancellation', _booking.cancellation || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.CANCELLATION}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('amendments')}
-                      checked={amendments}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'amendments')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.amendments = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation,
-                            amendments: _booking.amendments,
-                            theftProtection,
-                            collisionDamageWaiver,
-                            fullInsurance,
-                            additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('amendments', _booking.amendments || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.AMENDMENTS}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('theftProtection')}
-                      checked={theftProtection}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'theftProtection')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.theftProtection = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation,
-                            amendments,
-                            theftProtection: _booking.theftProtection,
-                            collisionDamageWaiver,
-                            fullInsurance,
-                            additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('theftProtection', _booking.theftProtection || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.THEFT_PROTECTION}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('collisionDamageWaiver')}
-                      checked={collisionDamageWaiver}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'collisionDamageWaiver')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.collisionDamageWaiver = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation,
-                            amendments,
-                            theftProtection,
-                            collisionDamageWaiver: _booking.collisionDamageWaiver,
-                            fullInsurance,
-                            additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('collisionDamageWaiver', _booking.collisionDamageWaiver || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.COLLISION_DAMAGE_WAVER}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('fullInsurance')}
-                      checked={fullInsurance}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'fullInsurance')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.fullInsurance = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation,
-                            amendments,
-                            theftProtection,
-                            collisionDamageWaiver,
-                            fullInsurance: _booking.fullInsurance,
-                            additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('fullInsurance', _booking.fullInsurance || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.FULL_INSURANCE}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
-              <FormControl fullWidth margin="dense" className="checkbox-fc">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      // {...register('additionalDriver')}
-                      checked={additionalDriver}
-                      color="primary"
-                      disabled={!carObj || !helper.carOptionAvailable(carObj, 'additionalDriver')}
-                      onChange={async (e) => {
-                        if (booking && carObj && from && to) {
-                          const _booking = bookcarsHelper.clone(booking) as bookcarsTypes.Booking
-                          _booking.additionalDriver = e.target.checked
-
-                          const options: bookcarsTypes.CarOptions = {
-                            cancellation,
-                            amendments,
-                            theftProtection,
-                            collisionDamageWaiver,
-                            fullInsurance,
-                            additionalDriver: _booking.additionalDriver,
-                          }
-
-                          const _price = await bookcarsHelper.calculateTotalPrice(carObj, from, to, carObj.supplier.priceChangeRate || 0, options)
-                          setBooking(_booking)
-                          setPrice(_price)
-                          setValue('additionalDriver', _booking.additionalDriver || false)
-                        }
-                      }}
-                    />
-                  }
-                  label={csStrings.ADDITIONAL_DRIVER}
-                  className="checkbox-fcl"
-                />
-              </FormControl>
-
               {carObj && helper.carOptionAvailable(carObj, 'additionalDriver') && additionalDriver && (
-                <AdditionalDriverForm
-                  control={control}
-                  register={register}
-                  errors={errors}
-                  clearErrors={clearErrors}
-                  trigger={trigger}
-                  setValue={setValue}
-                  language={language}
-                />
+                <div className="additional-driver-nested">
+                  <AdditionalDriverForm
+                    control={control} register={register} errors={errors}
+                    clearErrors={clearErrors} trigger={trigger}
+                    setValue={setValue} language={language}
+                  />
+                </div>
               )}
 
-              <div>
-                <div className="buttons">
-                  <Button variant="contained" className="btn-primary btn-margin-bottom" size="small" type="submit" disabled={isSubmitting}>
-                    {commonStrings.SAVE}
-                  </Button>
-                  <Button variant="contained" className="btn-margin-bottom" color="error" size="small" onClick={handleDelete}>
+              <div className="buttons-group">
+                <Button variant="contained" className="btn-primary" fullWidth size="large" type="submit" disabled={isSubmitting}>
+                  {commonStrings.SAVE}
+                </Button>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <Button variant="contained" color="error" fullWidth onClick={handleDelete}>
                     {commonStrings.DELETE}
                   </Button>
-                  <Button variant="contained" className="btn-secondary btn-margin-bottom" size="small" onClick={() => navigate('/')}>
+                  <Button variant="contained" className="btn-secondary" fullWidth onClick={() => navigate('/')}>
                     {commonStrings.CANCEL}
                   </Button>
                 </div>
               </div>
-            </form>
-          </div>
-          <div className="col-2">
-            {
-              days > 0 && (
-                <div className="col-2-header">
-                  <div className="price">
-                    <span className="price-days">{helper.getDays(days)}</span>
-                    <span className="price-main">{bookcarsHelper.formatPrice(price as number, commonStrings.CURRENCY, language)}</span>
-                    <span className="price-day">{`${csStrings.PRICE_PER_DAY} ${bookcarsHelper.formatPrice((price as number) / days, commonStrings.CURRENCY, language)}`}</span>
-                  </div>
+            </div>
+
+            {/* ══ COL 2: MEDIO (Vehículo y Acciones) ═══════════════ */}
+            <div className="booking-col booking-col-2">
+              {days > 0 && (
+                <div className="price-card">
+                  <span className="p-label">{`Resumen para ${days} días`}</span>
+                  <span className="p-value">{bookcarsHelper.formatPrice(price as number, commonStrings.CURRENCY, language)}</span>
                 </div>
-              )
-            }
-            <CarList
-              className="car"
-              user={user}
-              booking={booking}
-              cars={((carObj && [booking.car]) as bookcarsTypes.Car[]) || []}
-              language={language}
-              hidePrice
-            />
-            {booking.odooOrderId && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
-                {/* ── Orden de Compra (siempre visible si hay odooOrderId) ── */}
-                <div className="order-box">
-                  <div className="order-box-header">
-                    <span className="order-box-title">Orden de Compra</span>
-                  </div>
-                  <div className="order-box-content">
-                    <div className="order-box-detail">
-                      <span className="order-box-detail-title">Estado:</span>
-                      <span className="order-box-detail-value">
-                        <span className="order-box-status">Confirmada / Enviada</span>
-                      </span>
+              )}
+
+              <div className="section-title">Detalles del Vehículo</div>
+              <CarList
+                className="car-summary-card"
+                user={user}
+                booking={booking}
+                cars={((carObj && [booking.car]) as bookcarsTypes.Car[]) || []}
+                language={language}
+                hidePrice
+              />
+
+              <div className="actions-stack">
+                {booking.odooOrderId && (
+                  <div className="box-v3">
+                    <div className="box-title">Odoo Order</div>
+                    <div className="box-row">
+                      <span>Status:</span>
+                      <span className="tag-green">Confirmed</span>
                     </div>
                     <Button
-                      variant="contained"
-                      className="btn-primary"
-                      style={{ marginTop: '15px', width: '100%' }}
-                      onClick={() => {
-                        window.open(`${env.API_HOST}/api/bookings/purchase-order/${booking._id}`, '_blank')
-                      }}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      onClick={() => window.open(`${env.API_HOST}/api/bookings/purchase-order/${booking._id}`, '_blank')}
                     >
                       Descargar PDF
                     </Button>
                   </div>
-                </div>
+                )}
 
-                {/* ── Checkout: solo si el pago lo permite O ya hay checkout ── */}
                 {(
                   booking.kmOut !== undefined
                   || status === bookcarsTypes.BookingStatus.Deposit
@@ -972,119 +656,86 @@ const UpdateBooking = () => {
                   || status === bookcarsTypes.BookingStatus.PaidInFull
                   || status === bookcarsTypes.BookingStatus.Reserved
                 ) && (
-                  <div className="order-box">
-                    <div className="order-box-header">
-                      <span className="order-box-title">
-                        {booking.kmOut !== undefined ? '✅ Inspección Registrada' : 'Registrar Salida'}
-                      </span>
-                    </div>
-                    <div className="order-box-content">
+                    <div className="box-v3">
+                      <div className="box-title">
+                        {booking.kmOut !== undefined ? '✅ Inspección Finalizada' : 'Registro de Salida'}
+                      </div>
                       {booking.kmOut !== undefined ? (
-                        <>
-                          <div className="order-box-detail" style={{ marginBottom: 6 }}>
-                            <span className="order-box-detail-title">Km salida:</span>
-                            <span className="order-box-detail-value" style={{ fontWeight: 700 }}>
-                              {booking.kmOut.toLocaleString()} km
-                            </span>
+                        <div className="box-details">
+                          <div className="box-row">
+                            <span>Kilometraje:</span>
+                            <strong>{booking.kmOut.toLocaleString()} km</strong>
                           </div>
-                          <div className="order-box-detail" style={{ marginBottom: 12 }}>
-                            <span className="order-box-detail-title">Combustible:</span>
-                            <span className="order-box-detail-value" style={{ fontWeight: 700 }}>
-                              {booking.fuelOut || '—'}%
-                            </span>
+                          <div className="box-row">
+                            <span>Combustible:</span>
+                            <strong>{booking.fuelOut}%</strong>
                           </div>
-                          {booking.remarksOut && (
-                            <div style={{ fontSize: 12, color: '#e65100', marginBottom: 12, fontStyle: 'italic', background: '#fff3e0', padding: '8px', borderRadius: '4px' }}>
-                              {booking.remarksOut}
-                            </div>
-                          )}
                           <Button
                             variant="contained"
                             className="btn-primary"
-                            style={{ marginTop: '4px', width: '100%' }}
-                            onClick={() => {
-                              window.open(`/admin/checkout-report?b=${booking._id}`, '_blank')
-                            }}
+                            size="small"
+                            fullWidth
+                            onClick={() => window.open(`/admin/checkout-report?b=${booking._id}`, '_blank')}
+                            style={{ marginTop: 8 }}
                           >
-                            Ver Reporte PDF
+                            Ver Reporte
                           </Button>
-                        </>
+                        </div>
                       ) : (
                         <Button
                           variant="contained"
                           className="btn-primary"
-                          style={{ marginTop: '15px', width: '100%' }}
-                          onClick={() => {
-                            window.open(`/admin/checkout_car?b=${booking._id}`, '_blank')
-                          }}
+                          size="medium"
+                          fullWidth
+                          onClick={() => window.open(`/admin/checkout_car?b=${booking._id}`, '_blank')}
                         >
-                          Registrar Salida
+                          Iniciar Registro
                         </Button>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-
-          {/* ── FOTOS DE INSPECCIÓN DE SALIDA ── */}
-          {booking.kmOut !== undefined && booking.picturesOut && booking.picturesOut.length > 0 && (
-            <div
-              style={{
-                background: '#fff',
-                border: '1px solid #e0e0e0',
-                borderRadius: 12,
-                padding: '20px 24px',
-                marginTop: '16px',
-                width: '100%',
-              }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#616161', marginBottom: 12 }}>
-                📸 Fotografías de salida ({booking.picturesOut.length} imágenes)
-              </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                  gap: 10,
-                }}
-              >
-                {booking.picturesOut.map((pic, idx) => (
-                  <a
-                    key={pic}
-                    href={`${env.CDN_CARS}/${pic}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: 'block', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0' }}
-                    title={`Imagen ${idx + 1}`}
-                  >
-                    <img
-                      src={`${env.CDN_CARS}/${pic}`}
-                      alt={`checkout-${idx}`}
-                      style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }}
-                    />
-                  </a>
-                ))}
+                  )}
               </div>
             </div>
-          )}
 
-          <Dialog disableEscapeKeyDown maxWidth="xs" open={openDeleteDialog}>
-            <DialogTitle className="dialog-header">{commonStrings.CONFIRM_TITLE}</DialogTitle>
-            <DialogContent>{strings.DELETE_BOOKING}</DialogContent>
-            <DialogActions className="dialog-actions">
-              <Button onClick={handleCancelDelete} variant="contained" className="btn-secondary">
-                {commonStrings.CANCEL}
-              </Button>
-              <Button onClick={handleConfirmDelete} variant="contained" color="error">
-                {commonStrings.DELETE}
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </div>
+            {/* ══ COL 3: DERECHA (Galería Fotográfica) ══════════════ */}
+            <div className="booking-col booking-col-3">
+              <div className="section-title">{`📸 Galería de Inspección (${booking.picturesOut?.length || 0})`}</div>
+
+              {booking.picturesOut && booking.picturesOut.length > 0 ? (
+                <div className="photos-vertical-grid">
+                  {booking.picturesOut.map((pic, idx) => {
+                    const filename = pic.includes('|') ? pic.split('|')[1] : pic
+                    const label = pic.includes('|') ? pic.split('|')[0].replace('photo_', '') : idx
+                    const isKm = label === '0' || label === 0
+                    return (
+                      <a key={pic} href={`${env.CDN_CARS}/${filename}`} target="_blank" rel="noreferrer" className="photo-item">
+                        <img src={`${env.CDN_CARS}/${filename}`} alt={`Inspección ${label}`} title={`Click para ampliar - ${label}`} />
+                        <span className="chk-label">{`chk-${label}${isKm ? 'km' : ''}`}</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="no-photos">No hay imágenes disponibles</div>
+              )}
+            </div>
+
+          </div>
+        </form>
       )}
+
+      <Dialog disableEscapeKeyDown maxWidth="xs" open={openDeleteDialog}>
+        <DialogTitle className="dialog-header">{commonStrings.CONFIRM_TITLE}</DialogTitle>
+        <DialogContent>{strings.DELETE_BOOKING}</DialogContent>
+        <DialogActions className="dialog-actions">
+          <Button onClick={handleCancelDelete} variant="contained" className="btn-secondary">
+            {commonStrings.CANCEL}
+          </Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error">
+            {commonStrings.DELETE}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {loading && <Backdrop text={commonStrings.PLEASE_WAIT} />}
       {noMatch && <NoMatch hideHeader />}
