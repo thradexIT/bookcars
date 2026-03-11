@@ -114,6 +114,15 @@ const bookingSchema = new Schema<env.Booking>(
     odooOrderId: {
       type: Number,
     },
+    kmOut: {
+      type: Number,
+    },
+    fuelOut: {
+      type: String,
+    },
+    picturesOut: {
+      type: [String],
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

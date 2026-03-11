@@ -11,6 +11,7 @@ const routes = {
   hasBookings: '/api/has-bookings/:driver',
   cancelBooking: '/api/cancel-booking/:id',
   purchaseOrder: '/api/bookings/purchase-order/:id',
+  checkoutDeparture: '/api/checkout-departure/:id',
 }
 
 export default routes

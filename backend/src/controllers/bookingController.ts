@@ -1195,3 +1195,59 @@ export const downloadPurchaseOrder = async (req: Request, res: Response) => {
     res.status(500).send('Error generating PDF')
   }
 }
+
+/**
+ * Handle Booking checkout departure
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const checkoutDeparture = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id).populate<{ car: env.Car }>('car')
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    const kmOut = Number(req.body.kmOut)
+    const fuelOut = req.body.fuelOut
+    const files = req.files as any
+
+    booking.kmOut = kmOut
+    booking.fuelOut = fuelOut
+    
+    // Process files
+    if (files && files.length > 0) {
+      const picturesOut: string[] = []
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const carName = booking.car ? booking.car.name.replace(/[^a-zA-Z0-9]/g, '-') : 'auto'
+        const filename = `${carName}-checkout-${id}-${Date.now()}-${i}${path.extname(file.originalname || '.jpg')}`
+        const filepath = path.join(env.CDN_CARS, filename)
+        
+        await asyncFs.writeFile(filepath, file.buffer)
+        picturesOut.push(filename)
+      }
+      
+      booking.picturesOut = picturesOut
+    }
+
+    // Update status to indicate checkout is done, e.g., to "Reserved" or "PaidInFull"? 
+    // We will just keep the current status or let the frontend trigger a status update if needed,
+    // but saving kmOut and fuelOut is the primary goal here.
+    
+    await booking.save()
+
+    res.json(booking)
+  } catch (err) {
+    logger.error(`[booking.checkoutDeparture] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}

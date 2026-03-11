@@ -47,7 +47,8 @@ const ClientTypes = lazy(() => import('@/pages/ClientTypes'))
 const CreateClientType = lazy(() => import('@/pages/CreateClientType'))
 const UpdateClientType = lazy(() => import('@/pages/UpdateClientType'))
 const PurchaseOrders = lazy(() => import('@/pages/PurchaseOrders'))
-
+const CarCheckout = lazy(() => import('@/pages/CarCheckout'))
+const CheckoutReport = lazy(() => import('@/pages/CheckoutReport'))
 const AppLayout = () => {
   const location = useLocation()
   const [refreshKey, setRefreshKey] = useState(0) // refreshKey to check user and notifications when navigating between routes
@@ -117,6 +118,8 @@ const router = createBrowserRouter([
       { path: 'create-client-type', element: <CreateClientType /> },
       { path: 'update-client-type', element: <UpdateClientType /> },
       { path: 'purchase-orders', element: <PurchaseOrders /> },
+      { path: 'checkout_car', element: <CarCheckout /> },
+      { path: 'checkout-report', element: <CheckoutReport /> },
       { path: '*', element: <NoMatch /> }
     ]
   }

@@ -46,7 +46,7 @@ export const SettingProvider = ({ children }: { children: React.ReactNode }) => 
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Text style={{ textAlign: 'center', color: '#ff0000', marginBottom: 10 }}>{i18n.t('SETTINGS_NOT_LOADED')}</Text>
-        <Text style={{ textAlign: 'center', fontSize: 12, color: '#666' }}>Verifica que el Backend funcione en: http://165.1.122.9/api</Text>
+        <Text style={{ textAlign: 'center', fontSize: 12, color: '#666' }}>Verifica que el Backend funcione en: http://rentacar.thradex.com/api</Text>
       </View>
     )
   }

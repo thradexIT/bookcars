@@ -92,3 +92,22 @@ export const getBookings = (payload: bookcarsTypes.GetBookingsPayload, page: num
       { withCredentials: true }
     )
     .then((res) => res.data)
+
+/**
+ * Checkout departure
+ *
+ * @param {string} id
+ * @param {FormData} payload
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const checkoutDeparture = (id: string, payload: FormData): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .post(
+      `/api/checkout-departure/${encodeURIComponent(id)}`,
+      payload,
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    )
+    .then((res) => res.data)

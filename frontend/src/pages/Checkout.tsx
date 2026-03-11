@@ -1194,6 +1194,14 @@ const Checkout = () => {
             </div >
           </>
         )}
+        {success && (
+          <CheckoutStatus
+            bookingId={bookingId!}
+            payLater={payLater}
+            language={language}
+            status="success"
+          />
+        )}
         <Footer />
       </Layout >
     </>

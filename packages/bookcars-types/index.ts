@@ -111,6 +111,9 @@ export interface Booking {
   isPayedInFull?: boolean
   paypalOrderId?: string
   odooOrderId?: number
+  kmOut?: number
+  fuelOut?: string
+  picturesOut?: string[]
 }
 
 export interface CheckoutPayload {
