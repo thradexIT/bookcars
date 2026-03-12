@@ -10,6 +10,9 @@ import CurrencyConverter, { currencies } from ':currency-converter'
  * @returns {string}
  */
 export const formatNumber = (x: number, language: string): string => {
+  if (typeof x === 'undefined' || x === null || Number.isNaN(x)) {
+    return ''
+  }
   const parts: string[] = String(x % 1 !== 0 ? x.toFixed(2) : x).split('.')
   const separator = language === 'en' ? ',' : ' '
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, separator)
@@ -58,9 +61,7 @@ export const isDate = (value?: any): boolean => {
  */
 export const joinURL = (part1?: string, part2?: string) => {
   if (!part1 || !part2) {
-    const msg = '[joinURL] part undefined'
-    console.log(msg)
-    throw new Error(msg)
+    return ''
   }
 
   if (part1.charAt(part1.length - 1) === '/') {

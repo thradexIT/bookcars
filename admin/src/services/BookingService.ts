@@ -3,81 +3,7 @@ import axiosInstance from './axiosInstance'
 import * as UserService from './UserService'
 
 /**
- * Create a Booking.
- *
- * @param {bookcarsTypes.UpsertBookingPayload} data
- * @returns {Promise<bookcarsTypes.Booking>}
- */
-export const create = (data: bookcarsTypes.UpsertBookingPayload): Promise<bookcarsTypes.Booking> =>
-  axiosInstance
-    .post(
-      '/api/create-booking',
-      data,
-      { withCredentials: true }
-    )
-    .then((res) => res.data)
-
-/**
- * Update a Booking.
- *
- * @param {bookcarsTypes.UpsertBookingPayload} data
- * @returns {Promise<number>}
- */
-export const update = (data: bookcarsTypes.UpsertBookingPayload): Promise<number> =>
-  axiosInstance
-    .put(
-      '/api/update-booking',
-      data,
-      { withCredentials: true }
-    )
-    .then((res) => res.status)
-
-/**
- * Update a Booking status.
- *
- * @param {bookcarsTypes.UpdateStatusPayload} data
- * @returns {Promise<number>}
- */
-export const updateStatus = (data: bookcarsTypes.UpdateStatusPayload): Promise<number> =>
-  axiosInstance
-    .post(
-      '/api/update-booking-status',
-      data,
-      { withCredentials: true }
-    )
-    .then((res) => res.status)
-
-/**
- * Delete Bookings.
- *
- * @param {string[]} ids
- * @returns {Promise<number>}
- */
-export const deleteBookings = (ids: string[]): Promise<number> =>
-  axiosInstance
-    .post(
-      '/api/delete-bookings',
-      ids,
-      { withCredentials: true }
-    )
-    .then((res) => res.status)
-
-/**
- * Get a Booking by ID.
- *
- * @param {string} id
- * @returns {Promise<bookcarsTypes.Booking>}
- */
-export const getBooking = (id: string): Promise<bookcarsTypes.Booking> =>
-  axiosInstance
-    .get(
-      `/api/booking/${encodeURIComponent(id)}/${UserService.getLanguage()}`,
-      { withCredentials: true }
-    )
-    .then((res) => res.data)
-
-/**
- * Get Bookings.
+ * Get bookings
  *
  * @param {bookcarsTypes.GetBookingsPayload} payload
  * @param {number} page
@@ -92,6 +18,108 @@ export const getBookings = (payload: bookcarsTypes.GetBookingsPayload, page: num
       { withCredentials: true }
     )
     .then((res) => res.data)
+
+/**
+ * Get booking
+ *
+ * @param {string} id
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const getBooking = (id: string): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .get(
+      `/api/booking/${encodeURIComponent(id)}/${UserService.getLanguage()}`,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+
+/**
+ * Get booking by session ID
+ *
+ * @param {string} sessionId
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const getBookingId = (sessionId: string): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .get(
+      `/api/booking-id/${encodeURIComponent(sessionId)}`,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+
+/**
+ * Has bookings
+ *
+ * @param {string} driver
+ * @returns {Promise<number>}
+ */
+export const hasBookings = (driver: string): Promise<number> =>
+  axiosInstance
+    .get(
+      `/api/has-bookings/${encodeURIComponent(driver)}`,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+
+/**
+ * Update booking
+ *
+ * @param {bookcarsTypes.UpsertBookingPayload} data
+ * @returns {Promise<number>}
+ */
+export const update = (data: bookcarsTypes.UpsertBookingPayload): Promise<number> =>
+  axiosInstance
+    .put(
+      '/api/update-booking',
+      data,
+      { withCredentials: true }
+    )
+    .then((res) => res.status)
+
+/**
+ * Update booking status
+ *
+ * @param {bookcarsTypes.UpdateStatusPayload} payload
+ * @returns {Promise<number>}
+ */
+export const updateStatus = (payload: bookcarsTypes.UpdateStatusPayload): Promise<number> =>
+  axiosInstance
+    .post(
+      '/api/update-booking-status',
+      payload,
+      { withCredentials: true }
+    )
+    .then((res) => res.status)
+
+/**
+ * Delete bookings
+ *
+ * @param {string[]} ids
+ * @returns {Promise<number>}
+ */
+export const deleteBookings = (ids: string[]): Promise<number> =>
+  axiosInstance
+    .post(
+      '/api/delete-bookings',
+      ids,
+      { withCredentials: true }
+    )
+    .then((res) => res.status)
+
+/**
+ * Cancel booking
+ *
+ * @param {string} id
+ * @returns {Promise<number>}
+ */
+export const cancel = (id: string): Promise<number> =>
+  axiosInstance
+    .post(
+      `/api/cancel-booking/${encodeURIComponent(id)}`,
+      null,
+      { withCredentials: true }
+    )
+    .then((res) => res.status)
 
 /**
  * Checkout departure
@@ -150,3 +178,21 @@ export const saveSignatures = (id: string, payload: {
     )
     .then((res) => res.data)
 
+/**
+ * Verify inspection
+ *
+ * @param {string} id
+ * @param {{ picturesOutVerified?: boolean; picturesInVerified?: boolean; verificationRemarks?: string }} payload
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const verifyInspection = (
+  id: string,
+  payload: { picturesOutVerified?: boolean; picturesInVerified?: boolean; verificationRemarks?: string }
+): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .post(
+      `/api/verify-inspection/${encodeURIComponent(id)}`,
+      payload,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)

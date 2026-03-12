@@ -120,6 +120,9 @@ export interface Booking {
   signatureDriverIn?: string
   signatureRepIn?: string
   remarksIn?: string
+  picturesOutVerified?: boolean
+  picturesInVerified?: boolean
+  verificationRemarks?: string
 }
 
 export interface CheckoutPayload {

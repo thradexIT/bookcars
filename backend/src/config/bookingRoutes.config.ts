@@ -15,6 +15,7 @@ const routes = {
   checkoutDeparture: '/api/checkout-departure/:id',
   checkinReturn: '/api/checkin-return/:id',
   saveSignatures: '/api/booking-signatures/:id',
+  verifyInspection: '/api/verify-inspection/:id',
 }
 
 export default routes

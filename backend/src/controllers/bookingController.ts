@@ -1647,3 +1647,73 @@ export const saveSignatures = async (req: Request, res: Response) => {
   }
 }
 
+/**
+ * Update the verification status of inspection pictures.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const verifyInspection = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const { 
+    picturesOutVerified, 
+    picturesInVerified, 
+    verificationRemarks 
+  } = req.body
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    if (picturesOutVerified !== undefined) {
+      booking.picturesOutVerified = picturesOutVerified
+    }
+    if (picturesInVerified !== undefined) {
+      booking.picturesInVerified = picturesInVerified
+    }
+    if (verificationRemarks !== undefined) {
+      booking.verificationRemarks = verificationRemarks
+    }
+
+    await booking.save()
+
+    const updatedBooking = await Booking.findById(id)
+      .populate<{ supplier: env.UserInfo }>('supplier')
+      .populate<{ car: env.CarInfo }>({
+        path: 'car',
+        populate: {
+          path: 'supplier',
+          model: 'User',
+        },
+      })
+      .populate<{ driver: env.User }>('driver')
+      .populate<{ pickupLocation: env.LocationInfo }>({
+        path: 'pickupLocation',
+        populate: {
+          path: 'values',
+          model: 'LocationValue',
+        },
+      })
+      .populate<{ dropOffLocation: env.LocationInfo }>({
+        path: 'dropOffLocation',
+        populate: {
+          path: 'values',
+          model: 'LocationValue',
+        },
+      })
+      .populate<{ _additionalDriver: env.AdditionalDriver }>('_additionalDriver')
+      .lean()
+
+    res.json(updatedBooking)
+  } catch (err) {
+    logger.error(`[booking.verifyInspection] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+

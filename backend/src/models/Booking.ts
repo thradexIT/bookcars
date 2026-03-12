@@ -150,6 +150,17 @@ const bookingSchema = new Schema<env.Booking>(
     remarksIn: {
       type: String,
     },
+    picturesOutVerified: {
+      type: Boolean,
+      default: false,
+    },
+    picturesInVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationRemarks: {
+      type: String,
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

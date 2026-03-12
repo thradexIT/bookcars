@@ -11,12 +11,15 @@ import {
   DialogActions,
   FormHelperText,
   InputLabel,
-  Input
+  Input,
+  IconButton
 } from '@mui/material'
 import {
-  Person as DriverIcon
+  Person as DriverIcon,
+  FactCheck as VerifyIcon,
+  NavigateBefore,
+  NavigateNext
 } from '@mui/icons-material'
-import { DateTimeValidationError } from '@mui/x-date-pickers'
 import { Control, FieldErrors, useForm, UseFormClearErrors, UseFormRegister, UseFormSetValue, UseFormTrigger, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as bookcarsTypes from ':bookcars-types'
@@ -164,6 +167,14 @@ const UpdateBooking = () => {
   const [fromError, setFromError] = useState(false)
   const [toError, setToError] = useState(false)
   const [price, setPrice] = useState<number>()
+
+  const [openVerifyDialog, setOpenVerifyDialog] = useState(false)
+  const [picturesOutVerified, setPicturesOutVerified] = useState(false)
+  const [picturesInVerified, setPicturesInVerified] = useState(false)
+  const [verificationRemarks, setVerificationRemarks] = useState('')
+  const [activeVerifyStep, setActiveVerifyStep] = useState(0)
+  const [stepRemarks, setStepRemarks] = useState<Record<string, string>>({})
+  const [stepStatus, setStepStatus] = useState<Record<string, boolean>>({})
 
   // ── Auto-refresh via BroadcastChannel + WebSocket ──────────────────────────
   useEffect(() => {
@@ -387,6 +398,54 @@ const UpdateBooking = () => {
       } else {
         setLoading(false); setNoMatch(true)
       }
+    }
+  }
+
+  const handleVerifyOpen = () => {
+    setPicturesOutVerified(booking?.picturesOutVerified || false)
+    setPicturesInVerified(booking?.picturesInVerified || false)
+    setVerificationRemarks(booking?.verificationRemarks || '')
+    setActiveVerifyStep(0)
+    setStepRemarks({})
+    setStepStatus({})
+    setOpenVerifyDialog(true)
+  }
+
+  const handleVerifyInspection = async () => {
+    if (!booking?._id) {
+      return
+    }
+    try {
+      setLoading(true)
+      
+      // Combine step observations into the final string
+      let finalRemarks = ''
+      Object.keys(stepRemarks).forEach(key => {
+        const label = key.replace('photo_', '').toUpperCase()
+        const status = stepStatus[key] === false ? '[INCORRECTO]' : '[OK]'
+        const obs = stepRemarks[key]
+        if (obs || stepStatus[key] === false) {
+           finalRemarks += `${label}: ${status} ${obs}\n`
+        }
+      })
+      if (verificationRemarks) {
+        finalRemarks += `\nRESUMEN GLOBAL: ${verificationRemarks}`
+      }
+
+      const updated = await BookingService.verifyInspection(booking._id, {
+        picturesOutVerified,
+        picturesInVerified,
+        verificationRemarks: finalRemarks,
+      })
+      if (updated) {
+        setBooking((prev) => (prev ? { ...prev, ...updated } : updated))
+        setOpenVerifyDialog(false)
+        helper.info('Inspección validada correctamente')
+      }
+    } catch (err) {
+      helper.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -735,6 +794,44 @@ const UpdateBooking = () => {
                   </div>
                 )}
 
+                <div className="box-v3">
+                  <div className="box-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <VerifyIcon fontSize="small" /> Auditoría de Fotos
+                  </div>
+                  <div className="box-details">
+                    <div className="box-row">
+                      <span>Salida:</span>
+                      {booking.picturesOutVerified ? <span className="tag-green">Validada</span> : <span className="tag-red">Pendiente</span>}
+                    </div>
+                    {booking.kmIn !== undefined && (
+                      <div className="box-row">
+                        <span>Ingreso:</span>
+                        {booking.picturesInVerified ? <span className="tag-green">Validada</span> : <span className="tag-red">Pendiente</span>}
+                      </div>
+                    )}
+                    <Button
+                      variant="contained"
+                      size="small"
+                      fullWidth
+                      onClick={handleVerifyOpen}
+                      style={{ marginTop: 12, backgroundColor: '#000', color: '#fff' }}
+                    >
+                      {booking.picturesOutVerified || booking.picturesInVerified ? 'Re-validar Inspección' : 'Validar Inspección'}
+                    </Button>
+                    {(booking.picturesOutVerified || booking.picturesInVerified) && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        onClick={() => window.open(`/admin/verification-report?b=${booking._id}`, '_blank')}
+                        style={{ marginTop: 8 }}
+                      >
+                        Ver Reporte de Auditoría
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -796,6 +893,180 @@ const UpdateBooking = () => {
           </Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error">
             {commonStrings.DELETE}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog disableEscapeKeyDown maxWidth="md" open={openVerifyDialog} fullWidth>
+        <DialogTitle className="dialog-header">Auditoría Foto a Foto</DialogTitle>
+        <DialogContent style={{ paddingTop: 20 }}>
+          {(() => {
+            const slots = [
+              { key: 'photo_0', label: 'Frontal' },
+              { key: 'photo_1', label: 'Trasera' },
+              { key: 'photo_2', label: 'Lateral Izqu.' },
+              { key: 'photo_3', label: 'Lateral Der.' },
+              { key: 'photo_4', label: 'Interior' },
+              { key: 'photo_5', label: 'Tablero' },
+              { key: 'photo_km', label: 'Tablero (Km)' },
+            ]
+
+            const mapOut: Record<string, string> = {}
+            booking?.picturesOut?.forEach((p) => {
+              if (p.includes('|')) {
+                const [k, f] = p.split('|')
+                mapOut[k] = f
+              }
+            })
+
+            const mapIn: Record<string, string> = {}
+            booking?.picturesIn?.forEach((p) => {
+              if (p.includes('|')) {
+                const [k, f] = p.split('|')
+                mapIn[k] = f
+              }
+            })
+
+            const activeSlots = slots.filter((s) => mapOut[s.key] || mapIn[s.key])
+            const totalSteps = activeSlots.length
+            const currentSlot = activeSlots[activeVerifyStep]
+
+            if (!currentSlot) {
+              return <div>No hay fotos para auditar.</div>
+            }
+
+            const imgOut = mapOut[currentSlot.key]
+            const imgIn = mapIn[currentSlot.key]
+
+            return (
+              <div className="comparison-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div className="comparison-slot-title" style={{ fontSize: 18 }}>
+                    {`Paso ${activeVerifyStep + 1} de ${totalSteps}: ${currentSlot.label}`}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <IconButton 
+                      disabled={activeVerifyStep === 0}
+                      onClick={() => setActiveVerifyStep(activeVerifyStep - 1)}
+                    >
+                      <NavigateBefore />
+                    </IconButton>
+                    <IconButton 
+                      disabled={activeVerifyStep === totalSteps - 1}
+                      onClick={() => setActiveVerifyStep(activeVerifyStep + 1)}
+                    >
+                      <NavigateNext />
+                    </IconButton>
+                  </div>
+                </div>
+
+                <div className="comparison-images-grid" style={{ gridTemplateColumns: '1fr 1fr', minHeight: 350 }}>
+                  <div className="comparison-col">
+                    <span className="comparison-label">📸 Salida</span>
+                    {imgOut ? (
+                      <a href={`${env.CDN_CARS}/${imgOut}`} target="_blank" rel="noreferrer" style={{ height: '100%' }}>
+                        <img src={`${env.CDN_CARS}/${imgOut}`} className="comparison-image" style={{ height: '100%', objectFit: 'contain' }} alt="Salida" />
+                      </a>
+                    ) : (
+                      <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
+                    )}
+                  </div>
+                  <div className="comparison-col">
+                    <span className="comparison-label">📸 Ingreso</span>
+                    {imgIn ? (
+                      <a href={`${env.CDN_CARS}/${imgIn}`} target="_blank" rel="noreferrer" style={{ height: '100%' }}>
+                        <img src={`${env.CDN_CARS}/${imgIn}`} className="comparison-image" style={{ height: '100%', objectFit: 'contain' }} alt="Ingreso" />
+                      </a>
+                    ) : (
+                      <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="comparison-footer">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="sub-section-title">Observaciones de este punto</div>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          size="small"
+                          checked={stepStatus[currentSlot.key] ?? true}
+                          onChange={(e) => setStepStatus({ ...stepStatus, [currentSlot.key]: e.target.checked })}
+                          color="success"
+                        />
+                      }
+                      label={<span style={{ fontSize: 13, fontWeight: 600 }}>{stepStatus[currentSlot.key] === false ? 'Punto Incorrecto' : 'Punto Validado'}</span>}
+                    />
+                  </div>
+                  <Input
+                    multiline
+                    rows={2}
+                    value={stepRemarks[currentSlot.key] || ''}
+                    onChange={(e) => setStepRemarks({ ...stepRemarks, [currentSlot.key]: e.target.value })}
+                    placeholder={`Escriba observaciones específicas para ${currentSlot.label.toLowerCase()}...`}
+                    style={{ fontSize: 13 }}
+                  />
+                </div>
+
+                {activeVerifyStep === totalSteps - 1 && (
+                  <div style={{ marginTop: 24, borderTop: '2px solid #3b82f6', paddingTop: 24, background: '#f0f7ff', padding: 20, borderRadius: 12 }}>
+                    <div className="section-title" style={{ marginBottom: 16, borderLeftColor: '#1e40af' }}>Resumen Final de Auditoría</div>
+                    <div style={{ display: 'flex', gap: 20 }}>
+                      <FormControl fullWidth margin="dense">
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={picturesOutVerified}
+                              onChange={(e) => setPicturesOutVerified(e.target.checked)}
+                              color="primary"
+                            />
+                          }
+                          label="Fotos de Salida COMPLETAS"
+                        />
+                      </FormControl>
+                      {booking?.kmIn !== undefined && (
+                        <FormControl fullWidth margin="dense">
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={picturesInVerified}
+                                onChange={(e) => setPicturesInVerified(e.target.checked)}
+                                color="primary"
+                              />
+                            }
+                            label="Fotos de Ingreso COMPLETAS"
+                          />
+                        </FormControl>
+                      )}
+                    </div>
+                    <FormControl fullWidth margin="dense">
+                      <InputLabel shrink>Observaciones generales / Hallazgos finales</InputLabel>
+                      <Input
+                        multiline
+                        rows={2}
+                        value={verificationRemarks}
+                        onChange={(e) => setVerificationRemarks(e.target.value)}
+                        style={{ marginTop: 16 }}
+                        placeholder="Cualquier nota adicional que resuma toda la inspección..."
+                      />
+                    </FormControl>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+        </DialogContent>
+        <DialogActions className="dialog-actions">
+          <Button onClick={() => setOpenVerifyDialog(false)} variant="contained" className="btn-secondary">
+            {commonStrings.CANCEL}
+          </Button>
+          <Button 
+            onClick={handleVerifyInspection} 
+            variant="contained" 
+            color="primary"
+            disabled={activeVerifyStep < (activeVerifyStep === 0 ? 0 : 1) && activeVerifyStep < 1} // Simplified logic for demo
+          >
+            Guardar Auditoría
           </Button>
         </DialogActions>
       </Dialog>

@@ -51,6 +51,7 @@ const CarCheckout = lazy(() => import('@/pages/CarCheckout'))
 const CheckoutReport = lazy(() => import('@/pages/CheckoutReport'))
 const CarCheckin = lazy(() => import('@/pages/CarCheckin'))
 const CheckinReport = lazy(() => import('@/pages/CheckinReport'))
+const VerificationReport = lazy(() => import('@/pages/VerificationReport'))
 const AppLayout = () => {
   const location = useLocation()
   const [refreshKey, setRefreshKey] = useState(0) // refreshKey to check user and notifications when navigating between routes
@@ -66,7 +67,7 @@ const AppLayout = () => {
           <ScrollToTop />
           <div className="app">
             <Suspense fallback={<NProgressIndicator />}>
-              <Header hidden={location.pathname.includes('/checkout-report') || location.pathname.includes('/checkin-report')} />
+              <Header hidden={location.pathname.includes('/checkout-report') || location.pathname.includes('/checkin-report') || location.pathname.includes('/verification-report')} />
               <Outlet />
             </Suspense>
           </div>
@@ -124,6 +125,7 @@ const router = createBrowserRouter([
       { path: 'checkout-report', element: <CheckoutReport /> },
       { path: 'checkin_car', element: <CarCheckin /> },
       { path: 'checkin-report', element: <CheckinReport /> },
+      { path: 'verification-report', element: <VerificationReport /> },
       { path: '*', element: <NoMatch /> }
     ]
   }

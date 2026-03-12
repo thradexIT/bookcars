@@ -28,4 +28,5 @@ routes.route(routeNames.checkinReturn).post(
   bookingController.checkinReturn
 )
 routes.route(routeNames.saveSignatures).patch(authJwt.verifyToken, bookingController.saveSignatures)
+routes.route(routeNames.verifyInspection).post(authJwt.verifyToken, bookingController.verifyInspection)
 export default routes
