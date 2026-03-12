@@ -658,7 +658,7 @@ const UpdateBooking = () => {
                 ) && (
                     <div className="box-v3">
                       <div className="box-title">
-                        {booking.kmOut !== undefined ? '✅ Inspección Finalizada' : 'Registro de Salida'}
+                        {booking.kmOut !== undefined ? '✅ Salida Finalizada' : 'Registro de Salida'}
                       </div>
                       {booking.kmOut !== undefined ? (
                         <div className="box-details">
@@ -671,14 +671,13 @@ const UpdateBooking = () => {
                             <strong>{booking.fuelOut}%</strong>
                           </div>
                           <Button
-                            variant="contained"
-                            className="btn-primary"
+                            variant="outlined"
                             size="small"
                             fullWidth
                             onClick={() => window.open(`/admin/checkout-report?b=${booking._id}`, '_blank')}
-                            style={{ marginTop: 8 }}
+                            style={{ marginTop: 8, borderColor: '#2e7d32', color: '#2e7d32' }}
                           >
-                            Ver Reporte
+                            Ver Reporte de Salida
                           </Button>
                         </div>
                       ) : (
@@ -688,37 +687,101 @@ const UpdateBooking = () => {
                           size="medium"
                           fullWidth
                           onClick={() => window.open(`/admin/checkout_car?b=${booking._id}`, '_blank')}
+                          style={{ backgroundColor: '#2e7d32' }}
                         >
-                          Iniciar Registro
+                          Realizar Salida
                         </Button>
                       )}
                     </div>
                   )}
+
+                {booking.kmOut !== undefined && (
+                  <div className="box-v3">
+                    <div className="box-title">
+                      {booking.kmIn !== undefined ? '✅ Ingreso Finalizado' : 'Registro de Ingreso'}
+                    </div>
+                    {booking.kmIn !== undefined ? (
+                      <div className="box-details">
+                        <div className="box-row">
+                          <span>Kilometraje:</span>
+                          <strong>{booking.kmIn.toLocaleString()} km</strong>
+                        </div>
+                        <div className="box-row">
+                          <span>Combustible:</span>
+                          <strong>{booking.fuelIn}%</strong>
+                        </div>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          onClick={() => window.open(`/admin/checkin-report?b=${booking._id}`, '_blank')}
+                          style={{ marginTop: 8, borderColor: '#ef6c00', color: '#ef6c00' }}
+                        >
+                          Ver Reporte de Ingreso
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        className="btn-primary"
+                        size="medium"
+                        fullWidth
+                        onClick={() => window.open(`/admin/checkin_car?b=${booking._id}`, '_blank')}
+                        style={{ backgroundColor: '#ef6c00' }}
+                      >
+                        Realizar Ingreso
+                      </Button>
+                    )}
+                  </div>
+                )}
+
               </div>
             </div>
 
             {/* ══ COL 3: DERECHA (Galería Fotográfica) ══════════════ */}
             <div className="booking-col booking-col-3">
-              <div className="section-title">{`📸 Galería de Inspección (${booking.picturesOut?.length || 0})`}</div>
-
+              <div className="section-title">{`📸 Fotos de Salida (${booking.picturesOut?.length || 0})`}</div>
               {booking.picturesOut && booking.picturesOut.length > 0 ? (
-                <div className="photos-vertical-grid">
+                <div className="photos-vertical-grid" style={{ marginBottom: 24 }}>
                   {booking.picturesOut.map((pic, idx) => {
                     const filename = pic.includes('|') ? pic.split('|')[1] : pic
                     const label = pic.includes('|') ? pic.split('|')[0].replace('photo_', '') : idx
                     const isKm = label === '0' || label === 0
                     return (
                       <a key={pic} href={`${env.CDN_CARS}/${filename}`} target="_blank" rel="noreferrer" className="photo-item">
-                        <img src={`${env.CDN_CARS}/${filename}`} alt={`Inspección ${label}`} title={`Click para ampliar - ${label}`} />
-                        <span className="chk-label">{`chk-${label}${isKm ? 'km' : ''}`}</span>
+                        <img src={`${env.CDN_CARS}/${filename}`} alt={`Salida ${label}`} title={`Click para ampliar - ${label}`} />
+                        <span className="chk-label">{`out-${label}${isKm ? 'km' : ''}`}</span>
                       </a>
                     )
                   })}
                 </div>
               ) : (
-                <div className="no-photos">No hay imágenes disponibles</div>
+                <div className="no-photos" style={{ marginBottom: 24 }}>No hay fotos de salida</div>
+              )}
+
+              {booking.kmIn !== undefined && (
+                <>
+                  <div className="section-title">{`📸 Fotos de Ingreso (${booking.picturesIn?.length || 0})`}</div>
+                  {booking.picturesIn && booking.picturesIn.length > 0 ? (
+                    <div className="photos-vertical-grid">
+                      {booking.picturesIn.map((pic, idx) => {
+                        const filename = pic.includes('|') ? pic.split('|')[1] : pic
+                        const label = pic.includes('|') ? pic.split('|')[0].replace('photo_', '') : idx
+                        return (
+                          <a key={pic} href={`${env.CDN_CARS}/${filename}`} target="_blank" rel="noreferrer" className="photo-item" style={{ borderColor: '#ef6c00' }}>
+                            <img src={`${env.CDN_CARS}/${filename}`} alt={`Ingreso ${label}`} title={`Click para ampliar - ${label}`} />
+                            <span className="chk-label" style={{ background: '#ef6c00' }}>{`in-${label}`}</span>
+                          </a>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="no-photos">No hay fotos de ingreso</div>
+                  )}
+                </>
               )}
             </div>
+
 
           </div>
         </form>

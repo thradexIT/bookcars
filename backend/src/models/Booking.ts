@@ -132,6 +132,24 @@ const bookingSchema = new Schema<env.Booking>(
     remarksOut: {
       type: String,
     },
+    kmIn: {
+      type: Number,
+    },
+    fuelIn: {
+      type: String,
+    },
+    picturesIn: {
+      type: [String],
+    },
+    signatureDriverIn: {
+      type: String,
+    },
+    signatureRepIn: {
+      type: String,
+    },
+    remarksIn: {
+      type: String,
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

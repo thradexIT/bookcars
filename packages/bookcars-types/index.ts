@@ -114,6 +114,12 @@ export interface Booking {
   signatureDriver?: string
   signatureRep?: string
   remarksOut?: string
+  kmIn?: number
+  fuelIn?: string
+  picturesIn?: string[]
+  signatureDriverIn?: string
+  signatureRepIn?: string
+  remarksIn?: string
 }
 
 export interface CheckoutPayload {

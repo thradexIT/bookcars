@@ -113,13 +113,35 @@ export const checkoutDeparture = (id: string, payload: FormData): Promise<bookca
     .then((res) => res.data)
 
 /**
+ * Checkin return
+ *
+ * @param {string} id
+ * @param {FormData} payload
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const checkinReturn = (id: string, payload: FormData): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .post(
+      `/api/checkin-return/${encodeURIComponent(id)}`,
+      payload,
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    )
+    .then((res) => res.data)
+
+/**
  * Save digital signatures for a booking.
  *
  * @param {string} id
- * @param {{ signatureDriver?: string; signatureRep?: string }} payload
+ * @param {{ signatureDriver?: string; signatureRep?: string; signatureDriverIn?: string; signatureRepIn?: string }} payload
  * @returns {Promise<{ ok: boolean }>}
  */
-export const saveSignatures = (id: string, payload: { signatureDriver?: string; signatureRep?: string }): Promise<{ ok: boolean }> =>
+export const saveSignatures = (id: string, payload: { 
+  signatureDriver?: string; signatureRep?: string;
+  signatureDriverIn?: string; signatureRepIn?: string;
+}): Promise<{ ok: boolean }> =>
   axiosInstance
     .patch(
       `/api/booking-signatures/${encodeURIComponent(id)}`,

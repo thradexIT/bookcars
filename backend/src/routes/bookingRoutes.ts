@@ -23,5 +23,9 @@ routes.route(routeNames.checkoutDeparture).post(
   [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
   bookingController.checkoutDeparture
 )
+routes.route(routeNames.checkinReturn).post(
+  [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
+  bookingController.checkinReturn
+)
 routes.route(routeNames.saveSignatures).patch(authJwt.verifyToken, bookingController.saveSignatures)
 export default routes

@@ -1547,7 +1547,61 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
 }
 
 /**
- * Save digital signatures for a booking checkout.
+ * Checkin return
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const checkinReturn = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id).populate<{ car: env.Car }>('car')
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    const kmIn = Number(req.body.kmIn)
+    const fuelIn = req.body.fuelIn
+    const remarksIn = req.body.remarksIn
+    const files = req.files as any
+
+    booking.kmIn = kmIn
+    booking.fuelIn = fuelIn
+    booking.remarksIn = remarksIn
+    
+    // Process files
+    if (files && files.length > 0) {
+      const picturesIn: string[] = []
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const carName = booking.car ? booking.car.name.replace(/[^a-zA-Z0-9]/g, '-') : 'auto'
+        const filename = `${carName}-checkin-${id}-${Date.now()}-${i}${path.extname(file.originalname || '.jpg')}`
+        const filepath = path.join(env.CDN_CARS, filename)
+        
+        await asyncFs.writeFile(filepath, file.buffer)
+        picturesIn.push(`${file.fieldname}|${filename}`)
+      }
+      
+      booking.picturesIn = picturesIn
+    }
+
+    await booking.save()
+
+    res.json(booking)
+  } catch (err) {
+    logger.error(`[booking.checkinReturn] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+
+/**
+ * Save digital signatures for a booking checkout or checkin.
  *
  * @export
  * @async
@@ -1557,7 +1611,13 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
  */
 export const saveSignatures = async (req: Request, res: Response) => {
   const { id } = req.params
-  const { signatureDriver, signatureRep } = req.body as { signatureDriver?: string; signatureRep?: string }
+  const { 
+    signatureDriver, signatureRep,
+    signatureDriverIn, signatureRepIn
+  } = req.body as { 
+    signatureDriver?: string; signatureRep?: string;
+    signatureDriverIn?: string; signatureRepIn?: string;
+  }
 
   try {
     const booking = await Booking.findById(id)
@@ -1571,6 +1631,12 @@ export const saveSignatures = async (req: Request, res: Response) => {
     }
     if (signatureRep !== undefined) {
       booking.signatureRep = signatureRep
+    }
+    if (signatureDriverIn !== undefined) {
+      booking.signatureDriverIn = signatureDriverIn
+    }
+    if (signatureRepIn !== undefined) {
+      booking.signatureRepIn = signatureRepIn
     }
 
     await booking.save()
