@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import Layout from '@/components/Layout'
 import Backdrop from '@/components/SimpleBackdrop'
 import * as BookingService from '@/services/BookingService'
 import * as helper from '@/utils/helper'
 import * as bookcarsTypes from ':bookcars-types'
+import ValidatedCamera from '@/components/ValidatedCamera'
 
 import frontImg from '@/assets/img/front.png'
 import rearImg from '@/assets/img/rear.png'
@@ -13,7 +14,6 @@ import interiorImg from '@/assets/img/interior1.png'
 import dashboardImg from '@/assets/img/interior2.webp'
 
 // ─── CONFIGURABLE ────────────────────────────────────────────────────
-// Imágenes del carrusel (excluye el tablero/km que va aparte)
 const CAROUSEL_SLOTS: { label: string; refImg: string; hint: string }[] = [
     { label: 'Frontal', refImg: frontImg, hint: 'Frente del vehículo completo' },
     { label: 'Trasera', refImg: rearImg, hint: 'Parte trasera completa' },
@@ -22,7 +22,6 @@ const CAROUSEL_SLOTS: { label: string; refImg: string; hint: string }[] = [
     { label: 'Interior', refImg: interiorImg, hint: 'Asientos y habitáculo' },
     { label: 'Tablero', refImg: dashboardImg, hint: 'Tablero del vehículo' },
 ]
-// ─────────────────────────────────────────────────────────────────────
 
 const STEPS = ['Niveles y Km', 'Fotos', 'Confirmación']
 
@@ -38,12 +37,23 @@ const CarouselSlot = ({
     file: File | null
     onChange: (i: number, f: File | null) => void
 }) => {
-    const inputRef = useRef<HTMLInputElement>(null)
+    const [cameraOpen, setCameraOpen] = useState(false)
     const [viewerOpen, setViewerOpen] = useState(false)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
     const preview = file ? URL.createObjectURL(file) : null
+    const hasCameraSupport = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 4px' }}>
+            <ValidatedCamera
+                open={cameraOpen}
+                onClose={() => setCameraOpen(false)}
+                onCapture={(f) => onChange(index, f)}
+                label={`Capturar ${slot.label}`}
+                silhouetteImg={slot.refImg}
+                expectedType={slot.label.toLowerCase().includes('tablero') ? 'dashboard' : 'car'}
+            />
+            
             {viewerOpen && (
                 <div
                     onClick={() => setViewerOpen(false)}
@@ -59,32 +69,25 @@ const CarouselSlot = ({
                 </div>
             )}
 
-            {/* Etiqueta */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#424242', letterSpacing: .3 }}>{slot.label}</span>
                 <span style={{ fontSize: 11, color: '#9e9e9e' }}>{slot.hint}</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-                {/* Imagen referencial */}
                 <div
                     onClick={() => setViewerOpen(true)}
                     style={{
                         borderRadius: 10, overflow: 'hidden', background: '#f0f4fa',
                         border: '1.5px solid #e3eaf5', position: 'relative',
                         aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'zoom-in', transition: 'box-shadow 0.2s', width: '100%', height: 'auto'
+                        cursor: 'zoom-in', transition: 'all 0.2s', width: '100%', height: 'auto'
                     }}
-                    onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
-                    onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}
                 >
                     <img
                         src={slot.refImg}
                         alt={`ref-${slot.label}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={e => {
-                            (e.target as HTMLImageElement).style.display = 'none'
-                        }}
                     />
                     <div style={{
                         position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.6)',
@@ -93,20 +96,30 @@ const CarouselSlot = ({
                     }}>
                         <span>🔍</span> Ampliar
                     </div>
-                    <span style={{
-                        position: 'absolute', top: 8, left: 8, background: '#1976d2',
-                        color: '#fff', fontSize: 10, borderRadius: 20, padding: '2px 8px', fontWeight: 600,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}>REFERENCIA</span>
                 </div>
 
-                {/* Imagen adjunta */}
-                <label htmlFor={`carousel-${index}`} style={{
-                    borderRadius: 10, overflow: 'hidden', border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
-                    aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: preview ? '#e3f2fd' : '#fafafa', cursor: 'pointer', position: 'relative',
-                    transition: 'all .2s', width: '100%', height: 'auto'
-                }}>
+                <div 
+                    onClick={() => hasCameraSupport ? setCameraOpen(true) : fileInputRef.current?.click()}
+                    style={{
+                        borderRadius: 10, overflow: 'hidden', border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
+                        aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: preview ? '#e3f2fd' : '#fafafa', cursor: 'pointer', position: 'relative',
+                        transition: 'all .2s', width: '100%', height: 'auto'
+                    }}
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                                onChange(index, f)
+                            }
+                        }}
+                    />
                     {preview ? (
                         <>
                             <img src={preview} alt={`taken-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -116,7 +129,7 @@ const CarouselSlot = ({
                             }}>✓ CAPTURADA</span>
                             <button
                                 onClick={e => {
-                                    e.preventDefault(); onChange(index, null)
+                                    e.stopPropagation(); onChange(index, null)
                                 }}
                                 style={{
                                     position: 'absolute', bottom: 8, right: 8, background: '#d32f2f',
@@ -127,27 +140,21 @@ const CarouselSlot = ({
                         </>
                     ) : (
                         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 30 }}>📷</span>
-                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>Adjuntar foto</span>
-                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>Toca para seleccionar</span>
+                            <span style={{ fontSize: 30 }}>{hasCameraSupport ? '📷' : '📁'}</span>
+                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>
+                                {hasCameraSupport ? 'Capturar con IA' : 'Subir fotografía'}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>
+                                {hasCameraSupport ? 'Toca para abrir cámara' : 'Toca para seleccionar archivo'}
+                            </span>
                         </div>
                     )}
-                    <input
-                        ref={inputRef}
-                        id={`carousel-${index}`}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        style={{ display: 'none' }}
-                        onChange={e => onChange(index, e.target.files?.[0] ?? null)}
-                    />
-                </label>
+                </div>
             </div>
         </div>
     )
 }
 
-// ── Carrusel ──────────────────────────────────────────────────────────
 const PhotoCarousel = ({
     files,
     onChange,
@@ -161,7 +168,6 @@ const PhotoCarousel = ({
 
     return (
         <div>
-            {/* Indicador de progreso */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#757575', textTransform: 'uppercase', letterSpacing: 1 }}>
                     Fotos del vehículo
@@ -171,7 +177,6 @@ const PhotoCarousel = ({
                 </span>
             </div>
 
-            {/* Dots navegación */}
             <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
                 {CAROUSEL_SLOTS.map((_, i) => (
                     <button
@@ -186,17 +191,13 @@ const PhotoCarousel = ({
                 ))}
             </div>
 
-            {/* Slot activo */}
             <CarouselSlot
                 slot={CAROUSEL_SLOTS[active]}
                 index={active}
                 file={files[active]}
-                onChange={(i, f) => {
-                    onChange(i, f)
-                }}
+                onChange={onChange}
             />
 
-            {/* Flechas de navegación */}
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button
                     onClick={() => setActive(a => Math.max(0, a - 1))}
@@ -218,45 +219,10 @@ const PhotoCarousel = ({
                     }}
                 >Siguiente →</button>
             </div>
-
-            {/* Miniaturas */}
-            <div style={{ display: 'flex', gap: 6, marginTop: 14, overflowX: 'auto', paddingBottom: 4 }}>
-                {CAROUSEL_SLOTS.map((s, i) => (
-                    <button
-                        key={i}
-                        onClick={() => setActive(i)}
-                        style={{
-                            flexShrink: 0, width: 56, height: 56, borderRadius: 8, overflow: 'hidden',
-                            border: i === active ? '2.5px solid #1976d2' : '2px solid #e0e0e0',
-                            background: '#f5f5f5', cursor: 'pointer', padding: 0, position: 'relative',
-                        }}
-                    >
-                        {files[i] ? (
-                            <img
-                                src={URL.createObjectURL(files[i]!)}
-                                alt={s.label}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                        ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 2 }}>
-                                <span style={{ fontSize: 16 }}>📷</span>
-                                <span style={{ fontSize: 8, color: '#9e9e9e', lineHeight: 1, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
-                            </div>
-                        )}
-                        {files[i] && (
-                            <div style={{
-                                position: 'absolute', bottom: 0, left: 0, right: 0,
-                                height: 4, background: '#388e3c',
-                            }} />
-                        )}
-                    </button>
-                ))}
-            </div>
         </div>
     )
 }
 
-// ── Slot especial: Tablero / Km ───────────────────────────────────────
 const KmSlot = ({
     mileage,
     onMileageChange,
@@ -268,7 +234,10 @@ const KmSlot = ({
     file: File | null
     onFileChange: (f: File | null) => void
 }) => {
+    const [cameraOpen, setCameraOpen] = useState(false)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
     const preview = file ? URL.createObjectURL(file) : null
+    const hasCameraSupport = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
 
     return (
         <div style={{
@@ -280,7 +249,6 @@ const KmSlot = ({
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-                {/* Texto: km */}
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#757575', display: 'block', marginBottom: 8 }}>
                         Kilometraje (numérico) *
@@ -293,30 +261,51 @@ const KmSlot = ({
                         style={{
                             width: '100%', padding: '16px 14px', border: '1px solid #e0e0e0',
                             borderRadius: 8, fontSize: 20, fontWeight: 700, color: '#1976d2',
-                            fontFamily: 'Roboto, Arial, sans-serif', boxSizing: 'border-box',
-                            background: '#fff', outline: 'none',
+                            boxSizing: 'border-box', background: '#fff', outline: 'none',
                         }}
                     />
                 </div>
 
-                {/* Foto del tablero */}
-                <label htmlFor="km-photo" style={{
-                    display: 'flex', borderRadius: 10, overflow: 'hidden',
-                    border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
-                    aspectRatio: '16/9', cursor: 'pointer', position: 'relative',
-                    background: preview ? '#e3f2fd' : '#fafafa', transition: 'all .2s',
-                    alignItems: 'center', justifyContent: 'center', width: '100%', height: 'auto'
-                }}>
+                <div 
+                    onClick={() => hasCameraSupport ? setCameraOpen(true) : fileInputRef.current?.click()}
+                    style={{
+                        display: 'flex', borderRadius: 10, overflow: 'hidden',
+                        border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
+                        aspectRatio: '16/9', cursor: 'pointer', position: 'relative',
+                        background: preview ? '#e3f2fd' : '#fafafa', transition: 'all .2s',
+                        alignItems: 'center', justifyContent: 'center', width: '100%', height: 'auto'
+                    }}
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                                onFileChange(f)
+                            }
+                        }}
+                    />
+                    <ValidatedCamera
+                        open={cameraOpen}
+                        onClose={() => setCameraOpen(false)}
+                        onCapture={(f) => onFileChange(f)}
+                        label="Foto del Tablero"
+                        expectedType="dashboard"
+                    />
                     {preview ? (
                         <>
                             <img src={preview} alt="km-photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            <span style={{
+                               <span style={{
                                 position: 'absolute', top: 8, right: 8, background: '#388e3c',
                                 color: '#fff', fontSize: 10, borderRadius: 20, padding: '2px 8px', fontWeight: 600,
                             }}>✓ FOTO TABLERO</span>
                             <button
                                 onClick={e => {
-                                    e.preventDefault(); onFileChange(null)
+                                    e.stopPropagation(); onFileChange(null)
                                 }}
                                 style={{
                                     position: 'absolute', bottom: 8, right: 8, background: '#d32f2f',
@@ -330,26 +319,21 @@ const KmSlot = ({
                             display: 'flex', flexDirection: 'column', alignItems: 'center',
                             justifyContent: 'center', height: '100%', gap: 6,
                         }}>
-                            <span style={{ fontSize: 30 }}>📷</span>
-                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>Foto del tablero</span>
-                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>Debe mostrar el odómetro</span>
+                            <span style={{ fontSize: 30 }}>{hasCameraSupport ? '📷' : '📁'}</span>
+                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>
+                                {hasCameraSupport ? 'Foto del tablero' : 'Subir foto del tablero'}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>
+                                {hasCameraSupport ? 'IA validará el odómetro' : 'Selecciona foto del odómetro'}
+                            </span>
                         </div>
                     )}
-                    <input
-                        id="km-photo"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        style={{ display: 'none' }}
-                        onChange={e => onFileChange(e.target.files?.[0] ?? null)}
-                    />
-                </label>
+                </div>
             </div>
         </div>
     )
 }
 
-// ── Componente principal ──────────────────────────────────────────────
 const CarCheckout = () => {
     const [step, setStep] = useState(0)
     const [selectedCar, setSelectedCar] = useState<any>(null)
@@ -370,7 +354,7 @@ const CarCheckout = () => {
             const params = new URLSearchParams(window.location.search)
             if (params.has('b')) {
                 const id = params.get('b')
-                if (id && id !== '') {
+                if (id) {
                     setBookingId(id)
                     try {
                         const _booking = await BookingService.getBooking(id)
@@ -434,10 +418,7 @@ const CarCheckout = () => {
             return carouselFiles.filter(Boolean).length >= 1
         }
         if (step === 2) {
-            const hasMissingPhotos = carouselFiles.some(f => f === null)
-            if (hasMissingPhotos) {
-                return acceptedResponsibility
-            }
+            return !carouselFiles.some(f => f === null) || acceptedResponsibility
         }
         return true
     }
@@ -454,28 +435,26 @@ const CarCheckout = () => {
 
                 const missingPhotos = CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label)
                 if (missingPhotos.length > 0) {
-                    const observation = `Bajo la responsabilidad de la persona que está llenando la data, se omitieron las imágenes ${missingPhotos.join(', ')} cuando se realizó la salida de taller.`
-                    formData.append('remarksOut', observation)
+                    formData.append('remarksOut', `Omisión de imágenes bajo responsabilidad: ${missingPhotos.join(', ')}`)
                 }
 
                 if (kmPhoto) {
                     formData.append('photo_km', kmPhoto)
                 }
-                for (let i = 0; i < carouselFiles.length; i++) {
-                    const file = carouselFiles[i]
+                carouselFiles.forEach((file, i) => {
                     if (file) {
                         formData.append(`photo_${i}`, file)
                     }
-                }
+                })
+
                 await BookingService.checkoutDeparture(bookingId, formData)
-                // Notify UpdateBooking tab to refresh
+                
                 try {
                     const bc = new BroadcastChannel('bookcars-checkout')
                     bc.postMessage({ type: 'checkout-completed', bookingId })
                     bc.close()
-                } catch {
-                    // BroadcastChannel not supported — no-op
-                }
+                } catch {}
+                
                 setDone(true)
             } catch (err) {
                 helper.error(err)
@@ -484,48 +463,28 @@ const CarCheckout = () => {
             }
         }
     }
-    const back = () => setStep(s => s - 1)
 
     const S: any = {
-        wrap: { minHeight: '100vh', background: '#f5f5f5', fontFamily: 'Roboto, Arial, sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 40px' },
-        header: { width: '100%', maxWidth: 720, padding: '28px 20px 0', color: '#424242', boxSizing: 'border-box' },
-        brand: { fontSize: 13, letterSpacing: 1.5, textTransform: 'uppercase', opacity: .6, marginBottom: 4 },
+        wrap: { minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 40px' },
+        header: { width: '100%', maxWidth: 720, padding: '28px 20px 0', boxSizing: 'border-box' },
         title: { fontSize: 26, fontWeight: 700, color: '#1976d2', margin: 0 },
-        stepper: { display: 'flex', gap: 0, width: '100%', maxWidth: 720, padding: '20px 20px 0', overflowX: 'auto', boxSizing: 'border-box' },
-        card: { background: '#fff', borderRadius: 12, width: '100%', maxWidth: 720, margin: '16px 16px', padding: '32px 28px', boxShadow: '0 2px 10px rgba(0,0,0,.1)', boxSizing: 'border-box' },
-        sectionTitle: { fontSize: 20, fontWeight: 700, color: '#212121', margin: '0 0 20px' },
-        btnPrimary: { width: '100%', padding: '16px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, fontFamily: 'Roboto, Arial, sans-serif', cursor: 'pointer', marginTop: 8, boxShadow: '0 4px 6px rgba(25,118,210,.3)' },
-        btnSecondary: { background: 'none', border: '1px solid #bdbdbd', borderRadius: 8, padding: '12px 20px', fontSize: 14, color: '#757575', cursor: 'pointer', fontFamily: 'Roboto, Arial, sans-serif' },
+        stepper: { display: 'flex', width: '100%', maxWidth: 720, padding: '20px 20px 0', boxSizing: 'border-box' },
+        card: { background: '#fff', borderRadius: 12, width: '100%', maxWidth: 720, margin: '16px', padding: '32px 28px', boxShadow: '0 2px 10px rgba(0,0,0,.1)', boxSizing: 'border-box' },
+        btnPrimary: { width: '100%', padding: '16px', background: '#1976d2', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: 8 },
+        btnSecondary: { background: 'none', border: '1px solid #bdbdbd', borderRadius: 8, padding: '12px 20px', fontSize: 14, color: '#757575', cursor: 'pointer' },
     }
 
     if (done) {
         return (
             <Layout onLoad={onLoad} strict>
-                {!loading && (
-                    <div style={S.wrap}>
-                        <div style={{ ...S.card, margin: '60px 20px', textAlign: 'center', maxWidth: 440 }}>
-                            <div style={{ fontSize: 64, marginBottom: 12 }}>✅</div>
-                            <h2 style={{ fontSize: 24, color: '#212121', margin: '0 0 8px' }}>¡Salida registrada!</h2>
-                            <p style={{ color: '#757575', fontSize: 16 }}>El checkout del vehículo se completó con éxito.</p>
-                            <div style={{ background: '#f5f5f5', borderRadius: 8, padding: 16, margin: '20px 0', textAlign: 'left' }}>
-                                <div style={{ fontSize: 13, color: '#9e9e9e', marginBottom: 4, fontWeight: 600 }}>RESUMEN</div>
-                                <div style={{ fontSize: 16, color: '#212121', fontWeight: 500 }}>{selectedCar?.name} · {days()} día{days() > 1 ? 's' : ''}</div>
-                                <div style={{ fontSize: 14, color: '#616161', marginTop: 4 }}>Conductor: {driver.name}</div>
-                                <div style={{ fontSize: 14, color: '#616161', marginTop: 2 }}>Km salida: {mileage} km · Combustible: {fuel}%</div>
-                                <div style={{ fontSize: 14, color: '#616161', marginTop: 2 }}>
-                                    Fotos: {carouselFiles.filter(Boolean).length + (kmPhoto ? 1 : 0)}/{CAROUSEL_SLOTS.length + 1}
-                                </div>
-                                {carouselFiles.some(f => !f) && (
-                                    <div style={{ fontSize: 13, color: '#e65100', marginTop: 8, fontStyle: 'italic', lineHeight: 1.4 }}>
-                                        <strong>Obs:</strong> Bajo la responsabilidad de la persona que está llenando la data, se omitieron las imágenes {CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label).join(', ')} cuando se realizó la salida de taller.
-                                    </div>
-                                )}
-                            </div>
-                            <button style={S.btnPrimary} onClick={() => window.close()}>Cerrar</button>
-                        </div>
+                <div style={S.wrap}>
+                    <div style={{ ...S.card, margin: '60px 20px', textAlign: 'center', maxWidth: 440 }}>
+                        <div style={{ fontSize: 64, marginBottom: 12 }}>✅</div>
+                        <h2 style={{ fontSize: 24, color: '#212121' }}>¡Salida registrada!</h2>
+                        <p style={{ color: '#757575' }}>El checkout del vehículo se completó con éxito.</p>
+                        <button style={S.btnPrimary} onClick={() => window.close()}>Cerrar</button>
                     </div>
-                )}
-                {loading && <Backdrop text="Cargando..." />}
+                </div>
             </Layout>
         )
     }
@@ -533,46 +492,35 @@ const CarCheckout = () => {
     return (
         <Layout onLoad={onLoad} strict>
             {!loading && (
-                <div style={{ ...S.wrap, minHeight: 'calc(100vh - 64px)' }}>
-                    {/* Header */}
+                <div style={S.wrap}>
                     <div style={S.header}>
-                        <div style={S.brand}>Panel de Administración</div>
                         <h1 style={S.title}>Despacho de Vehículo</h1>
                     </div>
 
-                    {/* Stepper */}
                     <div style={S.stepper}>
                         {STEPS.map((s, i) => (
                             <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 56 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 60 }}>
                                     <div style={{
                                         width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         background: i < step ? '#1976d2' : i === step ? '#e3f2fd' : '#e0e0e0',
                                         color: i < step ? '#fff' : i === step ? '#1976d2' : '#9e9e9e',
                                         fontSize: 12, fontWeight: 700, border: i === step ? '2px solid #1976d2' : 'none',
                                     }}>{i < step ? '✓' : i + 1}</div>
-                                    <span style={{ fontSize: 10, fontWeight: i === step ? 600 : 400, color: i === step ? '#1976d2' : '#9e9e9e', whiteSpace: 'nowrap' }}>{s}</span>
+                                    <span style={{ fontSize: 10, color: i === step ? '#1976d2' : '#9e9e9e' }}>{s}</span>
                                 </div>
                                 {i < STEPS.length - 1 && <div style={{ width: 40, height: 2, background: i < step ? '#1976d2' : '#e0e0e0', marginBottom: 16 }} />}
                             </div>
                         ))}
                     </div>
 
-                    {/* Card */}
                     <div style={S.card}>
-
-                        {/* STEP 0: Niveles y Km */}
                         {step === 0 && (
                             <>
-                                <h2 style={S.sectionTitle}>Niveles y Kilometraje</h2>
-
-                                {/* Nivel combustible */}
                                 <div style={{ marginBottom: 16 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#757575', display: 'block', marginBottom: 6 }}>
-                                        Nivel de Combustible
-                                    </label>
+                                    <label style={{ fontSize: 12, fontWeight: 600, color: '#757575' }}>Nivel de Combustible</label>
                                     <select
-                                        style={{ width: '100%', padding: '13px 14px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 15, fontFamily: 'Roboto, Arial, sans-serif', boxSizing: 'border-box', background: '#fafafa', color: '#212121', outline: 'none' }}
+                                        style={{ width: '100%', padding: '13px', border: '1px solid #e0e0e0', borderRadius: 8, background: '#fafafa' }}
                                         value={fuel}
                                         onChange={e => setFuel(e.target.value)}
                                     >
@@ -583,78 +531,31 @@ const CarCheckout = () => {
                                         <option value="0">0% (Reserva)</option>
                                     </select>
                                 </div>
-
-                                {/* Slot especial: Km + foto tablero */}
-                                <KmSlot
-                                    mileage={mileage}
-                                    onMileageChange={setMileage}
-                                    file={kmPhoto}
-                                    onFileChange={setKmPhoto}
-                                />
+                                <KmSlot mileage={mileage} onMileageChange={setMileage} file={kmPhoto} onFileChange={setKmPhoto} />
                             </>
                         )}
 
-                        {/* STEP 1: Fotos del vehículo */}
-                        {step === 1 && (
-                            <>
-                                <h2 style={S.sectionTitle}>Estado Exterior e Interior</h2>
+                        {step === 1 && <PhotoCarousel files={carouselFiles} onChange={handleCarouselChange} />}
 
-                                {/* Carrusel de fotos del vehículo */}
-                                <PhotoCarousel
-                                    files={carouselFiles}
-                                    onChange={handleCarouselChange}
-                                />
-                            </>
-                        )}
-
-                        {/* STEP 2: Confirmación */}
                         {step === 2 && (
                             <>
-                                <h2 style={S.sectionTitle}>Confirmar Entrega</h2>
-                                <p style={{ color: '#616161', fontSize: 14, marginBottom: 20 }}>
-                                    Verifica que el kilometraje y las fotografías estén correctas. Una vez aprobado no podrán editarse fácilmente.
-                                </p>
+                                <h2 style={{ fontSize: 20 }}>Confirmar Entrega</h2>
                                 {[
                                     { label: 'Vehículo', value: selectedCar?.name || '-' },
                                     { label: 'Conductor', value: driver.name || '-' },
                                     { label: 'Km de salida', value: mileage ? `${mileage} km` : '-' },
                                     { label: 'Combustible', value: `${fuel}%` },
-                                    { label: 'Foto tablero', value: kmPhoto ? '✓ Adjunta' : '✗ Faltante' },
-                                    { label: 'Fotos vehículo', value: `${carouselFiles.filter(Boolean).length} de ${CAROUSEL_SLOTS.length}` },
                                 ].map(row => (
                                     <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f5f5f5' }}>
-                                        <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>{row.label}</span>
-                                        <span style={{ fontSize: 14, fontWeight: 600, color: '#212121', textAlign: 'right', maxWidth: '60%' }}>{row.value}</span>
+                                        <span style={{ fontSize: 13, color: '#757575' }}>{row.label}</span>
+                                        <span style={{ fontSize: 14, fontWeight: 600 }}>{row.value}</span>
                                     </div>
                                 ))}
-
                                 {carouselFiles.some(f => !f) && (
-                                    <div style={{
-                                        marginTop: 24,
-                                        padding: 16,
-                                        background: '#fff3e0',
-                                        border: '1px solid #ffe0b2',
-                                        borderRadius: 8,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 12
-                                    }}>
-                                        <div style={{ color: '#e65100', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            ⚠️ ATENCIÓN: FOTOS FALTANTES
-                                        </div>
-                                        <div style={{ fontSize: 13, color: '#5d4037', lineHeight: 1.5 }}>
-                                            No se han subido las siguientes fotografías: <strong>{CAROUSEL_SLOTS.filter((_, i) => !carouselFiles[i]).map(s => s.label).join(', ')}</strong>.
-                                            <br /><br />
-                                            Al continuar, el usuario declara que <strong>bajo la responsabilidad de la persona que está llenando la data</strong> se está omitiendo la captura de estas imágenes.
-                                        </div>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '8px 0' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={acceptedResponsibility}
-                                                onChange={e => setAcceptedResponsibility(e.target.checked)}
-                                                style={{ width: 18, height: 18, cursor: 'pointer' }}
-                                            />
-                                            <span style={{ fontSize: 13, fontWeight: 600, color: '#212121' }}>Entiendo y acepto la responsabilidad</span>
+                                    <div style={{ marginTop: 24, padding: 16, background: '#fff3e0', borderRadius: 8 }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                                            <input type="checkbox" checked={acceptedResponsibility} onChange={e => setAcceptedResponsibility(e.target.checked)} />
+                                            <span style={{ fontSize: 13, fontWeight: 600 }}>Acepto la responsabilidad por fotos faltantes</span>
                                         </label>
                                     </div>
                                 )}
@@ -662,20 +563,15 @@ const CarCheckout = () => {
                         )}
                     </div>
 
-                    {/* Navigation */}
                     <div style={{ width: '100%', maxWidth: 720, padding: '0 16px', boxSizing: 'border-box', display: 'flex', gap: 10 }}>
-                        {step > 0 && <button style={S.btnSecondary} onClick={back}>← Atrás</button>}
-                        <button
-                            style={{ ...S.btnPrimary, flex: 1, opacity: canNext() ? 1 : 0.5 }}
-                            onClick={next}
-                            disabled={!canNext()}
-                        >
+                        {step > 0 && <button style={S.btnSecondary} onClick={() => setStep(s => s - 1)}>← Atrás</button>}
+                        <button style={{ ...S.btnPrimary, flex: 1, opacity: canNext() ? 1 : 0.5 }} onClick={next} disabled={!canNext()}>
                             {step === STEPS.length - 1 ? '✓ Aprobar Salida' : 'Continuar →'}
                         </button>
                     </div>
                 </div>
             )}
-            {loading && <Backdrop text="Cargando datos..." />}
+            {loading && <Backdrop text="Cargando..." />}
         </Layout>
     )
 }

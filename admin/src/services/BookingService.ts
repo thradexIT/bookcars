@@ -3,6 +3,21 @@ import axiosInstance from './axiosInstance'
 import * as UserService from './UserService'
 
 /**
+ * Create a booking
+ *
+ * @param {bookcarsTypes.UpsertBookingPayload} payload
+ * @returns {Promise<bookcarsTypes.Booking>}
+ */
+export const create = (payload: bookcarsTypes.UpsertBookingPayload): Promise<bookcarsTypes.Booking> =>
+  axiosInstance
+    .post(
+      '/api/create-booking',
+      payload,
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+
+/**
  * Get bookings
  *
  * @param {bookcarsTypes.GetBookingsPayload} payload

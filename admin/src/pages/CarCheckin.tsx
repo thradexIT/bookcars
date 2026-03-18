@@ -4,6 +4,7 @@ import Backdrop from '@/components/SimpleBackdrop'
 import * as BookingService from '@/services/BookingService'
 import * as helper from '@/utils/helper'
 import * as bookcarsTypes from ':bookcars-types'
+import ValidatedCamera from '@/components/ValidatedCamera'
 
 import frontImg from '@/assets/img/front.png'
 import rearImg from '@/assets/img/rear.png'
@@ -12,6 +13,7 @@ import rightImg from '@/assets/img/right.png'
 import interiorImg from '@/assets/img/interior1.png'
 import dashboardImg from '@/assets/img/interior2.webp'
 
+// ─── CONFIGURABLE ────────────────────────────────────────────────────
 const CAROUSEL_SLOTS: { label: string; refImg: string; hint: string }[] = [
     { label: 'Frontal', refImg: frontImg, hint: 'Frente del vehículo completo' },
     { label: 'Trasera', refImg: rearImg, hint: 'Parte trasera completa' },
@@ -23,6 +25,7 @@ const CAROUSEL_SLOTS: { label: string; refImg: string; hint: string }[] = [
 
 const STEPS = ['Niveles y Km', 'Fotos', 'Confirmación']
 
+// ── Slot individual del carrusel ──────────────────────────────────────
 const CarouselSlot = ({
     slot,
     index,
@@ -34,10 +37,37 @@ const CarouselSlot = ({
     file: File | null
     onChange: (i: number, f: File | null) => void
 }) => {
+    const [cameraOpen, setCameraOpen] = useState(false)
+    const [viewerOpen, setViewerOpen] = useState(false)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
     const preview = file ? URL.createObjectURL(file) : null
+    const hasCameraSupport = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '0 4px' }}>
+            <ValidatedCamera
+                open={cameraOpen}
+                onClose={() => setCameraOpen(false)}
+                onCapture={(f) => onChange(index, f)}
+                label={`Capturar ${slot.label}`}
+                silhouetteImg={slot.refImg}
+                expectedType={slot.label.toLowerCase().includes('tablero') ? 'dashboard' : 'car'}
+            />
+            {viewerOpen && (
+                <div
+                    onClick={() => setViewerOpen(false)}
+                    style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out',
+                        padding: 20, boxSizing: 'border-box'
+                    }}
+                >
+                    <img src={slot.refImg} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} alt="Referencia Completa" />
+                    <div style={{ position: 'absolute', top: 20, right: 30, color: '#fff', fontSize: 24, fontWeight: 'bold' }}>✕</div>
+                </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#424242', letterSpacing: .3 }}>{slot.label}</span>
                 <span style={{ fontSize: 11, color: '#9e9e9e' }}>{slot.hint}</span>
@@ -45,34 +75,43 @@ const CarouselSlot = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
                 <div
+                    onClick={() => setViewerOpen(true)}
                     style={{
                         borderRadius: 10, overflow: 'hidden', background: '#f0f4fa',
                         border: '1.5px solid #e3eaf5', position: 'relative',
                         aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: '100%', height: 'auto'
+                        cursor: 'zoom-in', width: '100%', height: 'auto'
                     }}
                 >
                     <img
                         src={slot.refImg}
                         alt={`ref-${slot.label}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={e => {
-                            (e.target as HTMLImageElement).style.display = 'none'
-                        }}
                     />
-                    <span style={{
-                        position: 'absolute', top: 8, left: 8, background: '#1976d2',
-                        color: '#fff', fontSize: 10, borderRadius: 20, padding: '2px 8px', fontWeight: 600,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}>REFERENCIA</span>
                 </div>
 
-                <label htmlFor={`carousel-${index}`} style={{
-                    borderRadius: 10, overflow: 'hidden', border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
-                    aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: preview ? '#e3f2fd' : '#fafafa', cursor: 'pointer', position: 'relative',
-                    transition: 'all .2s', width: '100%', height: 'auto'
-                }}>
+                <div 
+                    onClick={() => hasCameraSupport ? setCameraOpen(true) : fileInputRef.current?.click()}
+                    style={{
+                        borderRadius: 10, overflow: 'hidden', border: `2px dashed ${preview ? '#2e7d32' : '#bdbdbd'}`,
+                        aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: preview ? '#e8f5e9' : '#fafafa', cursor: 'pointer', position: 'relative',
+                        transition: 'all .2s', width: '100%', height: 'auto'
+                    }}
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                                onChange(index, f)
+                            }
+                        }}
+                    />
                     {preview ? (
                         <>
                             <img src={preview} alt={`taken-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -82,7 +121,7 @@ const CarouselSlot = ({
                             }}>✓ CAPTURADA</span>
                             <button
                                 onClick={e => {
-                                    e.preventDefault(); onChange(index, null)
+                                    e.stopPropagation(); onChange(index, null)
                                 }}
                                 style={{
                                     position: 'absolute', bottom: 8, right: 8, background: '#d32f2f',
@@ -93,20 +132,16 @@ const CarouselSlot = ({
                         </>
                     ) : (
                         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 30 }}>📷</span>
-                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>Adjuntar foto</span>
-                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>Toca para seleccionar</span>
+                            <span style={{ fontSize: 30 }}>{hasCameraSupport ? '📷' : '📁'}</span>
+                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>
+                                {hasCameraSupport ? 'Capturar con IA' : 'Subir fotografía'}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>
+                                {hasCameraSupport ? 'Toca para abrir cámara' : 'Toca para seleccionar archivo'}
+                            </span>
                         </div>
                     )}
-                    <input
-                        id={`carousel-${index}`}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        style={{ display: 'none' }}
-                        onChange={e => onChange(index, e.target.files?.[0] ?? null)}
-                    />
-                </label>
+                </div>
             </div>
         </div>
     )
@@ -141,7 +176,7 @@ const PhotoCarousel = ({
                         onClick={() => setActive(i)}
                         style={{
                             width: i === active ? 24 : 8, height: 8, borderRadius: 4,
-                            background: files[i] ? '#388e3c' : i === active ? '#1976d2' : '#e0e0e0',
+                            background: files[i] ? '#388e3c' : i === active ? '#2e7d32' : '#e0e0e0',
                             border: 'none', cursor: 'pointer', transition: 'all .25s', padding: 0,
                         }}
                     />
@@ -170,8 +205,8 @@ const PhotoCarousel = ({
                     disabled={active === total - 1}
                     style={{
                         flex: 1, padding: '11px 0', borderRadius: 8, border: 'none',
-                        background: active === total - 1 ? '#e3f2fd' : '#1976d2',
-                        color: active === total - 1 ? '#90caf9' : '#fff',
+                        background: active === total - 1 ? '#e8f5e9' : '#2e7d32',
+                        color: active === total - 1 ? '#a5d6a7' : '#fff',
                         fontSize: 14, fontWeight: 600, cursor: active === total - 1 ? 'default' : 'pointer',
                     }}
                 >Siguiente →</button>
@@ -191,14 +226,17 @@ const KmSlot = ({
     file: File | null
     onFileChange: (f: File | null) => void
 }) => {
+    const [cameraOpen, setCameraOpen] = useState(false)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
     const preview = file ? URL.createObjectURL(file) : null
+    const hasCameraSupport = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
 
     return (
         <div style={{
             border: '1.5px solid #e3eaf5', borderRadius: 12, padding: 20,
             background: '#f8faff', marginBottom: 20,
         }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1976d2', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Tablero — Kilometraje de Entrada
             </div>
 
@@ -214,19 +252,42 @@ const KmSlot = ({
                         onChange={e => onMileageChange(e.target.value)}
                         style={{
                             width: '100%', padding: '16px 14px', border: '1px solid #e0e0e0',
-                            borderRadius: 8, fontSize: 20, fontWeight: 700, color: '#1976d2',
+                            borderRadius: 8, fontSize: 20, fontWeight: 700, color: '#2e7d32',
                             boxSizing: 'border-box', background: '#fff', outline: 'none',
                         }}
                     />
                 </div>
 
-                <label htmlFor="km-photo" style={{
-                    display: 'flex', borderRadius: 10, overflow: 'hidden',
-                    border: `2px dashed ${preview ? '#1976d2' : '#bdbdbd'}`,
-                    aspectRatio: '16/9', cursor: 'pointer', position: 'relative',
-                    background: preview ? '#e3f2fd' : '#fafafa', transition: 'all .2s',
-                    alignItems: 'center', justifyContent: 'center', width: '100%', height: 'auto'
-                }}>
+                <div
+                    onClick={() => hasCameraSupport ? setCameraOpen(true) : fileInputRef.current?.click()}
+                    style={{
+                        display: 'flex', borderRadius: 10, overflow: 'hidden',
+                        border: `2px dashed ${preview ? '#2e7d32' : '#bdbdbd'}`,
+                        aspectRatio: '16/9', cursor: 'pointer', position: 'relative',
+                        background: preview ? '#e8f5e9' : '#fafafa', transition: 'all .2s',
+                        alignItems: 'center', justifyContent: 'center', width: '100%', height: 'auto'
+                    }}
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                                onFileChange(f)
+                            }
+                        }}
+                    />
+                    <ValidatedCamera
+                        open={cameraOpen}
+                        onClose={() => setCameraOpen(false)}
+                        onCapture={(f) => onFileChange(f)}
+                        label="Foto del Tablero"
+                        expectedType="dashboard"
+                    />
                     {preview ? (
                         <>
                             <img src={preview} alt="km-photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -236,7 +297,7 @@ const KmSlot = ({
                             }}>✓ FOTO TABLERO</span>
                             <button
                                 onClick={e => {
-                                    e.preventDefault(); onFileChange(null)
+                                    e.stopPropagation(); onFileChange(null)
                                 }}
                                 style={{
                                     position: 'absolute', bottom: 8, right: 8, background: '#d32f2f',
@@ -250,20 +311,16 @@ const KmSlot = ({
                             display: 'flex', flexDirection: 'column', alignItems: 'center',
                             justifyContent: 'center', height: '100%', gap: 6,
                         }}>
-                            <span style={{ fontSize: 30 }}>📷</span>
-                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>Foto del tablero</span>
-                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>Debe mostrar el odómetro</span>
+                            <span style={{ fontSize: 30 }}>{hasCameraSupport ? '📷' : '📁'}</span>
+                            <span style={{ fontSize: 13, color: '#757575', fontWeight: 500 }}>
+                                {hasCameraSupport ? 'Foto del tablero' : 'Subir foto del tablero'}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#bdbdbd' }}>
+                                {hasCameraSupport ? 'IA validará el odómetro' : 'Selecciona foto del odómetro'}
+                            </span>
                         </div>
                     )}
-                    <input
-                        id="km-photo"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        style={{ display: 'none' }}
-                        onChange={e => onFileChange(e.target.files?.[0] ?? null)}
-                    />
-                </label>
+                </div>
             </div>
         </div>
     )

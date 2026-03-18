@@ -12,14 +12,19 @@ import {
   FormHelperText,
   InputLabel,
   Input,
-  IconButton
+  IconButton,
+  Typography
 } from '@mui/material'
 import {
   Person as DriverIcon,
   FactCheck as VerifyIcon,
   NavigateBefore,
-  NavigateNext
+  NavigateNext,
+  AutoFixHigh as AiIcon
 } from '@mui/icons-material'
+import ImageDiffSlider from '@/components/ImageDiffSlider'
+import * as tf from '@tensorflow/tfjs'
+import * as cocoSsd from '@tensorflow-models/coco-ssd'
 import { Control, FieldErrors, useForm, UseFormClearErrors, UseFormRegister, UseFormSetValue, UseFormTrigger, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as bookcarsTypes from ':bookcars-types'
@@ -175,6 +180,7 @@ const UpdateBooking = () => {
   const [activeVerifyStep, setActiveVerifyStep] = useState(0)
   const [stepRemarks, setStepRemarks] = useState<Record<string, string>>({})
   const [stepStatus, setStepStatus] = useState<Record<string, boolean>>({})
+  const [aiModel, setAiModel] = useState<cocoSsd.ObjectDetection | null>(null)
 
   // ── Auto-refresh via BroadcastChannel + WebSocket ──────────────────────────
   useEffect(() => {
@@ -794,43 +800,43 @@ const UpdateBooking = () => {
                   </div>
                 )}
 
-                <div className="box-v3">
-                  <div className="box-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <VerifyIcon fontSize="small" /> Auditoría de Fotos
-                  </div>
-                  <div className="box-details">
-                    <div className="box-row">
-                      <span>Salida:</span>
-                      {booking.picturesOutVerified ? <span className="tag-green">Validada</span> : <span className="tag-red">Pendiente</span>}
+                {booking.kmOut !== undefined && booking.kmIn !== undefined && (
+                  <div className="box-v3">
+                    <div className="box-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <VerifyIcon fontSize="small" /> Auditoría de Fotos
                     </div>
-                    {booking.kmIn !== undefined && (
+                    <div className="box-details">
+                      <div className="box-row">
+                        <span>Salida:</span>
+                        {booking.picturesOutVerified ? <span className="tag-green">Validada</span> : <span className="tag-red">Pendiente</span>}
+                      </div>
                       <div className="box-row">
                         <span>Ingreso:</span>
                         {booking.picturesInVerified ? <span className="tag-green">Validada</span> : <span className="tag-red">Pendiente</span>}
                       </div>
-                    )}
-                    <Button
-                      variant="contained"
-                      size="small"
-                      fullWidth
-                      onClick={handleVerifyOpen}
-                      style={{ marginTop: 12, backgroundColor: '#000', color: '#fff' }}
-                    >
-                      {booking.picturesOutVerified || booking.picturesInVerified ? 'Re-validar Inspección' : 'Validar Inspección'}
-                    </Button>
-                    {(booking.picturesOutVerified || booking.picturesInVerified) && (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
                         fullWidth
-                        onClick={() => window.open(`/admin/verification-report?b=${booking._id}`, '_blank')}
-                        style={{ marginTop: 8 }}
+                        onClick={handleVerifyOpen}
+                        style={{ marginTop: 12, backgroundColor: '#000', color: '#fff' }}
                       >
-                        Ver Reporte de Auditoría
+                        {booking.picturesOutVerified || booking.picturesInVerified ? 'Re-validar Inspección' : 'Validar Inspección'}
                       </Button>
-                    )}
+                      {(booking.picturesOutVerified || booking.picturesInVerified) && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          onClick={() => window.open(`/admin/verification-report?b=${booking._id}`, '_blank')}
+                          style={{ marginTop: 8 }}
+                        >
+                          Ver Reporte de Auditoría
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
               </div>
             </div>
@@ -960,27 +966,116 @@ const UpdateBooking = () => {
                   </div>
                 </div>
 
-                <div className="comparison-images-grid" style={{ gridTemplateColumns: '1fr 1fr', minHeight: 350 }}>
-                  <div className="comparison-col">
-                    <span className="comparison-label">📸 Salida</span>
-                    {imgOut ? (
-                      <a href={`${env.CDN_CARS}/${imgOut}`} target="_blank" rel="noreferrer" style={{ height: '100%' }}>
-                        <img src={`${env.CDN_CARS}/${imgOut}`} className="comparison-image" style={{ height: '100%', objectFit: 'contain' }} alt="Salida" />
-                      </a>
-                    ) : (
-                      <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
-                    )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div className="comparison-images-grid" style={{ gridTemplateColumns: '1fr 1fr', minHeight: 400 }}>
+                    <div className="comparison-col">
+                      <span className="comparison-label">📸 Salida</span>
+                      {imgOut ? (
+                        <div style={{ position: 'relative', height: '100%' }}>
+                          <img 
+                            id="audit-img-out"
+                            crossOrigin="anonymous"
+                            src={`${env.CDN_CARS}/${imgOut}`} 
+                            className="comparison-image" 
+                            style={{ height: '100%', objectFit: 'contain' }} 
+                            alt="Salida" 
+                          />
+                        </div>
+                      ) : (
+                        <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
+                      )}
+                    </div>
+                    <div className="comparison-col">
+                      <span className="comparison-label">📸 Ingreso</span>
+                      {imgIn ? (
+                        <div style={{ position: 'relative', height: '100%' }}>
+                           <img 
+                              id="audit-img-in"
+                              crossOrigin="anonymous"
+                              src={`${env.CDN_CARS}/${imgIn}`} 
+                              className="comparison-image" 
+                              style={{ height: '100%', objectFit: 'contain' }} 
+                              alt="Ingreso" 
+                            />
+                        </div>
+                      ) : (
+                        <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="comparison-col">
-                    <span className="comparison-label">📸 Ingreso</span>
-                    {imgIn ? (
-                      <a href={`${env.CDN_CARS}/${imgIn}`} target="_blank" rel="noreferrer" style={{ height: '100%' }}>
-                        <img src={`${env.CDN_CARS}/${imgIn}`} className="comparison-image" style={{ height: '100%', objectFit: 'contain' }} alt="Ingreso" />
-                      </a>
-                    ) : (
-                      <div className="no-img-placeholder" style={{ height: '100%' }}>Sin foto</div>
-                    )}
-                  </div>
+
+                  {imgOut && imgIn && (
+                    <div style={{ border: '2px solid #1976d2', borderRadius: 10, padding: 12, background: '#f0f4fa' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1976d2' }}>
+                             MODO COMPARACIÓN AVANZADA
+                          </Typography>
+                          <Button 
+                            variant="contained" 
+                            size="small" 
+                            startIcon={<AiIcon />} 
+                            onClick={async () => {
+                              try {
+                                await tf.ready()
+                                let model = aiModel
+                                if (!model) {
+                                  helper.info('Cargando modelo de alta precisión (COCO-SSD)...')
+                                  model = await cocoSsd.load()
+                                  setAiModel(model)
+                                } else {
+                                  helper.info('Iniciando análisis avanzado...')
+                                }
+
+                                const outEl = document.getElementById('audit-img-out') as HTMLImageElement
+                                const inEl = document.getElementById('audit-img-in') as HTMLImageElement
+                                
+                                if (outEl && inEl) {
+                                  if (!outEl.complete || !inEl.complete || outEl.naturalWidth === 0 || inEl.naturalWidth === 0) {
+                                    helper.warning('Espera a que las fotos se carguen totalmente.')
+                                    return
+                                  }
+
+                                  // Detect objects in both images
+                                  const predsOut = await model.detect(outEl)
+                                  const predsIn = await model.detect(inEl)
+                                  
+                                  // Filter for relevant objects (car, truck, motorcycle, bus)
+                                  const relevantClasses = ['car', 'truck', 'motorcycle', 'bus', 'vehicle']
+                                  const objectsOut = predsOut.filter(p => relevantClasses.includes(p.class) && p.score > 0.5)
+                                  const objectsIn = predsIn.filter(p => relevantClasses.includes(p.class) && p.score > 0.5)
+
+                                  if (objectsOut.length > 0 && objectsIn.length > 0) {
+                                    const bestOut = objectsOut[0].class
+                                    const bestIn = objectsIn[0].class
+                                    
+                                    if (bestOut === bestIn) {
+                                      helper.success(`IA Precisa: Coincidencia confirmada (${bestOut}).`)
+                                    } else {
+                                      helper.warning(`IA Precisa: Posible discrepancia. Salida: ${bestOut}, Ingreso: ${bestIn}`)
+                                    }
+                                  } else if (objectsOut.length === 0 && objectsIn.length === 0) {
+                                    helper.warning('IA Precisa: No se detectaron vehículos claros en ninguna de las fotos.')
+                                  } else {
+                                    helper.warning('IA Precisa: Solo se detectó vehículo en una de las imágenes. Revisa visualmente.')
+                                  }
+                                }
+                              } catch (err: any) {
+                                console.error('AI error detail:', err)
+                                const msg = err?.message || err || 'Error desconocido'
+                                helper.error(err, `Error de IA Precisa: ${msg}`)
+                              }
+                            }}
+                            sx={{ background: '#1976d2' }}
+                          >
+                            Analizar con IA
+                          </Button>
+                       </div>
+                       <ImageDiffSlider 
+                         img1={`${env.CDN_CARS}/${imgOut}`} 
+                         img2={`${env.CDN_CARS}/${imgIn}`} 
+                       />
+                    </div>
+                  )}
                 </div>
 
                 <div className="comparison-footer">

@@ -6,6 +6,8 @@ import * as logger from '../utils/logger'
 const whitelist = [
   helper.trimEnd(env.ADMIN_HOST, '/'),
   helper.trimEnd(env.FRONTEND_HOST, '/'),
+  'https://localhost:3002',
+  'https://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3001',
   'https://rentacar.thradex.com',
@@ -15,9 +17,12 @@ const whitelist = [
   'http://165.1.122.9:3002',
   'http://165.1.122.9:4002',
   'https://seisable-segmentally-jolyn.ngrok-free.dev',
-  'http://192.168.1.139:4002',
-  'http://192.168.1.139:3001',
-  'http://192.168.1.139:8080',
+  'https://192.168.18.13:4002',
+  'https://192.168.18.13:3001',
+  'https://192.168.18.13:3002',
+  'http://192.168.18.13:4002',
+  'http://192.168.18.13:3001',
+  'http://192.168.18.13:8080',
 ]
 
 /**
@@ -25,11 +30,38 @@ const whitelist = [
  *
  * @type {cors.CorsOptions}
  */
+
+// const CORS_CONFIG: cors.CorsOptions = {
+//   origin(origin, callback) {
+//     console.log('CORS Whitelist:', whitelist)
+//     console.log('Incoming Origin:', origin)
+//     if (!origin || whitelist.indexOf(helper.trimEnd(origin, '/')) !== -1) {
+//       callback(null, true)
+//     } else {
+//       const message = `Not allowed by CORS: ${origin}`
+//       logger.error(message)
+//       callback(new Error(message))
+//     }
+//   },
+//   credentials: true,
+//   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+// }
 const CORS_CONFIG: cors.CorsOptions = {
   origin(origin, callback) {
     console.log('CORS Whitelist:', whitelist)
     console.log('Incoming Origin:', origin)
-    if (!origin || whitelist.indexOf(helper.trimEnd(origin, '/')) !== -1) {
+
+    if (!origin) {
+      return callback(null, true)
+    }
+
+    const trimmedOrigin = helper.trimEnd(origin, '/')
+
+    const isWhitelisted = whitelist.includes(trimmedOrigin)
+
+    const isLocalNetwork = /^https?:\/\/192\.168\.18\.\d+(:\d+)?$/.test(trimmedOrigin)
+
+    if (isWhitelisted || isLocalNetwork) {
       callback(null, true)
     } else {
       const message = `Not allowed by CORS: ${origin}`
@@ -38,9 +70,8 @@ const CORS_CONFIG: cors.CorsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200,
 }
-
 /**
  * CORS middleware.
  *
