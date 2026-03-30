@@ -57,12 +57,7 @@
       "expo-asset",
       "expo-font"
     ],
-    "owner": "aelassas",
-    "extra": {
-      "eas": {
-        "projectId": "6837c81c-ac7f-4ec6-a994-90286550dcaf"
-      }
-    },
+    "owner": "em3rc0dth",
     "updates": {
       "url": "https://u.expo.dev/6837c81c-ac7f-4ec6-a994-90286550dcaf"
     },
@@ -71,6 +66,11 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ad8636eb-e73d-4fb7-9a3f-48c85dc39ab7"
+      }
     }
   }
 }
