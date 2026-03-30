@@ -36,6 +36,7 @@ services:
     volumes:
       - cdn:/var/www/cdn/bookcars
       - backend_logs:/bookcars/backend/logs
+      - /etc/letsencrypt:/etc/letsencrypt:ro
 
   bc-admin:
     build: 
@@ -62,6 +63,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - cdn:/var/www/cdn/bookcars
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - bc-frontend
       - bc-backend
