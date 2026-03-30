@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 // Backend URL ─────────────────────────────────────────────────────────────────
 // ngrok tunnel → valid HTTPS cert, no device config needed, already CORS-whitelisted.
 // Switch to local IP only if ngrok is not running.
-export const API_HOST = 'https://seisable-segmentally-jolyn.ngrok-free.dev'
+export const API_HOST = process.env.EXPO_PUBLIC_API_HOST || 'https://rentacar.thradex.com'
 // export const API_HOST = 'https://192.168.18.13:4002'  // requires trusting self-signed cert
 export const DEFAULT_LANGUAGE = 'es'
 // ──────────────────────────────────────────────────────────────────────────────
