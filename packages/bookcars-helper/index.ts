@@ -10,6 +10,9 @@ import CurrencyConverter, { currencies } from ':currency-converter'
  * @returns {string}
  */
 export const formatNumber = (x: number, language: string): string => {
+  if (typeof x === 'undefined' || x === null || Number.isNaN(x)) {
+    return ''
+  }
   const parts: string[] = String(x % 1 !== 0 ? x.toFixed(2) : x).split('.')
   const separator = language === 'en' ? ',' : ' '
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, separator)
@@ -58,9 +61,7 @@ export const isDate = (value?: any): boolean => {
  */
 export const joinURL = (part1?: string, part2?: string) => {
   if (!part1 || !part2) {
-    const msg = '[joinURL] part undefined'
-    console.log(msg)
-    throw new Error(msg)
+    return ''
   }
 
   if (part1.charAt(part1.length - 1) === '/') {
@@ -268,7 +269,14 @@ export const formatPrice = (price: number, currency: string, language: string) =
  * @param {?bookcarsTypes.CarOptions} [options]
  * @returns {number}
  */
-export const calculateTotalPrice = (car: bookcarsTypes.Car, from: Date, to: Date, priceChangeRate: number, options?: bookcarsTypes.CarOptions) => {
+export const calculateTotalPrice = (
+  car: bookcarsTypes.Car,
+  from: Date,
+  to: Date,
+  priceChangeRate: number,
+  options?: bookcarsTypes.CarOptions,
+  clientDiscount?: number // NEW: Client type discount percentage (0-100)
+) => {
   let totalPrice = 0
   let totalDays = days(from, to)
 
@@ -371,6 +379,15 @@ export const calculateTotalPrice = (car: bookcarsTypes.Car, from: Date, to: Date
   // apply price change rate
   totalPrice += totalPrice * (priceChangeRate / 100)
 
+  // NEW: Apply client discount AFTER calculating total with volume discounts
+  // Use explicit clientDiscount parameter, or fall back to car.clientDiscount
+  const discount = clientDiscount !== undefined ? clientDiscount : (car.clientDiscount || 0)
+  if (discount > 0) {
+    const beforeDiscount = totalPrice
+    totalPrice = totalPrice * (1 - (discount / 100))
+    console.log(`[DEBUG] Applied ${discount}% client discount: $${beforeDiscount.toFixed(2)} → $${totalPrice.toFixed(2)}`)
+  }
+
   return totalPrice
 }
 
@@ -404,7 +421,7 @@ export const convertPrice = async (amount: number, from: string, to: string): Pr
  * @param {string} currency
  * @returns {boolean}
  */
-export const checkCurrency = (currency: string) => currencies.findIndex((c) => c === currency) > -1
+export const checkCurrency = (currency: string) => currencies.findIndex((c: string) => c === currency) > -1
 
 /**
  * Check whether language is french

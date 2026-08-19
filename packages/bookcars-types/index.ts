@@ -79,8 +79,8 @@ export enum RecordType {
 export enum PaymentGateway {
   PayPal = 'payPal',
   Stripe = 'stripe',
+  MercadoPago = 'mercadopago',
 }
-
 export interface Booking {
   _id?: string
   supplier: string | User
@@ -107,6 +107,22 @@ export interface Booking {
   isDeposit?: boolean
   isPayedInFull?: boolean
   paypalOrderId?: string
+  odooOrderId?: number
+  kmOut?: number
+  fuelOut?: string
+  picturesOut?: string[]
+  signatureDriver?: string
+  signatureRep?: string
+  remarksOut?: string
+  kmIn?: number
+  fuelIn?: string
+  picturesIn?: string[]
+  signatureDriverIn?: string
+  signatureRepIn?: string
+  remarksIn?: string
+  picturesOutVerified?: boolean
+  picturesInVerified?: boolean
+  verificationRemarks?: string
 }
 
 export interface CheckoutPayload {
@@ -183,6 +199,7 @@ export interface UpdateSupplierPayload {
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
   blacklisted?: boolean
+  clientType?: string | ClientType
 }
 
 export interface CreateCarPayload {
@@ -301,6 +318,7 @@ export interface CreateUserPayload {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: string
 }
 
 export interface UpdateUserPayload extends CreateUserPayload {
@@ -406,6 +424,7 @@ export interface User {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: string | ClientType
 }
 
 export interface Option {
@@ -483,6 +502,9 @@ export interface Car {
   discountedWeeklyPrice: number | null
   monthlyPrice: number | null
   discountedMonthlyPrice: number | null
+
+  // client discount (applied in frontend after volume calculation)
+  clientDiscount?: number
 
   // date based price fields
   isDateBasedPrice: boolean
@@ -581,6 +603,17 @@ export interface CreatePayPalOrderPayload {
   currency: string
   name: string
   description: string
+}
+
+export interface ClientType {
+  _id?: string
+  name: string
+  displayName: string
+  description?: string
+  privileges: {
+    rentDiscount: number
+  }
+  active: boolean
 }
 
 export interface PaymentResult {

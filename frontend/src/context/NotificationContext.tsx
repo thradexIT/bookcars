@@ -3,6 +3,9 @@ import React, { ReactNode, createContext, useCallback, useContext, useEffect, us
 import { UserContextType, useUserContext } from './UserContext'
 import * as NotificationService from '@/services/NotificationService'
 import * as UserService from '@/services/UserService'
+import { io } from 'socket.io-client'
+import env from '@/config/env.config'
+
 
 // Create context
 export interface NotificationContextType {
@@ -48,6 +51,31 @@ export const NotificationProvider = ({ children, refreshKey }: NotificationProvi
       checkNotifications()
     }
   }, [refreshKey, checkNotifications])
+
+  useEffect(() => {
+    const currentUser = UserService.getCurrentUser()
+    let socket: any
+
+    if (userLoaded && currentUser) {
+      socket = io(env.API_HOST)
+      
+      socket.on('connect', () => {
+        socket.emit('join', currentUser._id)
+      })
+
+      socket.on('notification', () => {
+        checkNotifications()
+      })
+    }
+
+    return () => {
+      if (socket && currentUser) {
+        socket.emit('leave', currentUser._id)
+        socket.disconnect()
+      }
+    }
+  }, [userLoaded, checkNotifications])
+
 
   return (
     <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

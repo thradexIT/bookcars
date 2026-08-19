@@ -52,6 +52,10 @@ const CURRENCIES: Currency[] = [
     code: 'AUD',
     symbol: '$',
   },
+  {
+    code: 'PEN',
+    symbol: 'S/.',
+  },
 ]
 
 const getPaymentGateway = () => {
@@ -59,6 +63,10 @@ const getPaymentGateway = () => {
 
   if (paymentGateway === 'PAYPAL') {
     return bookcarsTypes.PaymentGateway.PayPal
+  }
+
+  if (paymentGateway === 'MERCADOPAGO') {
+    return bookcarsTypes.PaymentGateway.MercadoPago
   }
 
   // Default is Stripe
@@ -113,6 +121,7 @@ const env = {
       : Const.PAGINATION_MODE.CLASSIC,
   PAYMENT_GATEWAY,
   STRIPE_PUBLISHABLE_KEY: String(import.meta.env.VITE_BC_STRIPE_PUBLISHABLE_KEY),
+  MERCADO_PAGO_PUBLIC_KEY: String(import.meta.env.VITE_BC_MERCADO_PAGO_PUBLIC_KEY),
   PAYPAL_CLIENT_ID: String(import.meta.env.VITE_BC_PAYPAL_CLIENT_ID),
   PAYPAL_DEBUG: (import.meta.env.VITE_BC_PAYPAL_DEBUG && import.meta.env.VITE_BC_PAYPAL_DEBUG.toLowerCase()) === 'true',
   SET_LANGUAGE_FROM_IP: (import.meta.env.VITE_BC_SET_LANGUAGE_FROM_IP && import.meta.env.VITE_BC_SET_LANGUAGE_FROM_IP.toLowerCase()) === 'true',

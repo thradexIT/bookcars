@@ -50,6 +50,7 @@ interface CarProps {
   hideSupplier?: boolean
   sizeAuto?: boolean
   hidePrice?: boolean
+  clientType?: string
 }
 
 const Car = ({
@@ -64,12 +65,14 @@ const Car = ({
   hideSupplier,
   sizeAuto,
   hidePrice,
+  clientType,
 }: CarProps) => {
   const navigate = useNavigate()
 
   const [language, setLanguage] = useState('')
   const [days, setDays] = useState(0)
   const [totalPrice, setTotalPrice] = useState(0)
+  const [originalPrice, setOriginalPrice] = useState(0)
   const [deposit, setDeposit] = useState(0)
   const [cancellation, setCancellation] = useState('')
   const [amendments, setAmendments] = useState('')
@@ -86,8 +89,21 @@ const Car = ({
   useEffect(() => {
     const fetchPrice = async () => {
       if (from && to) {
+        console.log('[DEBUG Car.tsx] car.clientDiscount:', car.clientDiscount)
         const _totalPrice = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(car, from as Date, to as Date, car.supplier.priceChangeRate || 0))
         setTotalPrice(_totalPrice)
+
+        // Calculate original price (without discounts)
+        const originalCar: any = { ...car }
+        originalCar.discountedDailyPrice = undefined
+        originalCar.discountedWeeklyPrice = undefined
+        originalCar.discountedBiWeeklyPrice = undefined
+        originalCar.discountedMonthlyPrice = undefined
+        originalCar.discountedHourlyPrice = undefined
+        originalCar.clientDiscount = undefined // Don't apply client discount to original price
+        const _originalPrice = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(originalCar, from as Date, to as Date, car.supplier.priceChangeRate || 0))
+        setOriginalPrice(_originalPrice)
+
         setDays(bookcarsHelper.days(from, to))
       }
     }
@@ -129,6 +145,16 @@ const Car = ({
       if (!hidePrice) {
         let _totalPrice = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(car, from as Date, to as Date, car.supplier.priceChangeRate || 0))
         setTotalPrice(_totalPrice)
+
+        // Calculate original price (without discounts)
+        const originalCar: any = { ...car }
+        originalCar.discountedDailyPrice = undefined
+        originalCar.discountedWeeklyPrice = undefined
+        originalCar.discountedBiWeeklyPrice = undefined
+        originalCar.discountedMonthlyPrice = undefined
+        originalCar.discountedHourlyPrice = undefined
+        const _originalPrice = await PaymentService.convertPrice(bookcarsHelper.calculateTotalPrice(originalCar, from as Date, to as Date, car.supplier.priceChangeRate || 0))
+        setOriginalPrice(_originalPrice)
       }
     }
 
@@ -239,6 +265,11 @@ const Car = ({
                   <span>{`${strings.PRICE_PER_DAY} `}</span>
                   <span className="price-day-value">{bookcarsHelper.formatPrice(totalPrice / days, commonStrings.CURRENCY, language)}</span>
                 </span>
+                {originalPrice > totalPrice && (
+                  <span className="price-original" style={{ textDecoration: 'line-through', color: '#a1a1a1', fontSize: '12px', marginLeft: '5px' }}>
+                    {bookcarsHelper.formatPrice(originalPrice, commonStrings.CURRENCY, language)}
+                  </span>
+                )}
                 {
                   car.comingSoon ? (
                     <span className="coming-soon">{strings.COMING_SOON}</span>
@@ -384,7 +415,7 @@ const Car = ({
                 </Tooltip>
               </li>
             )}
-            {car.deposit > 0 && (
+            {car.deposit > 0 && clientType !== 'Internal' && (
               <li>
                 <div className="car-info-list-item">
                   <InfoIcon className="extra-info" />

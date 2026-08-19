@@ -1,4 +1,5 @@
 import express from 'express'
+import multer from 'multer'
 import routeNames from '../config/bookingRoutes.config'
 import authJwt from '../middlewares/authJwt'
 import * as bookingController from '../controllers/bookingController'
@@ -16,5 +17,16 @@ routes.route(routeNames.getBookingId).get(bookingController.getBookingId)
 routes.route(routeNames.getBookings).post(authJwt.verifyToken, bookingController.getBookings)
 routes.route(routeNames.hasBookings).get(authJwt.verifyToken, bookingController.hasBookings)
 routes.route(routeNames.cancelBooking).post(authJwt.verifyToken, bookingController.cancelBooking)
-
+routes.route(routeNames.purchaseOrder).get(bookingController.downloadPurchaseOrder)
+routes.route(routeNames.checkoutReportPdf).get(bookingController.downloadCheckoutReport)
+routes.route(routeNames.checkoutDeparture).post(
+  [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
+  bookingController.checkoutDeparture
+)
+routes.route(routeNames.checkinReturn).post(
+  [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
+  bookingController.checkinReturn
+)
+routes.route(routeNames.saveSignatures).patch(authJwt.verifyToken, bookingController.saveSignatures)
+routes.route(routeNames.verifyInspection).post(authJwt.verifyToken, bookingController.verifyInspection)
 export default routes

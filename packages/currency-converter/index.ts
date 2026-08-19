@@ -531,8 +531,8 @@ class CurrencyConverter {
       } else {
         return new Promise((resolve, reject) => {
           Convert(this.currencyAmount).from(this.currencyFrom).to(this.currencyTo)
-            .then((res) => resolve(res))
-            .catch((err) => reject(err))
+            .then((res: any) => resolve(res))
+            .catch((err: any) => reject(err))
         })
           .then((rates: unknown) => {
             const ratesNum = rates as number / this.currencyAmount

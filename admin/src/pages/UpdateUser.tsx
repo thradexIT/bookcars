@@ -25,6 +25,8 @@ import { strings } from '@/lang/update-user'
 import * as helper from '@/utils/helper'
 import * as UserService from '@/services/UserService'
 import * as SupplierService from '@/services/SupplierService'
+import * as ClientTypeService from '@/services/ClientTypeService'
+import { strings as clientTypeStrings } from '@/lang/client-types'
 import NoMatch from './NoMatch'
 import Error from '@/components/Error'
 import Backdrop from '@/components/SimpleBackdrop'
@@ -47,6 +49,7 @@ const UpdateUser = () => {
   const [loading, setLoading] = useState(false)
   const [avatar, setAvatar] = useState('')
   const [avatarError, setAvatarError] = useState(false)
+  const [clientTypes, setClientTypes] = useState<bookcarsTypes.ClientType[]>([])
 
   const {
     control,
@@ -73,7 +76,8 @@ const UpdateUser = () => {
       minimumRentalDays: '',
       priceChangeRate: '',
       supplierCarLimit: '',
-      notifyAdminOnNewCar: false
+      notifyAdminOnNewCar: false,
+      clientType: ''
     },
   })
 
@@ -84,6 +88,8 @@ const UpdateUser = () => {
   const payLater = useWatch({ control, name: 'payLater' })
   const licenseRequired = useWatch({ control, name: 'licenseRequired' })
   const notifyAdminOnNewCar = useWatch({ control, name: 'notifyAdminOnNewCar' })
+  const clientType = useWatch({ control, name: 'clientType' })
+  const birthDate = useWatch({ control, name: 'birthDate' })
 
   const onBeforeUpload = () => {
     setLoading(true)
@@ -139,6 +145,9 @@ const UpdateUser = () => {
             const _user = await UserService.getUser(id)
 
             if (_user) {
+              const _clientTypes = await ClientTypeService.getClientTypes('')
+              setClientTypes(_clientTypes)
+
               if (!(
                 _loggedUser.type === bookcarsTypes.UserType.Admin
                 || (_user.type === bookcarsTypes.UserType.Supplier && _loggedUser._id === _user._id)
@@ -167,6 +176,9 @@ const UpdateUser = () => {
               setValue('supplierCarLimit', _user.supplierCarLimit?.toString() || '')
               setValue('notifyAdminOnNewCar', !!_user.notifyAdminOnNewCar)
               setValue('blacklisted', !!_user.blacklisted)
+              if (_user.clientType) {
+                setValue('clientType', (typeof _user.clientType === 'string' ? _user.clientType : _user.clientType?._id) || '')
+              }
               setVisible(true)
               setLoading(false)
             } else {
@@ -224,6 +236,7 @@ const UpdateUser = () => {
         supplierCarLimit: data.supplierCarLimit ? Number(data.supplierCarLimit) : undefined,
         notifyAdminOnNewCar: type === bookcarsTypes.RecordType.Supplier ? notifyAdminOnNewCar : undefined,
         blacklisted: data.blacklisted,
+        clientType: data.clientType,
       }
 
       if (type === bookcarsTypes.RecordType.Supplier) {
@@ -357,8 +370,29 @@ const UpdateUser = () => {
               {driver && (
                 <>
                   <FormControl fullWidth margin="dense">
+                    <InputLabel>{clientTypeStrings.CLIENT_TYPE}</InputLabel>
+                    <Select
+                      label={clientTypeStrings.CLIENT_TYPE}
+                      value={clientType || ''}
+                      onChange={(e) => {
+                        setValue('clientType', e.target.value)
+                      }}
+                      variant="standard"
+                      fullWidth
+                    >
+                      <MenuItem value=""><em>{commonStrings.NONE}</em></MenuItem>
+                      {clientTypes.map((clientType) => (
+                        <MenuItem key={clientType._id} value={clientType._id}>
+                          {clientType.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth margin="dense">
                     <DatePicker
                       label={commonStrings.BIRTH_DATE}
+                      value={birthDate}
                       variant="standard"
                       required
                       onChange={(birthDate) => {

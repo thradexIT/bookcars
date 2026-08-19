@@ -143,7 +143,7 @@ export const COOKIE_SECRET = __env__('BC_COOKIE_SECRET', false, 'bookcars')
  *
  * @type {string}
  */
-export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, 'localhost')
+export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, '')
 
 /**
  * Cookie options.
@@ -156,7 +156,16 @@ export const AUTH_COOKIE_DOMAIN = __env__('BC_AUTH_COOKIE_DOMAIN', false, 'local
  *
  * @type {CookieOptions}
  */
-export const COOKIE_OPTIONS: CookieOptions = { httpOnly: true, secure: HTTPS, signed: true, sameSite: 'strict', domain: AUTH_COOKIE_DOMAIN }
+export const COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: HTTPS,
+  signed: true,
+  sameSite: HTTPS ? 'none' : 'lax',
+}
+
+if (AUTH_COOKIE_DOMAIN) {
+  COOKIE_OPTIONS.domain = AUTH_COOKIE_DOMAIN
+}
 
 /**
  * frontend authentication cookie name.
@@ -354,6 +363,48 @@ export const EXPO_ACCESS_TOKEN = __env__('BC_EXPO_ACCESS_TOKEN', false)
  */
 export const STRIPE_SECRET_KEY = __env__('BC_STRIPE_SECRET_KEY', false, 'STRIPE_SECRET_KEY')
 
+/**
+ * Mercado Pago Access Token.
+ *
+ * @type {string}
+ */
+export const MERCADO_PAGO_ACCESS_TOKEN = __env__('BC_MERCADO_PAGO_ACCESS_TOKEN', false, 'MERCADO_PAGO_ACCESS_TOKEN')
+
+/**
+ * Odoo URL.
+ *
+ * @type {string}
+ */
+export const ODOO_URL = __env__('BC_ODOO_URL', false, '')
+
+/**
+ * Odoo Database Name.
+ *
+ * @type {string}
+ */
+export const ODOO_DB = __env__('BC_ODOO_DB', false, '')
+
+/**
+ * Odoo Username.
+ *
+ * @type {string}
+ */
+export const ODOO_USERNAME = __env__('BC_ODOO_USERNAME', false, '')
+
+/**
+ * Odoo Password.
+ *
+ * @type {string}
+ */
+export const ODOO_PASSWORD = __env__('BC_ODOO_PASSWORD', false, '')
+
+/**
+ * Mercado Pago Public Key.
+ *
+ * @type {string}
+ */
+export const MERCADO_PAGO_PUBLIC_KEY = __env__('BC_MERCADO_PAGO_PUBLIC_KEY', false, 'MERCADO_PAGO_PUBLIC_KEY')
+
 let stripeSessionExpireAt = Number.parseInt(__env__('BC_STRIPE_SESSION_EXPIRE_AT', false, '82800'), 10)
 stripeSessionExpireAt = stripeSessionExpireAt < 1800 ? 1800 : stripeSessionExpireAt
 stripeSessionExpireAt = stripeSessionExpireAt <= 82800 ? stripeSessionExpireAt : 82800
@@ -472,6 +523,13 @@ export const SENTRY_DSN_BACKEND = __env__('BC_SENTRY_DSN_BACKEND', ENABLE_SENTRY
 export const SENTRY_TRACES_SAMPLE_RATE = Number.parseFloat(__env__('BC_SENTRY_TRACES_SAMPLE_RATE', false, '1.0'))
 
 /**
+ * Google Client ID for SSO.
+ *
+ * @type {string}
+ */
+export const GOOGLE_CLIENT_ID = __env__('BC_GG_APP_ID', false)
+
+/**
  * User Document.
  *
  * @export
@@ -506,6 +564,7 @@ export interface User extends Document {
   priceChangeRate?: number
   supplierCarLimit?: number
   notifyAdminOnNewCar?: boolean
+  clientType?: Types.ObjectId
 }
 
 /**
@@ -589,6 +648,22 @@ export interface Booking extends Document {
   isDeposit: boolean
   isPayedInFull?: boolean
   paypalOrderId?: string
+  odooOrderId?: number
+  kmOut?: number
+  fuelOut?: string
+  picturesOut?: string[]
+  signatureDriver?: string
+  signatureRep?: string
+  remarksOut?: string
+  kmIn?: number
+  fuelIn?: string
+  picturesIn?: string[]
+  signatureDriverIn?: string
+  signatureRepIn?: string
+  remarksIn?: string
+  picturesOutVerified?: boolean
+  picturesInVerified?: boolean
+  verificationRemarks?: string
 }
 
 /**
@@ -603,6 +678,24 @@ export interface DateBasedPrice extends Document {
   startDate: Date
   endDate: Date
   dailyPrice: number
+}
+
+/**
+ * ClientType Document.
+ *
+ * @export
+ * @interface ClientType
+ * @typedef {ClientType}
+ * @extends {Document}
+ */
+export interface ClientType extends Document {
+  name: string
+  displayName: string
+  description?: string
+  active: boolean
+  privileges: {
+    rentDiscount: number
+  }
 }
 
 /**
@@ -630,6 +723,9 @@ export interface Car extends Document {
   discountedWeeklyPrice: number | null
   monthlyPrice: number | null
   discountedMonthlyPrice: number | null
+
+  // client discount (set dynamically, not stored in DB)
+  clientDiscount?: number
 
   isDateBasedPrice: boolean
   dateBasedPrices: Types.ObjectId[]
@@ -670,6 +766,7 @@ export interface Car extends Document {
 export interface CarInfo {
   _id?: Types.ObjectId
   name: string
+  licensePlate?: string
   supplier: UserInfo
   minimumAge: number
   locations: Types.ObjectId[]

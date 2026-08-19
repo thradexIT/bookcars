@@ -1,4 +1,5 @@
 import React, { useState, useEffect, CSSProperties, ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@mui/material'
 import * as bookcarsTypes from ':bookcars-types'
 import { strings } from '@/lang/master'
@@ -23,20 +24,26 @@ const Layout = ({
   onLoad
 }: LayoutProps) => {
   const { user, userLoaded, setUnauthorized, unauthorized } = useUserContext() as UserContextType
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const currentUser = UserService.getCurrentUser()
+    const handleAuth = async () => {
+      const currentUser = UserService.getCurrentUser()
 
-    if (!currentUser && strict) {
-      UserService.signout(true)
-    } else if (userLoaded) {
-      setLoading(false)
+      if (!currentUser && strict) {
+        await UserService.signout(false) // clear session, no redirect
+        navigate('/sign-in') // navigate via router (basename handled)
+      } else if (userLoaded) {
+        setLoading(false)
 
-      if (onLoad) {
-        onLoad(user || undefined)
+        if (onLoad) {
+          onLoad(user || undefined)
+        }
       }
     }
+
+    handleAuth()
   }, [user, userLoaded, strict]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

@@ -487,3 +487,9 @@ div.home div.customer-care div.customer-care-img img {
     margin-right: 30px;
   }
 }
+
+.gallo-icon {
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

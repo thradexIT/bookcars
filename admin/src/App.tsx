@@ -11,7 +11,7 @@ const SignIn = lazy(() => import('@/pages/SignIn'))
 const Activate = lazy(() => import('@/pages/Activate'))
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
-const SignUp = lazy(() => import('@/pages/SignUp'))
+// const SignUp = lazy(() => import('@/pages/SignUp'))
 const Suppliers = lazy(() => import('@/pages/Suppliers'))
 const Supplier = lazy(() => import('@/pages/Supplier'))
 const CreateSupplier = lazy(() => import('@/pages/CreateSupplier'))
@@ -43,7 +43,15 @@ const UpdateCountry = lazy(() => import('@/pages/UpdateCountry'))
 const Scheduler = lazy(() => import('@/pages/Scheduler'))
 const BankDetails = lazy(() => import('@/pages/BankDetails'))
 const Pricing = lazy(() => import('@/pages/Pricing'))
-
+const ClientTypes = lazy(() => import('@/pages/ClientTypes'))
+const CreateClientType = lazy(() => import('@/pages/CreateClientType'))
+const UpdateClientType = lazy(() => import('@/pages/UpdateClientType'))
+const PurchaseOrders = lazy(() => import('@/pages/PurchaseOrders'))
+const CarCheckout = lazy(() => import('@/pages/CarCheckout'))
+const CheckoutReport = lazy(() => import('@/pages/CheckoutReport'))
+const CarCheckin = lazy(() => import('@/pages/CarCheckin'))
+const CheckinReport = lazy(() => import('@/pages/CheckinReport'))
+const VerificationReport = lazy(() => import('@/pages/VerificationReport'))
 const AppLayout = () => {
   const location = useLocation()
   const [refreshKey, setRefreshKey] = useState(0) // refreshKey to check user and notifications when navigating between routes
@@ -59,7 +67,7 @@ const AppLayout = () => {
           <ScrollToTop />
           <div className="app">
             <Suspense fallback={<NProgressIndicator />}>
-              <Header />
+              <Header hidden={location.pathname.includes('/checkout-report') || location.pathname.includes('/checkin-report') || location.pathname.includes('/verification-report')} />
               <Outlet />
             </Suspense>
           </div>
@@ -109,10 +117,19 @@ const router = createBrowserRouter([
       { path: 'scheduler', element: <Scheduler /> },
       { path: 'bank-details', element: <BankDetails /> },
       { path: 'pricing', element: <Pricing /> },
+      { path: 'client-types', element: <ClientTypes /> },
+      { path: 'create-client-type', element: <CreateClientType /> },
+      { path: 'update-client-type', element: <UpdateClientType /> },
+      { path: 'purchase-orders', element: <PurchaseOrders /> },
+      { path: 'checkout_car', element: <CarCheckout /> },
+      { path: 'checkout-report', element: <CheckoutReport /> },
+      { path: 'checkin_car', element: <CarCheckin /> },
+      { path: 'checkin-report', element: <CheckinReport /> },
+      { path: 'verification-report', element: <VerificationReport /> },
       { path: '*', element: <NoMatch /> }
     ]
   }
-])
+], { basename: '/admin/' })
 
 const App = () => <RouterProvider router={router} />
 

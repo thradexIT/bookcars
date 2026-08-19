@@ -101,46 +101,46 @@ const ContactScreen = ({ navigation, route }: NativeStackScreenProps<StackParams
           keyboardShouldPersistTaps={helper.android() ? 'handled' : 'always'}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>Contáctanos</Text>
+            <Text style={styles.title}>{i18n.t('CONTACT_TITLE')}</Text>
             <Text style={styles.subtitle}>
-              Estamos aquí para ayudarte. Elige el canal que prefieras para comunicarte con nosotros.
+              {i18n.t('CONTACT_SUBTITLE')}
             </Text>
           </View>
 
           <View style={styles.contactList}>
             <ContactItem
               icon="📧"
-              title="Correo Electrónico"
+              title={i18n.t('CONTACT_EMAIL')}
               subtitle="soporte@thradex.com"
               onPress={handleEmailPress}
             />
 
             <ContactItem
               icon="📱"
-              title="Teléfono"
+              title={i18n.t('CONTACT_PHONE')}
               subtitle="+51 933075200"
               onPress={handlePhonePress}
             />
 
             <ContactItem
               icon="🌐"
-              title="Sitio Web"
+              title={i18n.t('CONTACT_WEBSITE')}
               subtitle="www.thradex.com"
               onPress={handleWebPress}
             />
           </View>
 
           <View style={styles.infoSection}>
-            <Text style={styles.infoTitle}>Horario de Atención</Text>
-            <Text style={styles.infoText}>Lunes a Viernes: 9:00 AM - 6:00 PM</Text>
-            <Text style={styles.infoText}>Sábados: 9:00 AM - 1:00 PM</Text>
-            <Text style={styles.infoText}>Domingos: Cerrado</Text>
+            <Text style={styles.infoTitle}>{i18n.t('CONTACT_SCHEDULE_TITLE')}</Text>
+            <Text style={styles.infoText}>{i18n.t('CONTACT_SCHEDULE_WEEKDAYS')}</Text>
+            <Text style={styles.infoText}>{i18n.t('CONTACT_SCHEDULE_SATURDAY')}</Text>
+            <Text style={styles.infoText}>{i18n.t('CONTACT_SCHEDULE_SUNDAY')}</Text>
           </View>
 
           <View style={styles.infoSection}>
-            <Text style={styles.infoTitle}>Ubicación</Text>
-            <Text style={styles.infoText}>Lima, Perú</Text>
-            <Text style={styles.infoText}>Av. Principal 123, Miraflores</Text>
+            <Text style={styles.infoTitle}>{i18n.t('CONTACT_LOCATION_TITLE')}</Text>
+            <Text style={styles.infoText}>{i18n.t('CONTACT_LOCATION_CITY')}</Text>
+            <Text style={styles.infoText}>{i18n.t('CONTACT_LOCATION_ADDRESS')}</Text>
           </View>
         </ScrollView>
       )}

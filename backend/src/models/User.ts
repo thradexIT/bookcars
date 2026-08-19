@@ -96,6 +96,7 @@ const userSchema = new Schema<env.User>(
       type: Boolean,
       default: false,
     },
+
     payLater: {
       type: Boolean,
       default: true,
@@ -140,6 +141,10 @@ const userSchema = new Schema<env.User>(
       //
       type: Date,
       index: { name: USER_EXPIRE_AT_INDEX_NAME, expireAfterSeconds: env.USER_EXPIRE_AT, background: true },
+    },
+    clientType: {
+      type: Schema.Types.ObjectId,
+      ref: 'ClientType',
     },
   },
   {

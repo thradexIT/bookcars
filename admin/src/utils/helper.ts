@@ -25,6 +25,24 @@ export const info = (message: string) => {
 }
 
 /**
+ * Toast success message.
+ *
+ * @param {string} message
+ */
+export const success = (message: string) => {
+  toast.success(message)
+}
+
+/**
+ * Toast warning message.
+ *
+ * @param {string} message
+ */
+export const warning = (message: string) => {
+  toast.warning(message)
+}
+
+/**
  * Toast error message.
  *
  * @param {?unknown} [err]

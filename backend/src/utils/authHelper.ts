@@ -1,10 +1,13 @@
 import { Request } from 'express'
-import axios from 'axios'
 import { jwtVerify, SignJWT } from 'jose'
 import bcrypt from 'bcrypt'
 import * as bookcarsTypes from ':bookcars-types'
 import * as helper from './helper'
+import { OAuth2Client } from 'google-auth-library'
+import axios from 'axios'
 import * as env from '../config/env.config'
+
+const client = new OAuth2Client(env.GOOGLE_CLIENT_ID)
 
 const jwtSecret = new TextEncoder().encode(env.JWT_SECRET)
 const jwtAlg = 'HS256'
@@ -47,14 +50,28 @@ export const decryptJWT = async (input: string) => {
   return payload as SessionData
 }
 
-/**
- * Check whether the request is from the admin or not.
- *
- * @export
- * @param {Request} req
- * @returns {boolean}
- */
-export const isAdmin = (req: Request): boolean => !!req.headers.origin && helper.trimEnd(req.headers.origin, '/') === helper.trimEnd(env.ADMIN_HOST, '/')
+export const isAdmin = (req: Request): boolean => {
+  const origin = req.headers.origin
+  const referer = req.headers.referer
+
+  if (origin) {
+    const trimmedOrigin = helper.trimEnd(origin, '/')
+    if (
+      trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
+      trimmedOrigin === 'http://localhost:3001' ||
+      trimmedOrigin.includes('admin.thradex.com') ||
+      trimmedOrigin.includes('ngrok-free.dev')
+    ) {
+      return true
+    }
+  }
+
+  if (referer && referer.includes('/admin')) {
+    return true
+  }
+
+  return false
+}
 
 /**
  * Check whether the request is from the frontend or not.
@@ -63,7 +80,30 @@ export const isAdmin = (req: Request): boolean => !!req.headers.origin && helper
  * @param {Request} req
  * @returns {boolean}
  */
-export const isFrontend = (req: Request): boolean => !!req.headers.origin && helper.trimEnd(req.headers.origin, '/') === helper.trimEnd(env.FRONTEND_HOST, '/')
+export const isFrontend = (req: Request): boolean => {
+  const origin = req.headers.origin
+  const referer = req.headers.referer
+
+  if (origin) {
+    const trimmedOrigin = helper.trimEnd(origin, '/')
+    if (
+      trimmedOrigin === helper.trimEnd(env.FRONTEND_HOST, '/') ||
+      trimmedOrigin === 'http://localhost:3002' ||
+      trimmedOrigin.includes('rentacar.thradex.com') ||
+      trimmedOrigin.includes('165.1.122.9') ||
+      trimmedOrigin.startsWith('http://192.168.') ||
+      trimmedOrigin.includes('ngrok-free.dev')
+    ) {
+      return true
+    }
+  }
+
+  if (referer && !referer.includes('/admin')) {
+    return true
+  }
+
+  return false
+}
 
 /**
  * Get authentification cookie name.
@@ -132,16 +172,30 @@ export const validateAccessToken = async (socialSignInType: bookcarsTypes.Social
   }
 
   if (socialSignInType === bookcarsTypes.SocialSignInType.Google) {
-    try {
-      const res = await axios.get(
-        'https://www.googleapis.com/oauth2/v3/tokeninfo',
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      )
-      return res.data.email === email
-    } catch {
-      return false
+    const isJWT = token.split('.').length === 3
+    if (isJWT) {
+      try {
+        const ticket = await client.verifyIdToken({
+          idToken: token,
+          audience: env.GOOGLE_CLIENT_ID,
+        })
+        const payload = ticket.getPayload()
+        return payload?.email === email
+      } catch (err) {
+        console.error(err)
+        return false
+      }
+    } else {
+      try {
+        const res = await axios.get(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`)
+        if (res.status === 200) {
+          return res.data.email === email
+        }
+        return false
+      } catch (err) {
+        console.error(err)
+        return false
+      }
     }
   }
 

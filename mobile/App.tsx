@@ -108,7 +108,21 @@ const App = () => {
       console.log('DEBUG: setTimeout fired, setting appIsReady to true')
       setAppIsReady(true)
     }, 500)
-    return () => clearTimeout(timer)
+
+    //
+    // Fallback: Force hide splash screen after 5 seconds
+    // to prevent the app from getting stuck on the orange screen
+    // if the API or navigation fails to load.
+    //
+    const fallbackTimer = setTimeout(() => {
+      console.log('DEBUG: Fallback Hiding Splash Screen after 5s')
+      SplashScreen.hideAsync().catch(() => { })
+    }, 5000)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(fallbackTimer)
+    }
   }, [])
 
   const onReady = useCallback(() => {
@@ -117,13 +131,13 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    if (appIsReady && isNavReady) {
+    if (appIsReady) {
       console.log('DEBUG: Hiding Splash Screen now')
       SplashScreen.hideAsync().catch((err) => {
         console.log('DEBUG: Error hiding splash screen:', err)
       })
     }
-  }, [appIsReady, isNavReady])
+  }, [appIsReady])
 
   return (
     <SettingProvider>

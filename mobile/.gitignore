@@ -96,3 +96,7 @@ ios/
 *.tsbuildinfo
 
 .eslintcache
+
+# Local misc
+keytool_output.txt
+keytool_output_v3.txt

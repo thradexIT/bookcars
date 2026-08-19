@@ -2,6 +2,7 @@ import path from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { createHtmlPlugin } from 'vite-plugin-html'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
@@ -25,6 +26,7 @@ export default ({ mode }: { mode: string }) => {
           },
         },
       }),
+      basicSsl(),
     ],
 
     resolve: {
@@ -43,6 +45,7 @@ export default ({ mode }: { mode: string }) => {
     },
 
     server: {
+      https: {},
       host: '0.0.0.0',
       port: Number.parseInt(process.env.VITE_PORT || '3002', 10),
       watch: {
@@ -50,7 +53,7 @@ export default ({ mode }: { mode: string }) => {
         interval: 500,
       },
       hmr: {
-        protocol: 'ws',
+        protocol: 'wss',
         host: process.env.VITE_HMR_HOST || 'localhost',
         port: Number.parseInt(process.env.VITE_HMR_PORT || '8080', 10),
         clientPort: Number.parseInt(process.env.VITE_HMR_CLIENT_PORT || '8080', 10),

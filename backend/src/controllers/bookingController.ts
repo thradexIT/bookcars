@@ -5,6 +5,7 @@ import { Request, Response } from 'express'
 import nodemailer from 'nodemailer'
 import path from 'node:path'
 import asyncFs from 'node:fs/promises'
+import PDFDocument from 'pdfkit'
 import * as bookcarsTypes from ':bookcars-types'
 import i18n from '../lang/i18n'
 import Booking from '../models/Booking'
@@ -21,6 +22,67 @@ import * as mailHelper from '../utils/mailHelper'
 import * as env from '../config/env.config'
 import * as logger from '../utils/logger'
 import stripeAPI from '../payment/stripe'
+import odooService from '../services/odooService'
+import * as socketService from '../services/socketService'
+
+/**
+ * Creates an Odoo Purchase Order for a given booking.
+ */
+const createOdooOrderForBooking = async (booking: any) => {
+  try {
+    const companies = await odooService.searchCompanies()
+    if (!companies.length) {
+      logger.error('No companies found in Odoo')
+      return
+    }
+
+    const mecanica = companies.find((c: any) => c.name === 'MECANICA SA')
+    if (!mecanica || !mecanica.partner_id) {
+      logger.error('MECANICA SA company or partner not found in Odoo')
+      return
+    }
+
+    // partner_id is returned as [id, name] since it's a many2one field
+    const partner_id = mecanica.partner_id[0]
+
+    // Use THRADEX or the first available company that is not MECANICA as the buyer
+    const buyerCompany = companies.find((c: any) => c.name.includes('THRADEX')) || companies[0]
+    const company_id = buyerCompany.id
+
+    const products = await odooService.getProducts()
+    let product_id = null
+    if (products.length > 0) {
+      // Intentar encontrar un servicio que se llame algo relacionado a MECANICA o Servicio
+      const serviceProd = products.find((p: any) => p.name && (p.name.toUpperCase().includes('MECANICA') || p.name.toUpperCase().includes('REPARACION') || p.name.toUpperCase().includes('SERVICIO')))
+      product_id = serviceProd ? serviceProd.id : products[0].id
+    }
+
+    if (!product_id) {
+      logger.error('No products found in Odoo')
+      return
+    }
+
+    const car = await Car.findById(booking.car)
+    const description = car ? `Reserva ${booking._id} (${car.name})` : `Reserva ${booking._id}`
+
+    const orderId = await odooService.createOrder({
+      partner_id,
+      company_id,
+      product_id,
+      qty: 1,
+      price: booking.price, // Assuming the PO takes the full price for now
+      description,
+    })
+
+    await odooService.confirmOrder(orderId)
+
+    booking.odooOrderId = orderId
+    await booking.save()
+    logger.info(`Odoo purchase order ${orderId} created and confirmed for booking ${booking._id}`)
+  } catch (err) {
+    logger.error('Error creating Odoo purchase order for booking ' + booking._id, err)
+  }
+}
 
 /**
  * Create a Booking.
@@ -34,6 +96,28 @@ import stripeAPI from '../payment/stripe'
 export const create = async (req: Request, res: Response) => {
   try {
     const { body }: { body: bookcarsTypes.UpsertBookingPayload } = req
+
+    const activeStatuses = [
+      bookcarsTypes.BookingStatus.Pending,
+      bookcarsTypes.BookingStatus.Deposit,
+      bookcarsTypes.BookingStatus.Paid,
+      bookcarsTypes.BookingStatus.PaidInFull,
+      bookcarsTypes.BookingStatus.Reserved,
+    ]
+    const conflictingBooking = await Booking.findOne({
+      car: new mongoose.Types.ObjectId(body.booking.car as string),
+      status: { $in: activeStatuses },
+      $and: [
+        { from: { $lt: new Date(body.booking.to) } },
+        { to: { $gt: new Date(body.booking.from) } }
+      ]
+    })
+    
+    if (conflictingBooking) {
+      res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+      return
+    }
+
     if (body.booking.additionalDriver) {
       const additionalDriver = new AdditionalDriver(body.additionalDriver)
       await additionalDriver.save()
@@ -43,6 +127,13 @@ export const create = async (req: Request, res: Response) => {
     const booking = new Booking(body.booking)
 
     await booking.save()
+
+    // Notify connected clients that a booking was created to refresh grids
+    socketService.notifyBookingCreated(booking._id.toString())
+
+    // Create Odoo order asynchronously
+    createOdooOrderForBooking(booking)
+
     res.json(booking)
   } catch (err) {
     logger.error(`[booking.create] ${i18n.t('DB_ERROR')} ${JSON.stringify(req.body)}`, err)
@@ -60,7 +151,7 @@ export const create = async (req: Request, res: Response) => {
  * @param {boolean} notificationMessage
  * @returns {void}
  */
-export const notify = async (driver: env.User, bookingId: string, user: env.User, notificationMessage: string) => {
+export const notify = async (driver: env.User, bookingId: string, user: env.User, notificationMessage: string, req?: Request) => {
   i18n.locale = user.language
 
   // notification
@@ -81,6 +172,9 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
     await counter.save()
   }
 
+  // send real-time notification
+  socketService.notifyUser(user._id.toString(), message)
+
   // mail
   if (user.enableEmailNotifications) {
     const mailOptions: nodemailer.SendMailOptions = {
@@ -90,7 +184,7 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
       html: `<p>
     ${i18n.t('HELLO')}${user.fullName},<br><br>
     ${message}<br><br>
-    ${helper.joinURL(env.ADMIN_HOST, `update-booking?b=${bookingId}`)}<br><br>
+    ${helper.joinURL(helper.getAdminHost(req), `update-booking?b=${bookingId}`)}<br><br>
     ${i18n.t('REGARDS')}<br>
     </p>`,
     }
@@ -108,7 +202,7 @@ export const notify = async (driver: env.User, bookingId: string, user: env.User
  * @param {boolean} payLater
  * @returns {unknown}
  */
-export const confirm = async (user: env.User, supplier: env.User, booking: env.Booking, payLater: boolean) => {
+export const confirm = async (user: env.User, supplier: env.User, booking: env.Booking, payLater: boolean, req?: Request) => {
   const { language } = user
   const locale = language === 'fr' ? 'fr-FR' : 'en-US'
   const options: Intl.DateTimeFormatOptions = {
@@ -164,7 +258,7 @@ export const confirm = async (user: env.User, supplier: env.User, booking: env.B
       + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART8')}<br><br>`
       + `${i18n.t('BOOKING_CONFIRMED_PART9')}${car.supplier.fullName}${i18n.t('BOOKING_CONFIRMED_PART10')}${dropOffLocationName}${i18n.t('BOOKING_CONFIRMED_PART11')}`
       + `${to} ${i18n.t('BOOKING_CONFIRMED_PART12')}`
-      + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART13')}<br><br>${i18n.t('BOOKING_CONFIRMED_PART14')}${env.FRONTEND_HOST}<br><br>
+      + `<br><br>${i18n.t('BOOKING_CONFIRMED_PART13')}<br><br>${i18n.t('BOOKING_CONFIRMED_PART14')}${helper.getFrontendHost(req)}<br><br>
         ${i18n.t('REGARDS')}<br>
         </p>`,
   }
@@ -198,6 +292,27 @@ export const checkout = async (req: Request, res: Response) => {
 
     if (!body.booking) {
       throw new Error('Booking not found')
+    }
+
+    const activeStatuses = [
+      bookcarsTypes.BookingStatus.Pending,
+      bookcarsTypes.BookingStatus.Deposit,
+      bookcarsTypes.BookingStatus.Paid,
+      bookcarsTypes.BookingStatus.PaidInFull,
+      bookcarsTypes.BookingStatus.Reserved,
+    ]
+    const conflictingBooking = await Booking.findOne({
+      car: new mongoose.Types.ObjectId(body.booking.car as string),
+      status: { $in: activeStatuses },
+      $and: [
+        { from: { $lt: new Date(body.booking.to) } },
+        { to: { $gt: new Date(body.booking.from) } }
+      ]
+    })
+    
+    if (conflictingBooking) {
+      res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+      return
     }
 
     const supplier = await User.findById(body.booking.supplier)
@@ -243,7 +358,7 @@ export const checkout = async (req: Request, res: Response) => {
         html: `<p>
         ${i18n.t('HELLO')}${user.fullName},<br><br>
         ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
-        ${helper.joinURL(env.FRONTEND_HOST, 'activate')}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
+        ${helper.joinURL(helper.getFrontendHost(req), 'activate')}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
         ${i18n.t('REGARDS')}<br>
         </p>`,
       }
@@ -336,6 +451,9 @@ export const checkout = async (req: Request, res: Response) => {
     const booking = new Booking(body.booking)
 
     await booking.save()
+    
+    // Notify connected clients that a booking was created/updated (during checkout)
+    socketService.notifyBookingUpdated(booking._id.toString())
 
     if (booking.status === bookcarsTypes.BookingStatus.Paid && body.paymentIntentId && body.customerId) {
       const car = await Car.findById(booking.car)
@@ -347,13 +465,16 @@ export const checkout = async (req: Request, res: Response) => {
     }
 
     if (body.payLater || (booking.status === bookcarsTypes.BookingStatus.Paid && body.paymentIntentId && body.customerId)) {
+      // Create Odoo order asynchronously
+      createOdooOrderForBooking(booking)
+
       // Mark car as fully booked
       // if (env.MARK_CAR_AS_FULLY_BOOKED_ON_CHECKOUT) {
       //   await Car.updateOne({ _id: booking.car }, { fullyBooked: false })
       // }
 
       // Send confirmation email to customer
-      if (!(await confirm(user, supplier, booking, body.payLater))) {
+      if (!(await confirm(user, supplier, booking, body.payLater, req))) {
         res.sendStatus(400)
         return
       }
@@ -361,14 +482,14 @@ export const checkout = async (req: Request, res: Response) => {
       // Notify supplier
       i18n.locale = supplier.language
       let message = body.payLater ? i18n.t('BOOKING_PAY_LATER_NOTIFICATION') : i18n.t('BOOKING_PAID_NOTIFICATION')
-      await notify(user, booking._id.toString(), supplier, message)
+      await notify(user, booking._id.toString(), supplier, message, req)
 
       // Notify admin
       const admin = !!env.ADMIN_EMAIL && (await User.findOne({ email: env.ADMIN_EMAIL, type: bookcarsTypes.UserType.Admin }))
       if (admin) {
         i18n.locale = admin.language
         message = body.payLater ? i18n.t('BOOKING_PAY_LATER_NOTIFICATION') : i18n.t('BOOKING_PAID_NOTIFICATION')
-        await notify(user, booking._id.toString(), admin, message)
+        await notify(user, booking._id.toString(), admin, message, req)
       }
     }
 
@@ -384,9 +505,10 @@ export const checkout = async (req: Request, res: Response) => {
  *
  * @async
  * @param {env.Booking} booking
+ * @param {Request} [req]
  * @returns {void}
  */
-const notifyDriver = async (booking: env.Booking) => {
+const notifyDriver = async (booking: env.Booking, req?: Request) => {
   const driver = await User.findById(booking.driver)
   if (!driver) {
     logger.info(`Driver ${booking.driver} not found`)
@@ -412,6 +534,9 @@ const notifyDriver = async (booking: env.Booking) => {
     await counter.save()
   }
 
+  // send real-time notification
+  socketService.notifyUser(driver._id.toString(), message)
+
   // mail
   if (driver.enableEmailNotifications) {
     const mailOptions: nodemailer.SendMailOptions = {
@@ -421,7 +546,7 @@ const notifyDriver = async (booking: env.Booking) => {
       html: `<p>
     ${i18n.t('HELLO')}${driver.fullName},<br><br>
     ${message}<br><br>
-    ${helper.joinURL(env.FRONTEND_HOST, `booking?b=${booking._id}`)}<br><br>
+    ${helper.joinURL(helper.getFrontendHost(req), `booking?b=${booking._id}`)}<br><br>
     ${i18n.t('REGARDS')}<br>
     </p>`,
     }
@@ -504,6 +629,31 @@ export const update = async (req: Request, res: Response) => {
     const booking = await Booking.findById(body.booking._id)
 
     if (booking) {
+      const activeStatuses = [
+        bookcarsTypes.BookingStatus.Pending,
+        bookcarsTypes.BookingStatus.Deposit,
+        bookcarsTypes.BookingStatus.Paid,
+        bookcarsTypes.BookingStatus.PaidInFull,
+        bookcarsTypes.BookingStatus.Reserved,
+      ]
+      
+      if (activeStatuses.includes(body.booking.status as bookcarsTypes.BookingStatus)) {
+        const conflictingBooking = await Booking.findOne({
+          _id: { $ne: booking._id },
+          car: new mongoose.Types.ObjectId(body.booking.car as string),
+          status: { $in: activeStatuses },
+          $and: [
+            { from: { $lt: new Date(body.booking.to) } },
+            { to: { $gt: new Date(body.booking.from) } }
+          ]
+        })
+        
+        if (conflictingBooking) {
+          res.status(400).send(i18n.t('CAR_ALREADY_BOOKED'))
+          return
+        }
+      }
+
       if (!body.booking.additionalDriver && booking._additionalDriver) {
         await AdditionalDriver.deleteOne({ _id: booking._additionalDriver })
       }
@@ -587,10 +737,13 @@ export const update = async (req: Request, res: Response) => {
       }
 
       await booking.save()
+      
+      // Notify connected clients that a booking was updated
+      socketService.notifyBookingUpdated(booking._id.toString())
 
       if (previousStatus !== status) {
         // notify driver
-        await notifyDriver(booking)
+        await notifyDriver(booking, req)
       }
 
       res.json(booking)
@@ -627,8 +780,13 @@ export const updateStatus = async (req: Request, res: Response) => {
 
     for (const booking of bookings) {
       if (booking.status !== status) {
-        await notifyDriver(booking)
+        await notifyDriver(booking, req)
       }
+    }
+    
+    // Notify connected clients
+    for (const id of ids) {
+      socketService.notifyBookingUpdated(id.toString())
     }
 
     res.sendStatus(200)
@@ -660,6 +818,11 @@ export const deleteBookings = async (req: Request, res: Response) => {
     await Booking.deleteMany({ _id: { $in: ids } })
     const additionalDivers = bookings.map((booking) => new mongoose.Types.ObjectId(booking._additionalDriver))
     await AdditionalDriver.deleteMany({ _id: { $in: additionalDivers } })
+
+    // Notify connected clients
+    for (const id of ids) {
+      socketService.notifyBookingDeleted(id.toString())
+    }
 
     res.sendStatus(200)
   } catch (err) {
@@ -1097,3 +1260,460 @@ export const cancelBooking = async (req: Request, res: Response) => {
     res.status(400).send(i18n.t('DB_ERROR') + err)
   }
 }
+
+/**
+ * Download Purchase Order PDF for a booking
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const downloadPurchaseOrder = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking || !booking.odooOrderId) {
+      res.status(404).send('Purchase Order not found')
+      return
+    }
+
+    const pdfBuffer = await odooService.generatePdf(booking.odooOrderId)
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename=purchase_order_${booking.odooOrderId}.pdf`)
+    res.send(pdfBuffer)
+  } catch (err) {
+    logger.error(`[booking.downloadPurchaseOrder] Error generating PDF for booking ${id}`, err)
+    res.status(500).send('Error generating PDF')
+  }
+}
+
+/**
+ * Download Checkout Report PDF.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const downloadCheckoutReport = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id)
+      .populate<{ car: env.CarInfo }>('car')
+      .populate<{ driver: env.User }>('driver')
+      .populate<{ pickupLocation: env.LocationInfo }>({
+        path: 'pickupLocation',
+        populate: { path: 'values', model: 'LocationValue' },
+      })
+
+    if (!booking || booking.kmOut === undefined) {
+      res.status(404).send('Checkout report not found')
+      return
+    }
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4' })
+    const buffers: Buffer[] = []
+
+    doc.on('data', buffers.push.bind(buffers))
+    doc.on('end', () => {
+      const pdfData = Buffer.concat(buffers)
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename=inspeccion_salida_${id.slice(-6)}.pdf`)
+      res.send(pdfData)
+    })
+
+    // --- Draw Header Gradient ---
+    const gradient = doc.linearGradient(0, 0, 612, 120)
+    gradient.stop(0, '#1565c0')
+    gradient.stop(1, '#0d47a1')
+    doc.rect(0, 0, 612, 130).fill(gradient)
+    
+    // Header Content
+    doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('ACTA DE INSPECCIÓN DE SALIDA', 50, 45, { characterSpacing: 1 })
+    doc.fontSize(28).font('Helvetica-Bold').text('Reporte de Entrega', 50, 60)
+    doc.fillColor('#e3f2fd').fontSize(10).font('Helvetica').text('Thradex SAC • Gestión de Flota Automotriz', 50, 95)
+
+    // Meta Box
+    doc.fillColor('#ffffff').fontSize(9).font('Helvetica').text('RESERVA:', 420, 50)
+    doc.font('Helvetica-Bold').text(id.toUpperCase(), 420, 62)
+    doc.font('Helvetica').text('FECHA:', 420, 80)
+    doc.font('Helvetica-Bold').text(new Date().toLocaleDateString('es-PE'), 420, 92)
+
+    doc.moveDown(6)
+
+    // --- Content Card (Rounded White Area) ---
+    const contentY = 145
+    doc.fillColor('#f0f2f5').rect(30, contentY, 552, 650).fill() // Background under cards if needed
+
+    // --- Data Cards ---
+    const startY = 160
+    doc.fillColor('#1565c0').fontSize(9).font('Helvetica-Bold').text('INFORMACIÓN GENERAL', 50, startY, { characterSpacing: 1 })
+    
+    // Conductor Card
+    doc.roundedRect(50, startY + 15, 160, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').lineWidth(0.5).stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('CONDUCTOR', 65, startY + 28)
+    doc.fillColor('#1a1a2e').fontSize(10).font('Helvetica-Bold').text(booking.driver?.fullName || '---', 65, startY + 40, { width: 130 })
+
+    // Vehiculo Card
+    doc.roundedRect(220, startY + 15, 160, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('VEHÍCULO / MODELO', 235, startY + 28)
+    doc.fillColor('#1a1a2e').fontSize(10).font('Helvetica-Bold').text(booking.car?.name || '---', 235, startY + 40, { width: 130 })
+
+    // Placa Card
+    doc.roundedRect(390, startY + 15, 172, 50, 8).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(7).font('Helvetica-Bold').text('PLACA DE RODAJE', 405, startY + 28)
+    doc.fillColor('#1565c0').fontSize(14).font('Helvetica-Bold').text(booking.car?.licensePlate || '---', 405, startY + 40)
+
+    doc.moveDown(6)
+
+    // --- Metrics Section ---
+    const metricsY = doc.y + 20
+    doc.fillColor('#1565c0').fontSize(9).font('Helvetica-Bold').text('MÉTRICAS DEL VEHÍCULO', 50, metricsY, { characterSpacing: 1 })
+    
+    // KM Card
+    doc.roundedRect(50, metricsY + 15, 250, 70, 10).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(8).font('Helvetica-Bold').text('KILOMETRAJE DE SALIDA', 70, metricsY + 35)
+    doc.fillColor('#1565c0').fontSize(24).font('Helvetica-Bold').text(`${booking.kmOut.toLocaleString('es-PE')} km`, 70, metricsY + 50)
+
+    // Fuel Card
+    doc.roundedRect(310, metricsY + 15, 252, 70, 10).fill('#ffffff').strokeColor('#e0e0e0').stroke()
+    doc.fillColor('#78909c').fontSize(8).font('Helvetica-Bold').text('NIVEL DE COMBUSTIBLE', 330, metricsY + 35)
+    doc.fillColor('#1565c0').fontSize(24).font('Helvetica-Bold').text(`${booking.fuelOut}%`, 330, metricsY + 50)
+    
+    // Fuel Bar
+    const fuelVal = parseInt(booking.fuelOut || '0', 10)
+    doc.roundedRect(330, metricsY + 68, 210, 5, 2).fill('#eceff1')
+    doc.roundedRect(330, metricsY + 68, (210 * fuelVal) / 100, 5, 2).fill('#4caf50')
+
+    // --- Remarks Section ---
+    if (booking.remarksOut) {
+      doc.moveDown(7)
+      const remarksY = doc.y
+      doc.rect(50, remarksY, 512, 45).fill('#fff3e0').strokeColor('#ffe0b2').stroke()
+      doc.fillColor('#e65100').fontSize(7).font('Helvetica-Bold').text('OBSERVACIÓN DE RESPONSABILIDAD', 60, remarksY + 10)
+      doc.fillColor('#455a64').fontSize(9).font('Helvetica-Oblique').text(booking.remarksOut, 60, remarksY + 22, { width: 490, lineGap: 1.2 })
+    }
+
+    // --- Photo Grid ---
+    doc.moveDown(5)
+    const photoY = doc.y + 10
+    doc.fillColor('#1565c0').fontSize(10).font('Helvetica-Bold').text('REGISTRO FOTOGRÁFICO', 50, photoY, { characterSpacing: 1 })
+    
+    if (booking.picturesOut && booking.picturesOut.length > 0) {
+      let currentX = 50
+      let currentY = photoY + 20
+      const photoWidth = 164
+      const photoHeight = 124
+      const labels = ['Frontal', 'Trasera', 'Lat. Izqu.', 'Lat. Der.', 'Interior', 'Tablero', 'Km Tablero']
+
+      for (let i = 0; i < booking.picturesOut.length; i++) {
+        const pic = booking.picturesOut[i]
+        const [field, filename] = pic.includes('|') ? pic.split('|') : [null, pic]
+        const filepath = path.join(env.CDN_CARS, filename)
+
+        try {
+          doc.rect(currentX, currentY, photoWidth, photoHeight).fill('#fff').strokeColor('#e3eaf5').lineWidth(1).stroke()
+          doc.image(filepath, currentX + 2, currentY + 2, { width: photoWidth - 4, height: photoHeight - 4, fit: [photoWidth - 4, photoHeight - 4] })
+          
+          let label = 'Foto'
+          if (field) {
+            const index = field.startsWith('photo_') ? (field === 'photo_km' ? 6 : parseInt(field.split('_')[1], 10)) : -1
+            label = labels[index] || 'Foto'
+          }
+          
+          doc.rect(currentX, currentY + photoHeight - 14, photoWidth, 14).fill('#1565c0')
+          doc.fillColor('#ffffff').fontSize(7).font('Helvetica-Bold').text(label.toUpperCase(), currentX + 5, currentY + photoHeight - 9, { characterSpacing: 1 })
+
+          currentX += photoWidth + 10
+          if (currentX > 500) {
+            currentX = 50
+            currentY += photoHeight + 15
+            if (currentY > 700) {
+              doc.addPage()
+              currentY = 50
+            }
+          }
+        } catch {
+          // Skip if image missing
+        }
+      }
+    }
+
+    // --- Signatures Page ---
+    doc.addPage()
+    doc.fillColor('#1565c0').fontSize(10).font('Helvetica-Bold').text('FIRMAS Y CONFORMIDAD', 50, 50, { characterSpacing: 1 })
+    doc.moveTo(50, 65).lineTo(562, 65).strokeColor('#e3eaf5').stroke()
+    
+    const sigY = 90
+    const sigW = 240
+    const sigH = 120
+
+    // Conductor
+    doc.rect(50, sigY, sigW, sigH).strokeColor('#e3eaf5').dash(2, { space: 2 }).stroke().undash()
+    if (booking.signatureDriver) {
+      try {
+        const base64Data = booking.signatureDriver.replace(/^data:image\/png;base64,/, '')
+        doc.image(Buffer.from(base64Data, 'base64'), 60, sigY + 10, { width: sigW - 20, height: sigH - 20 })
+      } catch {
+        // ignore
+      }
+    }
+    doc.fillColor('#1a1a2e').fontSize(9).font('Helvetica-Bold').text('FIRMA DEL CONDUCTOR', 50, sigY + sigH + 10, { width: sigW, align: 'center' })
+
+    // Representante
+    doc.rect(310, sigY, sigW, sigH).strokeColor('#e3eaf5').dash(2, { space: 2 }).stroke().undash()
+    if (booking.signatureRep) {
+      try {
+        const base64Data = booking.signatureRep.replace(/^data:image\/png;base64,/, '')
+        doc.image(Buffer.from(base64Data, 'base64'), 320, sigY + 10, { width: sigW - 20, height: sigH - 20 })
+      } catch {
+        // ignore
+      }
+    }
+    doc.fillColor('#1a1a2e').fontSize(9).font('Helvetica-Bold').text('FIRMA REPRESENTANTE', 310, sigY + sigH + 10, { width: sigW, align: 'center' })
+
+    doc.fillColor('#90a4ae').fontSize(8).font('Helvetica').text('Este documento es una copia digital del acta de inspección original. Las firmas digitales son legalmente vinculantes.', 50, 750, { align: 'center' })
+
+    doc.end()
+  } catch (err) {
+    logger.error(`[booking.downloadCheckoutReport] Error generating PDF for booking ${id}`, err)
+    res.status(500).send('Error generating PDF report')
+  }
+}
+
+/**
+ * Handle Booking checkout departure
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const checkoutDeparture = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id).populate<{ car: env.Car }>('car')
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    const kmOut = Number(req.body.kmOut)
+    const fuelOut = req.body.fuelOut
+    const remarksOut = req.body.remarksOut
+    const files = req.files as any
+
+    booking.kmOut = kmOut
+    booking.fuelOut = fuelOut
+    booking.remarksOut = remarksOut
+    
+    // Process files
+    if (files && files.length > 0) {
+      const picturesOut: string[] = []
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const carName = booking.car ? booking.car.name.replace(/[^a-zA-Z0-9]/g, '-') : 'auto'
+        const filename = `${carName}-checkout-${id}-${Date.now()}-${i}${path.extname(file.originalname || '.jpg')}`
+        const filepath = path.join(env.CDN_CARS, filename)
+        
+        await asyncFs.writeFile(filepath, file.buffer)
+        // Guardamos el fieldname para saber qué slot es (ej: photo_0|nombre.jpg)
+        picturesOut.push(`${file.fieldname}|${filename}`)
+      }
+      
+      booking.picturesOut = picturesOut
+    }
+
+    // Update status to indicate checkout is done, e.g., to "Reserved" or "PaidInFull"? 
+    // We will just keep the current status or let the frontend trigger a status update if needed,
+    // but saving kmOut and fuelOut is the primary goal here.
+    
+    await booking.save()
+
+    res.json(booking)
+  } catch (err) {
+    logger.error(`[booking.checkoutDeparture] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+
+/**
+ * Checkin return
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const checkinReturn = async (req: Request, res: Response) => {
+  const { id } = req.params
+
+  try {
+    const booking = await Booking.findById(id).populate<{ car: env.Car }>('car')
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    const kmIn = Number(req.body.kmIn)
+    const fuelIn = req.body.fuelIn
+    const remarksIn = req.body.remarksIn
+    const files = req.files as any
+
+    booking.kmIn = kmIn
+    booking.fuelIn = fuelIn
+    booking.remarksIn = remarksIn
+    
+    // Process files
+    if (files && files.length > 0) {
+      const picturesIn: string[] = []
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const carName = booking.car ? booking.car.name.replace(/[^a-zA-Z0-9]/g, '-') : 'auto'
+        const filename = `${carName}-checkin-${id}-${Date.now()}-${i}${path.extname(file.originalname || '.jpg')}`
+        const filepath = path.join(env.CDN_CARS, filename)
+        
+        await asyncFs.writeFile(filepath, file.buffer)
+        picturesIn.push(`${file.fieldname}|${filename}`)
+      }
+      
+      booking.picturesIn = picturesIn
+    }
+
+    await booking.save()
+
+    res.json(booking)
+  } catch (err) {
+    logger.error(`[booking.checkinReturn] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+
+/**
+ * Save digital signatures for a booking checkout or checkin.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const saveSignatures = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const { 
+    signatureDriver, signatureRep,
+    signatureDriverIn, signatureRepIn
+  } = req.body as { 
+    signatureDriver?: string; signatureRep?: string;
+    signatureDriverIn?: string; signatureRepIn?: string;
+  }
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    if (signatureDriver !== undefined) {
+      booking.signatureDriver = signatureDriver
+    }
+    if (signatureRep !== undefined) {
+      booking.signatureRep = signatureRep
+    }
+    if (signatureDriverIn !== undefined) {
+      booking.signatureDriverIn = signatureDriverIn
+    }
+    if (signatureRepIn !== undefined) {
+      booking.signatureRepIn = signatureRepIn
+    }
+
+    await booking.save()
+    res.json({ ok: true })
+  } catch (err) {
+    logger.error(`[booking.saveSignatures] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+
+/**
+ * Update the verification status of inspection pictures.
+ *
+ * @export
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {unknown}
+ */
+export const verifyInspection = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const { 
+    picturesOutVerified, 
+    picturesInVerified, 
+    verificationRemarks 
+  } = req.body
+
+  try {
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      res.status(404).send('Booking not found')
+      return
+    }
+
+    if (picturesOutVerified !== undefined) {
+      booking.picturesOutVerified = picturesOutVerified
+    }
+    if (picturesInVerified !== undefined) {
+      booking.picturesInVerified = picturesInVerified
+    }
+    if (verificationRemarks !== undefined) {
+      booking.verificationRemarks = verificationRemarks
+    }
+
+    await booking.save()
+
+    const updatedBooking = await Booking.findById(id)
+      .populate<{ supplier: env.UserInfo }>('supplier')
+      .populate<{ car: env.CarInfo }>({
+        path: 'car',
+        populate: {
+          path: 'supplier',
+          model: 'User',
+        },
+      })
+      .populate<{ driver: env.User }>('driver')
+      .populate<{ pickupLocation: env.LocationInfo }>({
+        path: 'pickupLocation',
+        populate: {
+          path: 'values',
+          model: 'LocationValue',
+        },
+      })
+      .populate<{ dropOffLocation: env.LocationInfo }>({
+        path: 'dropOffLocation',
+        populate: {
+          path: 'values',
+          model: 'LocationValue',
+        },
+      })
+      .populate<{ _additionalDriver: env.AdditionalDriver }>('_additionalDriver')
+      .lean()
+
+    res.json(updatedBooking)
+  } catch (err) {
+    logger.error(`[booking.verifyInspection] ${i18n.t('DB_ERROR')} ${id}`, err)
+    res.status(400).send(i18n.t('DB_ERROR') + err)
+  }
+}
+

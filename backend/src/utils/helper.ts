@@ -3,6 +3,7 @@ import asyncFs from 'node:fs/promises'
 import path from 'node:path'
 import mongoose from 'mongoose'
 import validator from 'validator'
+import * as env from '../config/env.config'
 import Stripe from 'stripe'
 import { nanoid } from 'nanoid'
 
@@ -114,6 +115,40 @@ export const joinURL = (part1: string, part2: string): string => {
   }
 
   return `${p1}/${p2}`
+}
+
+/**
+ * Get frontend host.
+ *
+ * @param {?Request} [req]
+ * @returns {string}
+ */
+export const getFrontendHost = (req?: any): string => {
+  const host = (req?.headers?.origin || req?.headers?.referer) as string
+  if (host) {
+    const trimmedHost = trimEnd(host, '/')
+    if (trimmedHost.includes('thradex.com') || trimmedHost.includes('165.1.122.9')) {
+      return trimmedHost
+    }
+  }
+  return trimEnd(env.FRONTEND_HOST || 'https://rentacar.thradex.com', '/')
+}
+
+/**
+ * Get admin host.
+ *
+ * @param {?Request} [req]
+ * @returns {string}
+ */
+export const getAdminHost = (req?: any): string => {
+  const host = (req?.headers?.origin || req?.headers?.referer) as string
+  if (host) {
+    const trimmedHost = trimEnd(host, '/')
+    if (trimmedHost.includes('thradex.com') || trimmedHost.includes('165.1.122.9')) {
+      return trimmedHost
+    }
+  }
+  return trimEnd(env.ADMIN_HOST, '/')
 }
 
 /**
