@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import {
   DataGrid,
   GridColDef,
@@ -9,7 +9,6 @@ import {
 import {
   Tooltip,
   IconButton,
-  Link,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,6 +27,7 @@ import * as bookcarsTypes from ':bookcars-types'
 import * as bookcarsHelper from ':bookcars-helper'
 import env from '@/config/env.config'
 import { strings as commonStrings } from '@/lang/common'
+import { strings as clientTypeStrings } from '@/lang/client-types'
 import { strings } from '@/lang/user-list'
 import * as helper from '@/utils/helper'
 import * as UserService from '@/services/UserService'
@@ -217,10 +217,10 @@ const UserList = ({
           }
 
           return (
-            <Link href={`/user?u=${row._id}`} className="us-user">
+            <RouterLink to={`/user?u=${row._id}`} className="us-user">
               <span className="us-avatar">{userAvatar}</span>
               <span>{value}</span>
-            </Link>
+            </RouterLink>
           )
         },
         valueGetter: (value: string) => value,
@@ -236,6 +236,15 @@ const UserList = ({
         headerName: commonStrings.PHONE,
         flex: 1,
         valueGetter: (value: string) => value,
+      },
+      {
+        field: 'clientType',
+        headerName: clientTypeStrings.CLIENT_TYPE,
+        flex: 1,
+        renderCell: ({ value }: GridRenderCellParams<bookcarsTypes.User, bookcarsTypes.ClientType>) => (
+          <span className="bs">{value?.name}</span>
+        ),
+        valueGetter: (value: bookcarsTypes.ClientType) => value,
       },
       {
         field: 'type',

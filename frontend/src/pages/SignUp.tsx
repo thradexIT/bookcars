@@ -245,7 +245,7 @@ const SignUp = () => {
                 </table>
               </div>
 
-              <SocialLogin redirectToHomepage />
+              <SocialLogin redirectToHomepage onAccountNotActivated={() => setError('root', { message: commonStrings.ACCOUNT_NOT_ACTIVATED })} />
 
               <div className="buttons">
                 <Button type="submit" variant="contained" className="btn-primary btn-margin-bottom" disabled={isSubmitting}>

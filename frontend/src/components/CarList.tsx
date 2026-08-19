@@ -45,6 +45,7 @@ interface CarListProps {
   includeAlreadyBookedCars?: boolean
   includeComingSoonCars?: boolean
   onLoad?: bookcarsTypes.DataEvent<bookcarsTypes.Car>
+  clientType?: string
 }
 
 const CarList = ({
@@ -76,6 +77,7 @@ const CarList = ({
   includeAlreadyBookedCars,
   includeComingSoonCars,
   onLoad,
+  clientType,
 }: CarListProps) => {
   const [init, setInit] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -257,6 +259,7 @@ const CarList = ({
                   hideSupplier={hideSupplier}
                   sizeAuto={sizeAuto}
                   hidePrice={hidePrice}
+                  clientType={clientType}
                 />
               ))}
             </>

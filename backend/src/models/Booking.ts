@@ -111,6 +111,56 @@ const bookingSchema = new Schema<env.Booking>(
     paypalOrderId: {
       type: String,
     },
+    odooOrderId: {
+      type: Number,
+    },
+    kmOut: {
+      type: Number,
+    },
+    fuelOut: {
+      type: String,
+    },
+    picturesOut: {
+      type: [String],
+    },
+    signatureDriver: {
+      type: String,
+    },
+    signatureRep: {
+      type: String,
+    },
+    remarksOut: {
+      type: String,
+    },
+    kmIn: {
+      type: Number,
+    },
+    fuelIn: {
+      type: String,
+    },
+    picturesIn: {
+      type: [String],
+    },
+    signatureDriverIn: {
+      type: String,
+    },
+    signatureRepIn: {
+      type: String,
+    },
+    remarksIn: {
+      type: String,
+    },
+    picturesOutVerified: {
+      type: Boolean,
+      default: false,
+    },
+    picturesInVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationRemarks: {
+      type: String,
+    },
     expireAt: {
       //
       // Bookings created from checkout with Stripe are temporary and

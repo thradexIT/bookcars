@@ -78,52 +78,50 @@ const AboutScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, 
 
           {/* Descripción */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Acerca de Nosotros</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('ABOUT_TITLE')}</Text>
             <Text style={styles.description}>
-              Somos una plataforma líder en alquiler de vehículos, comprometidos con brindarte
-              la mejor experiencia de movilidad. Con una amplia flota de vehículos y un servicio
-              de excelencia, facilitamos tus desplazamientos de manera segura, cómoda y confiable.
+              {i18n.t('ABOUT_DESCRIPTION')}
             </Text>
           </View>
 
           {/* Características principales */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Características Principales</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('FEATURES_TITLE')}</Text>
 
             <FeatureItem
               icon="🚗"
-              title="Amplia Flota de Vehículos"
-              description="Desde económicos hasta premium, encuentra el auto perfecto para ti"
+              title={i18n.t('FEATURE_FLEET_TITLE')}
+              description={i18n.t('FEATURE_FLEET_DESC')}
             />
 
             <FeatureItem
               icon="📱"
-              title="Reserva Fácil y Rápida"
-              description="Alquila tu vehículo en minutos desde tu smartphone"
+              title={i18n.t('FEATURE_EASY_TITLE')}
+              description={i18n.t('FEATURE_EASY_DESC')}
             />
 
             <FeatureItem
               icon="🔒"
-              title="Seguro y Confiable"
-              description="Todos nuestros vehículos cuentan con seguro completo"
+              title={i18n.t('FEATURE_SECURE_TITLE')}
+              description={i18n.t('FEATURE_SECURE_DESC')}
             />
 
             <FeatureItem
               icon="💳"
-              title="Pagos Seguros"
-              description="Múltiples métodos de pago con tecnología encriptada"
+              title={i18n.t('FEATURE_PAYMENT_TITLE')}
+              description={i18n.t('FEATURE_PAYMENT_DESC')}
             />
           </View>
 
           {/* Información de contacto y legal */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Información Legal</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('LEGAL_TITLE')}</Text>
 
             <TouchableOpacity
               style={styles.linkButton}
               onPress={() => navigation.navigate('ToS', { d: Date.now() })}
             >
-              <Text style={styles.linkText}>Términos de Servicio</Text>
+              <Text style={styles.linkText}>{i18n.t('TOS_TITLE')}</Text>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
 
@@ -131,7 +129,7 @@ const AboutScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, 
               style={styles.linkButton}
               onPress={() => handleLinkPress('https://www.thradex.com/privacy')}
             >
-              <Text style={styles.linkText}>Política de Privacidad</Text>
+              <Text style={styles.linkText}>{i18n.t('PRIVACY_POLICY')}</Text>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
 
@@ -139,14 +137,14 @@ const AboutScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, 
               style={styles.linkButton}
               onPress={() => handleLinkPress('https://www.thradex.com/licenses')}
             >
-              <Text style={styles.linkText}>Licencias de Código Abierto</Text>
+              <Text style={styles.linkText}>{i18n.t('OPEN_SOURCE_LICENSES')}</Text>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
           </View>
 
           {/* Redes sociales */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Síguenos</Text>
+            <Text style={styles.sectionTitle}>{i18n.t('FOLLOW_US')}</Text>
             <View style={styles.socialContainer}>
               <TouchableOpacity
                 style={styles.socialButton}
@@ -180,8 +178,8 @@ const AboutScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, 
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>© 2026 Rent a Car</Text>
-            <Text style={styles.footerText}>Hecho con ❤️ en Perú</Text>
+            <Text style={styles.footerText}>{i18n.t('FOOTER_COPYRIGHT')}</Text>
+            <Text style={styles.footerText}>{i18n.t('FOOTER_MADE_WITH')}</Text>
           </View>
         </ScrollView>
       )}

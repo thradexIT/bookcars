@@ -25,7 +25,8 @@ export const schema = z.object({
   minimumRentalDays: z.string().refine((val) => !val || /^\d+$/.test(val), { message: commonStrings.FIELD_NOT_VALID }).optional(),
   priceChangeRate: z.string().refine((val) => !val || /^-?\d+(\.\d+)?$/.test(val), { message: commonStrings.FIELD_NOT_VALID }).optional(),
   supplierCarLimit: z.string().refine((val) => !val || /^\d+$/.test(val), { message: commonStrings.FIELD_NOT_VALID }).optional(),
-  notifyAdminOnNewCar: z.boolean().optional()
+  notifyAdminOnNewCar: z.boolean().optional(),
+  clientType: z.string().optional()
 })
 
 export type FormFields = z.infer<typeof schema>

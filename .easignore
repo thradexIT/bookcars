@@ -88,3 +88,6 @@ dist/
 
 /mobile/android/
 /mobile/ios/
+
+# Force EAS to skip npm ci and use npm install
+package-lock.json

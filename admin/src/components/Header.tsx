@@ -34,6 +34,7 @@ import {
   CalendarMonth as SchedulerIcon,
   AccountBalance as BankDetailsIcon,
   MonetizationOn as PricingIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import * as bookcarsTypes from ':bookcars-types'
@@ -167,7 +168,7 @@ const Header = ({
 
   const handleSignout = async () => {
     handleMenuClose()
-    await UserService.signout()
+    await UserService.signout(true, navigate)
   }
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -374,6 +375,15 @@ const Header = ({
                   <ListItemIcon><PricingIcon /></ListItemIcon>
                   <ListItemText primary={strings.PRICING} />
                 </ListItem>
+                <ListItem
+                  onClick={() => {
+                    navigate('/client-types')
+                    handleSideMenuClose()
+                  }}
+                >
+                  <ListItemIcon><UsersIcon /></ListItemIcon>
+                  <ListItemText primary={strings.CLIENT_TYPES} />
+                </ListItem>
                 {bankDetails?.showBankDetailsPage && (
                   <ListItem
                     onClick={() => {
@@ -385,6 +395,15 @@ const Header = ({
                     <ListItemText primary={strings.BANK_DETAILS} />
                   </ListItem>
                 )}
+                <ListItem
+                  onClick={() => {
+                    navigate('/purchase-orders')
+                    handleSideMenuClose()
+                  }}
+                >
+                  <ListItemIcon><ReceiptIcon /></ListItemIcon>
+                  <ListItemText primary="Purchase Orders" />
+                </ListItem>
                 <ListItem
                   onClick={() => {
                     navigate('/settings')

@@ -10,6 +10,12 @@ const routes = {
   getBookings: '/api/bookings/:page/:size/:language',
   hasBookings: '/api/has-bookings/:driver',
   cancelBooking: '/api/cancel-booking/:id',
+  purchaseOrder: '/api/bookings/purchase-order/:id',
+  checkoutReportPdf: '/api/bookings/checkout-report/:id',
+  checkoutDeparture: '/api/checkout-departure/:id',
+  checkinReturn: '/api/checkin-return/:id',
+  saveSignatures: '/api/booking-signatures/:id',
+  verifyInspection: '/api/verify-inspection/:id',
 }
 
 export default routes

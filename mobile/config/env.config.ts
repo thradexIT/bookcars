@@ -21,6 +21,7 @@ import {
   BC_DEPOSIT_FILTER_VALUE_2,
   BC_DEPOSIT_FILTER_VALUE_3,
   BC_WEBSITE_NAME,
+  BC_GG_APP_ID,
 } from '@env'
 
 /**
@@ -102,7 +103,7 @@ export const API_HOST: string = BC_API_HOST
  *
  * @type {number}
  */
-export const AXIOS_TIMEOUT: number = 5000
+export const AXIOS_TIMEOUT: number = 10000
 
 /**
  * Number of maximum axiosInstance retries.
@@ -268,3 +269,10 @@ export const DEPOSIT_FILTER_VALUE_2: number = Number(BC_DEPOSIT_FILTER_VALUE_2)
  * @type {number}
  */
 export const DEPOSIT_FILTER_VALUE_3: number = Number(BC_DEPOSIT_FILTER_VALUE_3)
+
+/**
+ * Google App ID.
+ *
+ * @type {string}
+ */
+export const GG_APP_ID: string = BC_GG_APP_ID

@@ -48,4 +48,5 @@ export const es = {
   LOCATION_IMAGE_NOT_FOUND: 'Imagen del lugar no encontrada',
   NEW_CAR_NOTIFICATION_PART1: 'El proveedor ',
   NEW_CAR_NOTIFICATION_PART2: ' creó un nuevo coche.',
+  CAR_ALREADY_BOOKED: 'Este coche ya está reservado para las fechas seleccionadas.',
 }

@@ -93,7 +93,7 @@ const _signup = async (req: Request, res: Response, userType: bookcarsTypes.User
     // Send email
     i18n.locale = user.language
 
-    const activationLink = `http${env.HTTPS ? 's' : ''}://${req.headers.host}/api/confirm-email/${user.email}/${token.token}`
+    const activationLink = `${helper.joinURL(helper.getFrontendHost(req), `api/confirm-email/${user.email}/${token.token}`)}`
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: env.SMTP_FROM,
@@ -244,7 +244,7 @@ export const create = async (req: Request, res: Response) => {
         ${i18n.t('HELLO')}${user.fullName},<br><br>
         ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
         ${helper.joinURL(
-          user.type === bookcarsTypes.UserType.User ? env.FRONTEND_HOST : env.ADMIN_HOST,
+          user.type === bookcarsTypes.UserType.User ? helper.getFrontendHost(req) : helper.getAdminHost(req),
           'activate',
         )}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}<br><br>
         ${i18n.t('REGARDS')}<br>
@@ -382,7 +382,7 @@ export const resend = async (req: Request, res: Response) => {
       const reset = req.params.reset === 'true'
 
       const activationOrResetLink = `${helper.joinURL(
-        user.type === bookcarsTypes.UserType.User ? env.FRONTEND_HOST : env.ADMIN_HOST,
+        user.type === bookcarsTypes.UserType.User ? helper.getFrontendHost(req) : helper.getAdminHost(req),
         reset ? 'reset-password' : 'activate',
       )}/?u=${encodeURIComponent(user._id.toString())}&e=${encodeURIComponent(user.email)}&t=${encodeURIComponent(token.token)}`
 
@@ -504,6 +504,7 @@ export const signin = async (req: Request, res: Response) => {
       // Authentication cookies are protected against XST attacks as well via allowedMethods middleware.
       //
       const cookieOptions: CookieOptions = helper.clone(env.COOKIE_OPTIONS)
+      cookieOptions.domain = undefined
 
       if (stayConnected) {
         //
@@ -593,24 +594,24 @@ export const socialSignin = async (req: Request, res: Response) => {
       throw new Error('body.email is not valid')
     }
 
-    if (!mobile) {
-      if (!accessToken) {
-        throw new Error('body.accessToken not found')
-      }
-
-      if (!(await authHelper.validateAccessToken(socialSignInType, accessToken, email))) {
-        throw new Error('body.accessToken is not valid')
-      }
+    if (!accessToken) {
+      throw new Error('body.accessToken not found')
     }
 
-    let user = await User.findOne({ email })
+    if (!(await authHelper.validateAccessToken(socialSignInType, accessToken, email))) {
+      console.log('Token validation failed for:', email)
+      throw new Error('body.accessToken is not valid')
+    }
+    console.log('Token validation success for:', email)
 
+    let user = await User.findOne({ email })
     if (!user) {
+      console.log('User not found, creating new user for:', email)
       user = new User({
         email,
         fullName,
         active: true,
-        verified: true,
+        verified: false,
         language: 'en',
         enableEmailNotifications: true,
         type: bookcarsTypes.UserType.User,
@@ -618,6 +619,45 @@ export const socialSignin = async (req: Request, res: Response) => {
         avatar,
       })
       await user.save()
+    } else {
+      console.log('User found:', user._id, 'Verified:', user.verified)
+    }
+
+    if (!user.verified) {
+      //
+      // Send confirmation email
+      //
+      // generate token and save
+      const token = new Token({ user: user._id, token: helper.generateToken() })
+      await token.save()
+
+      // Send email
+      i18n.locale = user.language || 'en'
+
+      const activationLink = `${helper.joinURL(helper.getFrontendHost(req), `api/confirm-email/${user.email}/${token.token}`)}`
+
+      const mailOptions: nodemailer.SendMailOptions = {
+        from: env.SMTP_FROM,
+        to: user.email,
+        subject: i18n.t('ACCOUNT_ACTIVATION_SUBJECT'),
+        html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <p style="font-size: 16px; color: #555;">
+            ${i18n.t('HELLO')} ${user.fullName},<br><br>
+            ${i18n.t('ACCOUNT_ACTIVATION_LINK')}<br><br>
+            <a href="${activationLink}" target="_blank">${activationLink}</a><br><br>
+            ${i18n.t('REGARDS')}<br>
+          </p>
+        </div>`,
+      }
+      await mailHelper.sendMail(mailOptions)
+
+      res.status(403).send('ACCOUNT_NOT_ACTIVATED')
+      return
+    }
+
+    if (user.blacklisted) {
+      res.sendStatus(204)
+      return
     }
 
     //
@@ -626,6 +666,7 @@ export const socialSignin = async (req: Request, res: Response) => {
     // Authentication cookies are protected against XST attacks as well via allowedMethods middleware.
     //
     const cookieOptions: CookieOptions = helper.clone(env.COOKIE_OPTIONS)
+    cookieOptions.domain = undefined
 
     if (stayConnected) {
       //
@@ -672,12 +713,14 @@ export const socialSignin = async (req: Request, res: Response) => {
     //
     const cookieName = authHelper.getAuthCookieName(req)
 
+    console.log('Sending success response with cookie:', cookieName)
     res
       .clearCookie(cookieName)
       .cookie(cookieName, token, cookieOptions)
       .status(200)
       .send(loggedUser)
   } catch (err) {
+    console.error(`[user.socialSignin] ${emailFromBody}`, err)
     logger.error(`[user.socialSignin] ${i18n.t('DB_ERROR')} ${emailFromBody}`, err)
     res.status(400).send(i18n.t('DB_ERROR') + err)
   }
@@ -1008,6 +1051,7 @@ export const update = async (req: Request, res: Response) => {
       supplierCarLimit,
       notifyAdminOnNewCar,
       blacklisted,
+      clientType,
     } = body
 
     if (fullName) {
@@ -1022,6 +1066,13 @@ export const update = async (req: Request, res: Response) => {
     user.supplierCarLimit = supplierCarLimit
     user.notifyAdminOnNewCar = notifyAdminOnNewCar
     user.blacklisted = !!blacklisted
+    if (clientType) {
+      if (helper.isValidObjectId(clientType)) {
+        user.clientType = new mongoose.Types.ObjectId(clientType)
+      } else {
+        logger.error('[user.update] Invalid clientType:', clientType)
+      }
+    }
     if (type) {
       user.type = type as bookcarsTypes.UserType
     }
@@ -1153,7 +1204,10 @@ export const getUser = async (req: Request, res: Response) => {
       priceChangeRate: 1,
       supplierCarLimit: 1,
       notifyAdminOnNewCar: 1,
-    }).lean()
+      clientType: 1,
+    })
+      .populate<{ clientType: env.ClientType }>('clientType')
+      .lean()
 
     if (!user) {
       logger.error('[user.getUser] User not found:', req.params)
@@ -1456,6 +1510,20 @@ export const getUsers = async (req: Request, res: Response) => {
           $match,
         },
         {
+          $lookup: {
+            from: 'ClientType',
+            localField: 'clientType',
+            foreignField: '_id',
+            as: 'clientType',
+          },
+        },
+        {
+          $unwind: {
+            path: '$clientType',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
           $project: {
             supplier: 1,
             email: 1,
@@ -1471,6 +1539,7 @@ export const getUsers = async (req: Request, res: Response) => {
             blacklisted: 1,
             birthDate: 1,
             customerId: 1,
+            clientType: 1,
           },
         },
         {

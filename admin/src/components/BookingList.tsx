@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import {
   DataGrid,
   GridPaginationModel,
   GridColDef,
   GridRowId,
   GridRenderCellParams,
-  GridRowSelectionModel
 } from '@mui/x-data-grid'
 import {
   Tooltip,
@@ -18,7 +17,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material'
-import { Edit as EditIcon, Delete as DeleteIcon, Check as CheckIcon } from '@mui/icons-material'
+import { Edit as EditIcon, Delete as DeleteIcon, Check as CheckIcon, Receipt as ReceiptIcon } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { fr as dfnsFR, enUS as dfnsENUS } from 'date-fns/locale'
 import * as bookcarsTypes from ':bookcars-types'
@@ -31,6 +30,7 @@ import * as helper from '@/utils/helper'
 import * as BookingService from '@/services/BookingService'
 import StatusList from './StatusList'
 import BookingStatus from './BookingStatus'
+import { io } from 'socket.io-client'
 
 import '@/assets/css/booking-list.css'
 
@@ -94,6 +94,22 @@ const BookingList = ({
     page: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => {
+    const socket = io(env.API_HOST)
+    const handleUpdate = () => {
+      setRefreshKey((prev) => prev + 1)
+    }
+
+    socket.on('booking-created', handleUpdate)
+    socket.on('booking-updated', handleUpdate)
+    socket.on('booking-deleted', handleUpdate)
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     if (!env.isMobile) {
@@ -193,7 +209,7 @@ const BookingList = ({
     if (suppliers && statuses && loggedUser) {
       fetchData(page, user)
     }
-  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (suppliers && statuses && loggedUser) {
@@ -222,7 +238,7 @@ const BookingList = ({
         field: 'driver',
         headerName: strings.DRIVER,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <RouterLink to={`/user?u=${(row.driver as bookcarsTypes.User)._id}`}>{value}</RouterLink>,
         valueGetter: (value: bookcarsTypes.User) => value?.fullName,
       },
       {
@@ -275,6 +291,16 @@ const BookingList = ({
                   <DeleteIcon />
                 </IconButton>
               </Tooltip>
+              {row.odooOrderId && (
+                <Tooltip title="Descargar Orden de Compra">
+                  <IconButton onClick={(e) => {
+                    e.stopPropagation()
+                    window.open(`${env.API_HOST}/api/bookings/purchase-order/${row._id}`, '_blank')
+                  }}>
+                    <ReceiptIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </div>
           )
         },
@@ -314,7 +340,7 @@ const BookingList = ({
         field: 'car',
         headerName: strings.CAR,
         flex: 1,
-        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <Link href={`/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</Link>,
+        renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => <RouterLink to={`/car?cr=${(row.car as bookcarsTypes.Car)._id}`}>{value}</RouterLink>,
         valueGetter: (value: bookcarsTypes.Car) => value?.name,
       })
     }
@@ -325,7 +351,7 @@ const BookingList = ({
         headerName: commonStrings.SUPPLIER,
         flex: 1,
         renderCell: ({ row, value }: GridRenderCellParams<bookcarsTypes.Booking, string>) => (
-          <Link href={`/supplier?c=${(row.supplier as bookcarsTypes.User)._id}`} className="cell-supplier">
+          <Link href={`/admin/supplier?c=${(row.supplier as bookcarsTypes.User)._id}`} className="cell-supplier">
             <img src={bookcarsHelper.joinURL(env.CDN_USERS, (row.supplier as bookcarsTypes.User).avatar)} alt={value} />
           </Link>
         ),
@@ -498,13 +524,13 @@ const BookingList = ({
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.CAR}</span>
                     <div className="booking-detail-value">
-                      <Link href={`car/?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</Link>
+                      <RouterLink to={`/car?cr=${(booking.car as bookcarsTypes.Car)._id}`}>{(booking.car as bookcarsTypes.Car).name}</RouterLink>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
                     <span className="booking-detail-title">{strings.DRIVER}</span>
                     <div className="booking-detail-value">
-                      <Link href={`user/?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</Link>
+                      <RouterLink to={`/user?u=${(booking.driver as bookcarsTypes.User)._id}`}>{(booking.driver as bookcarsTypes.User).fullName}</RouterLink>
                     </div>
                   </div>
                   <div className="booking-detail" style={{ height: bookingDetailHeight }}>
@@ -612,6 +638,19 @@ const BookingList = ({
                     >
                       {commonStrings.DELETE}
                     </Button>
+                    {booking.odooOrderId && (
+                      <Button
+                        variant="contained"
+                        className="btn-primary"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.open(`${env.API_HOST}/api/bookings/purchase-order/${booking._id}`, '_blank')
+                        }}
+                      >
+                        O.C.
+                      </Button>
+                    )}
                   </div>
                 </div>
               )
@@ -636,7 +675,7 @@ const BookingList = ({
             paginationModel={paginationModel}
             onPaginationModelChange={setPaginationModel}
             onRowSelectionModelChange={(_selectedIds) => {
-              if(_selectedIds.type === 'exclude' && _selectedIds.ids.size === 0){
+              if (_selectedIds.type === 'exclude' && _selectedIds.ids.size === 0) {
                 _selectedIds = { type: 'include', ids: new Set(rows.map((row) => row._id as GridRowId)) }
               }
               setSelectedIds(Array.from(new Set(_selectedIds.ids)).map((id) => id.toString()))

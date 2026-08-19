@@ -1,74 +1,375 @@
-div.booking {
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM BOOKING PAGE — 3-COLUMN ADAPTIVE LAYOUT
+   Designed for clarity, harmony, and 100% responsiveness.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Global Container ───────────────────────────────────────── */
+.booking-container {
+  padding: 16px;
+  background-color: #f1f5f9;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden; /* Prevent global horizontal scroll from subtle overflows */
+}
+
+.booking-3col-grid {
   display: flex;
   flex-direction: row;
-  transform: translate3d(0, 0, 0);
+  flex-wrap: nowrap; /* Start with 3 cols on desktop */
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
 }
 
-div.booking div.col-2 div.col-2-header {
-  text-align: right;
+/* ── Column Base ────────────────────────────────────────────── */
+.booking-col {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0; /* Important: allow flex items to shrink below their content size */
+  transition: box-shadow 0.3s ease;
 }
 
-div.booking div.col-2 div.col-2-header div.price {
-  width: fit-content;
+.booking-col:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-div.booking div.col-2 div.col-2-header span.price-main {
-  color: #383838;
-  font-size: 2em;
+.section-title {
+  font-size: 16px;
   font-weight: 700;
-  line-height: 1em;
-  white-space: nowrap;
-  display: table-row;
-  text-align: right;
+  color: #0f172a;
+  border-left: 4px solid #3b82f6;
+  padding-left: 12px;
+  margin-bottom: 4px;
+  line-height: 1;
 }
 
-div.booking div.col-2 div.col-2-header span.price-days,
-div.booking div.col-2 div.col-2-header span.price-day {
+/* ── COLUMN 1: LEFT (Form & Settings) ───────────────────────── */
+.booking-col-1 {
+  flex: 1 1 320px; /* Allow shrinking but aim for 320px */
+}
+
+/* Switches Grid */
+.switches-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.switch-item {
+  margin: 0 !important;
+}
+
+.switch-item span {
+  font-size: 13px !important;
+  color: #334155;
+  font-weight: 500;
+}
+
+.buttons-group {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── COLUMN 2: CENTER (Vehicle & Actions) ───────────────────── */
+.booking-col-2 {
+  flex: 2 2 450px; /* Allow shrinking but prioritize more space */
+}
+
+/* Premium Price Card */
+.price-card {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.p-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.p-value {
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.car-summary-card {
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  overflow-x: hidden; /* Changed to hidden to force wrap inside CarList if it supports it, or it will just be contained */
+  background-color: #fbfcfe;
+  width: 100%;
+}
+
+.car-summary-card * {
+  max-width: 100%;
+  word-wrap: break-word; /* Ensure text doesn't push width */
+}
+
+.actions-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.box-v3 {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.box-v3 .box-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.box-v3 .box-row {
+  display: flex;
+  justify-content: space-between;
   font-size: 13px;
-  color: #a1a1a1;
-  display: table-row;
-  text-align: right;
+  color: #64748b;
 }
 
-/* Device width is less than or equal to 960px */
+.tag-green {
+  color: #10b981;
+  font-weight: 700;
+}
 
-@media only screen and (width <=960px) {
-  div.booking div.col-1 {
-    padding: 20px;
-    background: #fefefe;
-    border-bottom: #eee solid 1px;
+.tag-red {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* ── COLUMN 3: RIGHT (Photos) ─────────────────────────────── */
+.booking-col-3 {
+  flex: 1 1 280px; /* Allow shrinking but aim for 280px */
+}
+
+.photos-vertical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.photo-item {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  transition: all 0.3s ease;
+  aspect-ratio: 1/1;
+}
+
+.photo-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-item .chk-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15, 23, 42, 0.8);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 4px 0;
+  backdrop-filter: blur(4px);
+}
+
+/* ── RESPONSIVE ADAPTATION ────────────────────────────────── */
+
+@media (max-width: 1400px) {
+  .booking-3col-grid {
+    gap: 12px;
   }
-
-  div.booking div.col-2 {
-    display: none;
+  .booking-col {
+    padding: 16px;
   }
 }
 
-@media only screen and (width <=1270px) {
-  div.booking div.col-2 .car {
-    display: none;
+@media (max-width: 1280px) {
+  .booking-3col-grid {
+    flex-wrap: wrap; /* Allow wrapping on standard laptops if needed */
+  }
+  .booking-col-1 {
+    flex: 1 1 300px;
+  }
+  .booking-col-2 {
+    flex: 2 1 400px;
+  }
+  .booking-col-3 {
+    flex: 1 1 100%; /* Photos jump to full width bottom on smaller laptops */
   }
 }
 
-/* Device width is greater than or equal to 960px */
-
-@media only screen and (width >=960px) {
-  div.booking div.col-1 {
-    background: #fefefe;
-    border-right: #eee solid 1px;
-    padding: 25px;
-    flex: 0 1 30%;
+@media (max-width: 1024px) {
+  .booking-col-1 {
+    flex: 1 1 100%;
+    order: 2;
   }
-
-  div.booking div.col-2 {
-    flex: 1;
-    padding-top: 10px;
+  .booking-col-2 {
+    flex: 1 1 100%;
+    order: 1; /* Vehicle summary is most important */
   }
-
-  div.booking div.col-2 div.col-2-header {
-    padding-right: 25px;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
+  .booking-col-3 {
+    flex: 1 1 100%;
+    order: 3;
   }
 }
+
+@media (max-width: 600px) {
+  .booking-container {
+    padding: 8px;
+  }
+  .booking-3col-grid {
+    gap: 12px;
+  }
+  .booking-col {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .switches-list {
+    grid-template-columns: 1fr;
+  }
+  .actions-stack {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .p-value {
+    font-size: 22px;
+  }
+}
+
+/* ── COMPARISON DIALOG ────────────────────────────────────── */
+.comparison-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.comparison-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.comparison-images-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.comparison-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comparison-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comparison-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.comparison-image:hover {
+  transform: scale(1.02);
+}
+
+.comparison-slot-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-img-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.comparison-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+.sub-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
