@@ -1,18 +1,18 @@
 .mitos-home {
-  --mitos-navy: #012063;
-  --mitos-blue: #123f96;
-  --mitos-blue-soft: #eef3fb;
-  --mitos-white: #fff;
-  --mitos-ink: #0a2f78;
-  --mitos-body: #34466f;
-  --mitos-muted: #67738c;
-  --mitos-line: #d9e2f0;
-  height: calc(100svh - var(--mitos-header-height, 110px));
+  --mitos-navy: #062866;
+  --mitos-navy-2: #0b367f;
+  --mitos-blue: #1556b8;
+  --mitos-ink: #082b6e;
+  --mitos-body: #425478;
+  --mitos-muted: #71809d;
+  --mitos-line: #dce5f2;
+  --mitos-soft: #f5f8fc;
+  height: calc(100svh - var(--mitos-header-height, 88px));
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior-y: contain;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
   background: #fff;
   color: var(--mitos-ink);
 }
@@ -20,109 +20,102 @@
 .mitos-home * { box-sizing: border-box; }
 
 .mitos-frame {
+  position: relative;
   width: 100%;
   height: 100%;
   min-height: 100%;
-  position: relative;
   overflow: hidden;
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
 
-/* FRAME 01 = HERO + SEARCH + TRUST + STORY */
-.mitos-hero-frame {
+/* FRAME 01 */
+.mitos-frame-hero {
   display: grid;
-  grid-template-rows: 56% 15% 29%;
+  grid-template-rows: minmax(0, 1fr) 132px;
   background: #fff;
 }
 
-.mitos-hero-scene {
+.mitos-hero-media {
   position: relative;
   min-height: 0;
-  overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(250,249,246,.98) 0%, rgba(250,249,246,.91) 30%, rgba(242,246,249,.53) 49%, rgba(212,228,239,.22) 66%, rgba(173,201,220,.12) 100%),
-    linear-gradient(180deg, #e8f1f7 0%, #c8ddea 57%, #94b3ca 100%);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
-.mitos-hero-scene::after {
-  content: '';
+.mitos-hero-shade {
   position: absolute;
-  inset: auto 0 0;
-  height: 28%;
-  background: linear-gradient(180deg, transparent, rgba(1,32,99,.12));
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.92) 22%, rgba(255,255,255,.62) 39%, rgba(255,255,255,.12) 58%, rgba(0,0,0,0) 100%);
   pointer-events: none;
 }
 
 .mitos-hero-copy {
   position: absolute;
-  z-index: 4;
-  left: clamp(34px, 4.4vw, 62px);
-  top: clamp(22px, 4vh, 58px);
-  width: min(47vw, 610px);
+  z-index: 3;
+  top: clamp(36px, 6vh, 74px);
+  left: clamp(46px, 6vw, 92px);
+  width: min(49vw, 650px);
+}
+
+.mitos-hero-copy > span,
+.mitos-section-heading > span,
+.mitos-how-copy > span,
+.mitos-trust-copy > span,
+.mitos-faq-copy > span,
+.mitos-final-cta span {
+  display: block;
+  color: var(--mitos-blue);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .13em;
 }
 
 .mitos-hero-copy h1 {
-  margin: 0;
+  margin: 8px 0 10px;
   color: var(--mitos-ink);
-  font-size: clamp(40px, 4.2vw, 66px);
-  line-height: .98;
-  letter-spacing: -.045em;
+  font-size: clamp(46px, 4.45vw, 72px);
+  line-height: .96;
+  letter-spacing: -.055em;
   font-weight: 900;
 }
 
 .mitos-hero-copy p {
-  margin: clamp(8px, 1.7vh, 18px) 0 0;
-  color: #405174;
-  font-size: clamp(19px, 1.8vw, 29px);
+  margin: 0;
+  color: #3c4d70;
+  font-size: clamp(20px, 1.8vw, 29px);
   font-weight: 500;
 }
 
-.mitos-hero-car {
+.mitos-search-card {
   position: absolute;
-  z-index: 2;
-  inset: 0 0 0 auto;
-  width: min(43vw, 570px);
-  background: url('../img/mitos-hero-yaris-reference.svg') right bottom / auto 100% no-repeat;
+  z-index: 5;
+  left: clamp(46px, 6vw, 92px);
+  bottom: clamp(18px, 3vh, 36px);
+  width: min(760px, calc(100% - 510px));
+  padding: 18px 20px 16px;
+  border: 1px solid rgba(207,219,237,.95);
+  border-radius: 16px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 18px 50px rgba(9,44,103,.16);
+  backdrop-filter: blur(10px);
 }
 
-.mitos-hero-car::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 -120px;
-  width: 190px;
-  background: linear-gradient(90deg, rgba(246,248,248,1), rgba(246,248,248,0));
-}
-
-.mitos-search-panel {
-  position: absolute;
-  z-index: 8;
-  left: clamp(34px, 4.2vw, 58px);
-  bottom: clamp(10px, 1.8vh, 20px);
-  width: min(820px, calc(100% - 485px));
-  padding: clamp(12px, 1.7vh, 22px) clamp(16px, 1.8vw, 26px);
-  border: 1px solid #ced9e9;
-  border-radius: 18px;
-  background: rgba(255,255,255,.985);
-  box-shadow: 0 14px 34px rgba(15,46,96,.12);
-}
-
-.mitos-search-heading {
+.mitos-search-title {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 54px;
-  padding: 0 6px 9px;
+  gap: 14px;
+  padding: 0 4px 11px;
   color: var(--mitos-ink);
 }
 
-.mitos-search-heading > svg { font-size: 31px; }
-.mitos-search-heading h2 { margin: 0 0 2px; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.1; }
-.mitos-search-heading p { margin: 0; color: #566585; font-size: 13px; }
-.mitos-search-runtime { min-height: 0; }
+.mitos-search-title > svg { font-size: 29px; }
+.mitos-search-title div { display: flex; flex-direction: column; gap: 2px; }
+.mitos-search-title strong { font-size: 20px; }
+.mitos-search-title small { color: #66738f; font-size: 12px; }
 
-/* MITOS owns presentation; SearchForm keeps rental behavior. */
-.mitos-search-panel form.home-search-form.mitos-search-form {
+.mitos-search-card form.home-search-form.mitos-search-form {
   width: 100% !important;
   margin: 0 !important;
   display: grid !important;
@@ -130,287 +123,329 @@
   grid-template-areas:
     'pickup dropoff from to'
     'check check search search' !important;
-  grid-template-rows: minmax(56px, auto) 48px !important;
-  align-items: stretch !important;
+  grid-template-rows: minmax(58px, auto) 46px !important;
   gap: 0 !important;
-  border-top: 1px solid #bcc9dd;
+  align-items: stretch !important;
+  border-top: 1px solid #c8d5e7;
 }
 
-.mitos-search-panel .mitos-search-form > * { min-width: 0; }
-.mitos-search-panel .mitos-search-form .pickup-location {
-  grid-area: pickup;
-  display: block !important;
+.mitos-search-card .mitos-search-form > * { min-width: 0; }
+.mitos-search-card .pickup-location,
+.mitos-search-card .drop-off-location,
+.mitos-search-card .from,
+.mitos-search-card .to,
+.mitos-search-card .mitos-drop-off-mirror {
   width: auto !important;
-  padding: 7px 9px 0 !important;
-  border-right: 1px solid #d9e2ef;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 7px 8px 0 !important;
+  border-right: 1px solid #dce4ef;
 }
-.mitos-search-panel .mitos-search-form .drop-off-location {
-  grid-area: dropoff;
-  display: block !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 7px 9px 0 !important;
-  border-right: 1px solid #d9e2ef;
-}
-.mitos-search-panel .mitos-search-form .mitos-drop-off-mirror {
-  grid-area: dropoff;
-  min-width: 0;
-  padding: 11px 14px 8px;
-  border-right: 1px solid #d9e2ef;
+.mitos-search-card .pickup-location { grid-area: pickup; }
+.mitos-search-card .drop-off-location,
+.mitos-search-card .mitos-drop-off-mirror { grid-area: dropoff; }
+.mitos-search-card .from { grid-area: from; }
+.mitos-search-card .to { grid-area: to; border-right: 0; }
+.mitos-search-card .mitos-drop-off-mirror {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  color: #203f80;
+  padding-inline: 13px !important;
 }
-.mitos-search-panel .mitos-drop-off-mirror small {
-  display: block;
-  margin-bottom: 7px;
-  color: #435477;
-  font-size: 12px;
-  font-weight: 700;
-}
-.mitos-search-panel .mitos-drop-off-mirror span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-}
-.mitos-search-panel .mitos-search-form .from {
-  grid-area: from;
-  display: block !important;
-  width: auto !important;
-  padding: 7px 9px 0 !important;
-  border-right: 1px solid #d9e2ef;
-}
-.mitos-search-panel .mitos-search-form .to {
-  grid-area: to;
-  display: block !important;
-  width: auto !important;
-  padding: 7px 9px 0 !important;
-}
-.mitos-search-panel .mitos-search-form .chk-same-location {
-  grid-area: check;
-  display: flex !important;
-  align-items: center;
-  width: auto !important;
-  margin: 0 !important;
-  padding: 3px 6px !important;
-  color: #536384;
-}
-.mitos-search-panel .mitos-search-form .chk-same-location label { margin: 0; }
-.mitos-search-panel .mitos-search-form .chk-same-location .MuiTypography-root { font-size: 13px; }
-.mitos-search-panel .mitos-search-form .btn-search {
+.mitos-search-card .mitos-drop-off-mirror small { margin-bottom: 5px; color: #4d5c7b; font-size: 11px; font-weight: 700; }
+.mitos-search-card .mitos-drop-off-mirror span { overflow: hidden; color: #203f80; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.mitos-search-card .chk-same-location { grid-area: check; display: flex !important; align-items: center; margin: 0 !important; padding: 2px 4px !important; }
+.mitos-search-card .chk-same-location label { margin: 0; }
+.mitos-search-card .chk-same-location .MuiTypography-root { font-size: 12px; }
+.mitos-search-card .btn-search {
   grid-area: search;
   width: 100% !important;
   min-width: 0 !important;
-  height: 44px !important;
+  height: 42px !important;
   align-self: center !important;
-  justify-self: stretch !important;
   margin: 2px 0 0 !important;
   border-radius: 7px !important;
   background: var(--mitos-navy) !important;
-  color: #fff !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
 }
-.mitos-search-panel .mitos-search-form .MuiOutlinedInput-root { min-height: 48px; border-radius: 7px; background: #fff; }
-.mitos-search-panel .mitos-search-form .MuiInputLabel-root { font-size: 13px; }
-.mitos-search-panel .mitos-search-form .MuiInputBase-input { font-size: 13px; }
-.mitos-search-panel .mitos-search-form .MuiFormHelperText-root { margin: 1px 0 0; font-size: 10px; line-height: 1.1; }
+.mitos-search-card .MuiOutlinedInput-root { min-height: 46px; border-radius: 7px; background: #fff; }
+.mitos-search-card .MuiInputLabel-root,
+.mitos-search-card .MuiInputBase-input { font-size: 12px; }
+.mitos-search-card .MuiFormHelperText-root { margin: 1px 0 0; font-size: 9px; line-height: 1.1; }
 
-.mitos-trust-strip {
-  min-height: 0;
-  padding: 10px clamp(34px, 6vw, 96px);
+.mitos-hero-benefits {
+  padding: 18px clamp(48px, 7vw, 108px);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: center;
-  gap: clamp(16px, 2.4vw, 34px);
+  gap: 28px;
+  border-top: 1px solid #edf1f7;
   background: #fff;
 }
-.mitos-trust-strip > div { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.mitos-trust-strip > div > svg {
+
+.mitos-hero-benefits article { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.mitos-hero-benefits article > svg {
   flex: 0 0 auto;
-  width: clamp(38px, 4vw, 58px);
-  height: clamp(38px, 4vw, 58px);
-  padding: clamp(8px, 1vw, 14px);
+  width: 48px;
+  height: 48px;
+  padding: 12px;
   border-radius: 50%;
   color: var(--mitos-navy);
-  background: #eef3fb;
+  background: #eef4fc;
 }
-.mitos-trust-strip span { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.mitos-trust-strip b { color: var(--mitos-ink); font-size: clamp(12px, 1vw, 15px); }
-.mitos-trust-strip small { color: #4c5c7c; font-size: clamp(10px, .9vw, 13px); line-height: 1.35; }
+.mitos-hero-benefits article div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.mitos-hero-benefits b { font-size: 13px; }
+.mitos-hero-benefits span { color: #53617d; font-size: 11px; line-height: 1.35; }
 
-.mitos-story-block {
-  min-height: 0;
-  padding: clamp(10px, 1.8vh, 22px) 20px clamp(28px, 4vh, 58px);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: #fff;
+/* Shared section language */
+.mitos-section-heading,
+.mitos-how-copy,
+.mitos-trust-copy,
+.mitos-faq-copy { position: relative; z-index: 2; }
+.mitos-section-heading.centered { max-width: 760px; margin: 0 auto 34px; text-align: center; }
+.mitos-section-heading h2,
+.mitos-how-copy h2,
+.mitos-trust-copy h2,
+.mitos-faq-copy h2,
+.mitos-final-cta h2 {
+  margin: 7px 0 10px;
+  font-size: clamp(34px, 3.5vw, 54px);
+  line-height: 1;
+  letter-spacing: -.045em;
 }
-.mitos-story-block::after {
-  content: '';
-  position: absolute;
-  left: -2%;
-  right: -2%;
-  bottom: -38px;
-  height: 72px;
-  border-radius: 50% 50% 0 0 / 55% 55% 0 0;
-  background: linear-gradient(180deg, #123f96 0%, #012063 100%);
-  transform: rotate(1deg);
-}
-.mitos-story-block h2 { margin: 0 0 7px; color: var(--mitos-ink); font-size: clamp(27px, 3vw, 48px); letter-spacing: -.035em; }
-.mitos-story-block p { max-width: 760px; margin: 0; color: #435375; font-size: clamp(11px, 1.15vw, 16px); line-height: 1.45; }
-.mitos-story-actions { display: flex; gap: 16px; margin-top: clamp(10px, 1.7vh, 22px); }
+.mitos-section-heading p,
+.mitos-how-copy p,
+.mitos-trust-copy p,
+.mitos-faq-copy p,
+.mitos-final-cta p { margin: 0; color: var(--mitos-body); font-size: 15px; line-height: 1.55; }
+.split-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 30px; }
+.split-heading > div { max-width: 760px; }
 
-.mitos-btn {
+.mitos-outline-action,
+.mitos-white-action,
+.mitos-ghost-action {
   min-height: 44px;
-  min-width: 190px;
   padding: 0 22px;
-  border: 1px solid transparent;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
 }
-.mitos-btn-primary { background: var(--mitos-navy); color: #fff; }
-.mitos-btn-outline { background: #fff; color: var(--mitos-navy); border-color: var(--mitos-navy); }
-.mitos-btn-white { background: #fff; color: var(--mitos-navy); }
-.mitos-btn-outline-white { background: transparent; color: #fff; border-color: rgba(255,255,255,.7); }
+.mitos-outline-action { border: 1px solid var(--mitos-navy); color: var(--mitos-navy); background: #fff; }
 
-/* FRAMES 02+ */
-.mitos-frame:not(.mitos-hero-frame):not(.mitos-footer-frame) {
-  padding: clamp(48px, 6vh, 88px) clamp(30px, 7vw, 104px);
+/* FRAME 02 */
+.mitos-frame-why {
+  padding: clamp(40px, 5vh, 68px) clamp(48px, 7vw, 108px);
+  background: linear-gradient(180deg, #fff 0%, #f7faff 100%);
+}
+
+.mitos-why-layout {
+  height: calc(100% - 145px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.mitos-benefit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.mitos-benefit-grid article {
+  min-height: 160px;
+  padding: 24px;
+  border: 1px solid var(--mitos-line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 12px 30px rgba(15,52,112,.06);
+}
+.mitos-benefit-grid svg { width: 42px; height: 42px; padding: 10px; border-radius: 50%; color: var(--mitos-navy); background: #eef4fc; }
+.mitos-benefit-grid h3 { margin: 16px 0 7px; font-size: 19px; }
+.mitos-benefit-grid p { margin: 0; color: var(--mitos-body); font-size: 13px; line-height: 1.55; }
+
+.mitos-3d-visual,
+.mitos-how-graphic,
+.mitos-travel-3d { width: 100%; max-height: 82%; object-fit: contain; filter: drop-shadow(0 22px 28px rgba(10,44,105,.14)); }
+
+/* FRAME 03 */
+.mitos-frame-fleet {
+  padding: clamp(38px, 5vh, 66px) clamp(44px, 6vw, 94px);
+  background: #fff;
+}
+
+.mitos-fleet-grid { height: calc(100% - 150px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 17px; }
+.mitos-car-card { min-width: 0; overflow: hidden; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 12px 26px rgba(11,45,104,.07); }
+.mitos-car-card img { width: 100%; height: 58%; object-fit: cover; object-position: 64% center; display: block; }
+.mitos-car-card div { padding: 16px 18px; }
+.mitos-car-card small { color: var(--mitos-blue); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.mitos-car-card h3 { margin: 6px 0 5px; font-size: 19px; }
+.mitos-car-card p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.4; }
+
+/* FRAME 04 */
+.mitos-frame-how {
+  padding: clamp(42px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .72fr 1.5fr .8fr;
+  align-items: center;
+  gap: 30px;
+  background: #f7f9fd;
+}
+
+.mitos-how-copy { max-width: 360px; }
+.mitos-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.mitos-steps article { min-height: 250px; padding: 20px 18px; position: relative; text-align: center; border-right: 1px solid #d9e2ef; }
+.mitos-steps article:last-child { border-right: 0; }
+.mitos-steps b { position: absolute; top: 0; left: 50%; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; transform: translateX(-50%); color: #fff; background: var(--mitos-navy); font-size: 11px; }
+.mitos-steps svg { width: 58px; height: 58px; margin-top: 36px; padding: 16px; border-radius: 50%; color: var(--mitos-navy); background: #e8f0fb; }
+.mitos-steps h3 { margin: 15px 0 7px; font-size: 16px; }
+.mitos-steps p { margin: 0; color: var(--mitos-body); font-size: 11px; line-height: 1.45; }
+
+/* FRAME 05 */
+.mitos-frame-promos {
+  padding: clamp(38px, 5vh, 66px) clamp(48px, 7vw, 108px);
+  background: #fff;
+}
+
+.mitos-promo-grid { height: calc(100% - 150px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.mitos-promo-grid article { overflow: hidden; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 14px 28px rgba(11,45,104,.08); }
+.mitos-promo-grid img { width: 100%; height: 57%; object-fit: cover; display: block; }
+.mitos-promo-grid div { padding: 17px 19px; }
+.mitos-promo-grid small { color: var(--mitos-blue); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.mitos-promo-grid h3 { margin: 7px 0 6px; font-size: 22px; }
+.mitos-promo-grid p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.45; }
+
+/* FRAME 06 */
+.mitos-frame-trust {
+  padding: clamp(40px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .72fr 1.45fr .78fr;
+  align-items: center;
+  gap: 28px;
+  background: linear-gradient(180deg, #f7faff 0%, #fff 100%);
+}
+
+.mitos-trust-copy { max-width: 390px; }
+.mitos-trust-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.mitos-trust-cards article { min-height: 240px; padding: 22px; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 12px 25px rgba(11,45,104,.06); }
+.mitos-trust-cards article > span { color: var(--mitos-blue); font-size: 42px; line-height: 1; font-family: Georgia, serif; }
+.mitos-trust-cards h3 { margin: 14px 0 8px; font-size: 17px; line-height: 1.25; }
+.mitos-trust-cards p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.5; }
+
+/* FRAME 07 */
+.mitos-frame-faq {
+  padding: clamp(40px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .62fr 1.38fr;
+  align-items: center;
+  gap: 50px;
+  background: #fff;
+}
+
+.mitos-faq-copy { max-width: 420px; }
+.mitos-faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.mitos-faq-grid details { border: 1px solid var(--mitos-line); border-radius: 12px; background: #fff; box-shadow: 0 8px 20px rgba(11,45,104,.05); }
+.mitos-faq-grid summary { min-height: 58px; padding: 17px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; color: var(--mitos-ink); font-size: 13px; font-weight: 800; list-style: none; }
+.mitos-faq-grid summary::-webkit-details-marker { display: none; }
+.mitos-faq-grid summary::after { content: '+'; color: var(--mitos-navy); font-size: 20px; }
+.mitos-faq-grid details[open] summary::after { content: '−'; }
+.mitos-faq-grid details p { margin: 0; padding: 0 20px 18px; color: var(--mitos-body); font-size: 12px; line-height: 1.5; }
+
+/* FRAME 08 */
+.mitos-frame-final {
+  display: grid;
+  grid-template-rows: 37% 63%;
+  color: #fff;
+  background: var(--mitos-navy);
+}
+
+.mitos-final-cta {
+  padding: 0 clamp(54px, 8vw, 126px);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  background: linear-gradient(100deg, #0b367f 0%, #062866 62%, #021d4e 100%);
 }
-.mitos-frame-copy { max-width: 780px; margin-bottom: clamp(24px, 4vh, 42px); }
-.mitos-frame-copy > span,
-.mitos-experience-copy > span { color: #1d57a8; font-size: 12px; font-weight: 900; letter-spacing: .13em; }
-.mitos-frame-copy h2,
-.mitos-experience-copy h2,
-.mitos-contact-frame h2 { margin: 9px 0 12px; font-size: clamp(34px, 4vw, 60px); line-height: 1; letter-spacing: -.045em; }
-.mitos-frame-copy p,
-.mitos-experience-copy p,
-.mitos-contact-frame p { margin: 0; color: var(--mitos-muted); font-size: 16px; line-height: 1.6; }
-.mitos-frame-copy-centered { margin-inline: auto; text-align: center; }
+.mitos-final-cta span { color: #88b8ff; }
+.mitos-final-cta h2 { color: #fff; }
+.mitos-final-cta p { color: rgba(255,255,255,.76); }
+.mitos-final-actions { display: flex; gap: 12px; }
+.mitos-white-action { border: 1px solid #fff; color: var(--mitos-navy); background: #fff; }
+.mitos-ghost-action { border: 1px solid rgba(255,255,255,.55); color: #fff; background: transparent; }
 
-.mitos-why-frame { background: #f7f9fd; }
-.mitos-four-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.mitos-four-cards article,
-.mitos-faq-list article { min-height: 190px; padding: 26px; background: #fff; border: 1px solid var(--mitos-line); border-radius: 22px; }
-.mitos-four-cards b { color: #1d57a8; font-size: 13px; }
-.mitos-four-cards h3,
-.mitos-faq-list h3 { margin: 19px 0 8px; font-size: 21px; }
-.mitos-four-cards p,
-.mitos-faq-list p { margin: 0; color: var(--mitos-muted); line-height: 1.55; }
-
-.mitos-fleet-frame { background: #fff; }
-.mitos-fleet-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.mitos-fleet-cards article { min-height: 300px; padding: 28px; border: 1px solid var(--mitos-line); border-radius: 24px; background: #f9fbff; }
-.mitos-vehicle-visual { height: 130px; display: grid; place-items: center; border-radius: 18px; background: linear-gradient(145deg,#edf3fb,#dce8f8); color: #174b99; }
-.mitos-vehicle-visual svg { font-size: 94px; }
-.mitos-fleet-cards small { display: block; margin-top: 20px; color: #1d57a8; font-weight: 900; }
-.mitos-fleet-cards h3 { margin: 7px 0 16px; font-size: 28px; }
-.mitos-fleet-cards button { border: 0; padding: 0; background: transparent; color: #174b99; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-
-.mitos-how-frame { background: #f6f8fc; }
-.mitos-steps-line { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #cbd7e8; }
-.mitos-steps-line > div { min-height: 175px; padding: 26px 22px; border-right: 1px solid #dce4ef; }
-.mitos-steps-line > div:last-child { border-right: 0; }
-.mitos-steps-line b { color: #1d57a8; }
-.mitos-steps-line h3 { margin: 18px 0 7px; font-size: 26px; }
-.mitos-steps-line p { margin: 0; color: var(--mitos-muted); }
-
-.mitos-experience-frame { display: grid !important; grid-template-columns: 1fr auto; align-items: center; background: linear-gradient(135deg,#123f96,#012063); color: #fff; }
-.mitos-experience-copy { max-width: 820px; }
-.mitos-experience-copy > span { color: rgba(255,255,255,.72); }
-.mitos-experience-copy h2 { color: #fff; }
-.mitos-experience-copy p { color: rgba(255,255,255,.8); }
-.mitos-experience-route { font-size: clamp(110px, 17vw, 250px) !important; color: rgba(255,255,255,.11); }
-
-.mitos-faq-frame { background: #fff; }
-.mitos-faq-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; }
-
-.mitos-contact-frame { flex-direction: row !important; align-items: center; justify-content: space-between !important; gap: 48px; background: #123f96; color: #fff; }
-.mitos-contact-frame > div:first-child { max-width: 760px; }
-.mitos-contact-frame > div:first-child > span { color: rgba(255,255,255,.7); font-weight: 800; }
-.mitos-contact-frame h2 { color: #fff; }
-.mitos-contact-frame p { color: rgba(255,255,255,.8); }
-.mitos-contact-actions { display: flex; gap: 14px; }
-
-.mitos-footer-frame { display: flex; align-items: stretch; background: #f7faff; }
-.mitos-footer-frame .mitos-footer { min-height: 100%; height: 100%; align-content: center; }
-
-@media only screen and (height <= 720px) and (width > 840px) {
-  .mitos-hero-frame { grid-template-rows: 58% 14% 28%; }
-  .mitos-hero-copy { top: 26px; }
-  .mitos-hero-copy h1 { font-size: clamp(38px, 3.9vw, 54px); }
-  .mitos-hero-copy p { font-size: clamp(18px, 1.55vw, 23px); }
-  .mitos-search-panel { bottom: 10px; padding-block: 10px; }
-  .mitos-search-heading { min-height: 45px; padding-bottom: 6px; }
-  .mitos-search-heading h2 { font-size: 20px; }
-  .mitos-search-heading p { font-size: 12px; }
-  .mitos-search-panel form.home-search-form.mitos-search-form { grid-template-rows: 52px 42px !important; }
-  .mitos-search-panel .mitos-search-form .MuiOutlinedInput-root { min-height: 43px; }
-  .mitos-search-panel .mitos-search-form .btn-search { height: 39px !important; }
-  .mitos-trust-strip { padding-block: 6px; }
-  .mitos-trust-strip > div > svg { width: 34px; height: 34px; padding: 7px; }
-  .mitos-trust-strip b { font-size: 11px; }
-  .mitos-trust-strip small { font-size: 9px; }
-  .mitos-story-block h2 { font-size: 27px; }
-  .mitos-story-block p { font-size: 10px; max-width: 660px; }
-  .mitos-story-actions { margin-top: 8px; }
-  .mitos-btn { min-height: 36px; min-width: 160px; font-size: 12px; }
+@media (max-width: 1100px) {
+  .mitos-search-card { width: min(690px, calc(100% - 390px)); }
+  .mitos-fleet-grid { grid-template-columns: repeat(2, 1fr); }
+  .mitos-car-card img { height: 50%; }
+  .mitos-frame-how { grid-template-columns: .7fr 1.4fr; }
+  .mitos-how-graphic { display: none; }
+  .mitos-frame-trust { grid-template-columns: .7fr 1.3fr; }
+  .mitos-travel-3d { display: none; }
 }
 
-@media only screen and (width <= 1100px) {
-  .mitos-hero-car { width: 53vw; opacity: .82; }
-  .mitos-search-panel { width: calc(100% - 54px); left: 27px; }
-  .mitos-hero-copy { width: 58vw; }
-  .mitos-four-cards { grid-template-columns: repeat(2,1fr); }
-}
-
-@media only screen and (width <= 840px) {
+@media (max-width: 840px) {
   .mitos-home {
-    height: calc(100svh - var(--mitos-header-height, 82px));
-    scroll-snap-type: y proximity;
+    height: auto;
+    overflow: visible;
+    scroll-snap-type: none;
   }
-  .mitos-frame { height: auto; min-height: 100%; }
-  .mitos-hero-frame { display: block; min-height: 100%; overflow-y: auto; }
-  .mitos-hero-scene { min-height: 700px; }
-  .mitos-hero-copy { left: 22px; right: 22px; top: 34px; width: auto; }
-  .mitos-hero-copy h1 { font-size: clamp(40px, 11vw, 56px); }
-  .mitos-hero-copy p { font-size: 22px; }
-  .mitos-hero-car { width: 90vw; height: 360px; top: 150px; bottom: auto; opacity: .72; }
-  .mitos-search-panel { left: 16px; width: calc(100% - 32px); bottom: 18px; }
-  .mitos-search-panel form.home-search-form.mitos-search-form { display: flex !important; flex-direction: column !important; border-top: 1px solid #bcc9dd; }
-  .mitos-search-panel .mitos-search-form .pickup-location,
-  .mitos-search-panel .mitos-search-form .drop-off-location,
-  .mitos-search-panel .mitos-search-form .mitos-drop-off-mirror,
-  .mitos-search-panel .mitos-search-form .from,
-  .mitos-search-panel .mitos-search-form .to { width: 100% !important; border-right: 0; border-bottom: 1px solid #e2e8f1; }
-  .mitos-trust-strip { grid-template-columns: 1fr 1fr; gap: 14px; padding: 24px; }
-  .mitos-story-block { padding: 44px 22px 74px; }
-  .mitos-story-actions { width: 100%; max-width: 340px; flex-direction: column; }
-  .mitos-btn { width: 100%; }
-  .mitos-frame:not(.mitos-hero-frame):not(.mitos-footer-frame) { height: auto; min-height: 100%; padding: 72px 24px; }
-  .mitos-fleet-cards,
-  .mitos-steps-line,
-  .mitos-faq-list { grid-template-columns: 1fr; }
-  .mitos-experience-frame { display: flex !important; }
-  .mitos-contact-frame { flex-direction: column !important; align-items: flex-start; }
-  .mitos-contact-actions { width: 100%; flex-direction: column; }
-  .mitos-footer-frame { height: auto; min-height: 100%; }
+  .mitos-frame {
+    height: auto;
+    min-height: calc(100svh - var(--mitos-header-height, 82px));
+    overflow: visible;
+    scroll-snap-align: none;
+  }
+  .mitos-frame-hero { display: block; }
+  .mitos-hero-media { min-height: 720px; background-position: 65% center; }
+  .mitos-hero-shade { background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.82) 36%, rgba(255,255,255,.15) 68%, transparent 100%); }
+  .mitos-hero-copy { top: 34px; left: 24px; width: calc(100% - 48px); }
+  .mitos-hero-copy h1 { font-size: clamp(42px, 11vw, 62px); }
+  .mitos-search-card { left: 20px; right: 20px; bottom: 20px; width: auto; }
+  .mitos-search-card form.home-search-form.mitos-search-form {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas: 'pickup dropoff' 'from to' 'check check' 'search search' !important;
+    grid-template-rows: auto auto 44px 46px !important;
+  }
+  .mitos-hero-benefits { grid-template-columns: 1fr 1fr; min-height: 230px; padding: 24px; }
+  .mitos-frame-why,
+  .mitos-frame-fleet,
+  .mitos-frame-how,
+  .mitos-frame-promos,
+  .mitos-frame-trust,
+  .mitos-frame-faq { padding: 52px 24px; }
+  .mitos-why-layout,
+  .mitos-frame-how,
+  .mitos-frame-trust,
+  .mitos-frame-faq { display: block; }
+  .mitos-benefit-grid,
+  .mitos-fleet-grid,
+  .mitos-promo-grid,
+  .mitos-trust-cards,
+  .mitos-faq-grid { grid-template-columns: 1fr; height: auto; }
+  .mitos-3d-visual,
+  .mitos-how-graphic,
+  .mitos-travel-3d { max-height: 360px; margin-top: 24px; }
+  .mitos-fleet-grid { grid-template-columns: 1fr 1fr; }
+  .mitos-car-card { min-height: 340px; }
+  .mitos-steps { grid-template-columns: 1fr 1fr; margin-top: 30px; }
+  .mitos-frame-final { min-height: 900px; grid-template-rows: auto 1fr; }
+  .mitos-final-cta { min-height: 310px; padding: 44px 24px; align-items: flex-start; flex-direction: column; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .mitos-hero-benefits,
+  .mitos-benefit-grid,
+  .mitos-fleet-grid,
+  .mitos-steps { grid-template-columns: 1fr; }
+  .mitos-search-card form.home-search-form.mitos-search-form {
+    grid-template-columns: 1fr !important;
+    grid-template-areas: 'pickup' 'dropoff' 'from' 'to' 'check' 'search' !important;
+    grid-template-rows: auto !important;
+  }
+  .mitos-final-actions,
+  .split-heading { align-items: stretch; flex-direction: column; }
 }
