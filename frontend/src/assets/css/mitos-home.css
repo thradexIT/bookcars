@@ -1,0 +1,590 @@
+.mitos-home {
+  --mitos-blue: #1757ff;
+  --mitos-blue-strong: #0f3fd8;
+  --mitos-blue-soft: #eaf1ff;
+  --mitos-blue-pale: #f6f9ff;
+  --mitos-ink: #10204a;
+  --mitos-muted: #63708f;
+  --mitos-white: #fff;
+  --mitos-line: #dce6ff;
+  --mitos-shadow: 0 24px 70px rgba(31, 88, 217, 0.13);
+  background: var(--mitos-white);
+  color: var(--mitos-ink);
+  overflow: hidden;
+}
+
+.mitos-home * {
+  box-sizing: border-box;
+}
+
+.mitos-hero {
+  min-height: 610px;
+  padding: clamp(56px, 8vw, 112px) clamp(22px, 7vw, 104px) 118px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  align-items: center;
+  gap: clamp(34px, 6vw, 90px);
+  position: relative;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(23, 87, 255, 0.12), transparent 32%),
+    linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+}
+
+.mitos-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--mitos-line);
+}
+
+.mitos-eyebrow,
+.mitos-section-intro > span,
+.mitos-promo-card > div > span,
+.mitos-travel-band span {
+  color: var(--mitos-blue);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mitos-hero h1 {
+  max-width: 720px;
+  margin: 14px 0 14px;
+  font-size: clamp(48px, 6.2vw, 86px);
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+  color: var(--mitos-ink);
+}
+
+.mitos-hero-tagline {
+  margin: 0;
+  color: var(--mitos-blue);
+  font-size: clamp(24px, 2.3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.mitos-hero-support {
+  max-width: 650px;
+  margin: 22px 0 0;
+  color: var(--mitos-muted);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.mitos-hero-actions,
+.mitos-final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.mitos-btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.mitos-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.mitos-btn-primary {
+  background: var(--mitos-blue);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(23, 87, 255, 0.2);
+}
+
+.mitos-btn-secondary {
+  background: #fff;
+  color: var(--mitos-blue-strong);
+  border-color: var(--mitos-line);
+}
+
+.mitos-agent-seam {
+  width: fit-content;
+  margin-top: 22px;
+  padding: 10px 13px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--mitos-blue-soft);
+  color: var(--mitos-blue-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mitos-agent-seam small {
+  color: var(--mitos-muted);
+  font-weight: 600;
+}
+
+.mitos-hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mitos-road-card {
+  width: min(100%, 520px);
+  aspect-ratio: 1 / 0.92;
+  border-radius: 42px;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(150deg, rgba(255,255,255,0.98) 0 22%, rgba(255,255,255,0.68) 22% 24%, transparent 24%),
+    linear-gradient(145deg, #4c81ff 0%, #1757ff 46%, #0f3fd8 100%);
+  box-shadow: var(--mitos-shadow);
+}
+
+.mitos-road-card::before {
+  content: '';
+  position: absolute;
+  width: 68%;
+  height: 170%;
+  left: 24%;
+  top: -34%;
+  transform: rotate(26deg);
+  border-left: 2px dashed rgba(255,255,255,0.52);
+  border-right: 2px dashed rgba(255,255,255,0.24);
+}
+
+.mitos-road-orbit {
+  position: absolute;
+  border: 1px solid rgba(255,255,255,0.38);
+  border-radius: 999px;
+}
+
+.mitos-road-orbit-one {
+  width: 260px;
+  height: 260px;
+  right: -60px;
+  top: -20px;
+}
+
+.mitos-road-orbit-two {
+  width: 390px;
+  height: 390px;
+  left: -190px;
+  bottom: -160px;
+}
+
+.mitos-car-mark {
+  width: 132px;
+  height: 132px;
+  border-radius: 34px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--mitos-blue);
+  box-shadow: 0 22px 55px rgba(0,0,0,0.16);
+}
+
+.mitos-car-mark svg {
+  font-size: 72px;
+}
+
+.mitos-route-label {
+  position: absolute;
+  padding: 9px 12px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.94);
+  color: var(--mitos-ink);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(8, 49, 145, 0.13);
+}
+
+.mitos-route-label-one { top: 16%; left: 8%; }
+.mitos-route-label-two { top: 18%; right: 8%; }
+.mitos-route-label-three { bottom: 12%; right: 10%; }
+.mitos-route-label svg { color: var(--mitos-blue); font-size: 18px; }
+
+.mitos-search-zone {
+  width: min(1180px, calc(100% - 40px));
+  margin: -64px auto 0;
+  padding: 30px;
+  position: relative;
+  z-index: 5;
+  border-radius: 28px;
+  background: #fff;
+  border: 1px solid var(--mitos-line);
+  box-shadow: var(--mitos-shadow);
+}
+
+.mitos-section-intro {
+  max-width: 760px;
+  margin-bottom: 36px;
+}
+
+.mitos-section-intro-compact {
+  margin-bottom: 18px;
+}
+
+.mitos-section-intro h2,
+.mitos-promo-card h2,
+.mitos-final-cta h2,
+.mitos-travel-band h2 {
+  margin: 8px 0 12px;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.mitos-section-intro p,
+.mitos-promo-card p {
+  margin: 0;
+  color: var(--mitos-muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.mitos-search-card {
+  width: 100%;
+  padding: 4px;
+  border-radius: 20px;
+  background: var(--mitos-blue-pale);
+}
+
+.mitos-search-card > * {
+  width: 100%;
+}
+
+.mitos-section {
+  padding: clamp(76px, 9vw, 124px) clamp(22px, 7vw, 104px);
+}
+
+.mitos-value-grid,
+.mitos-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.mitos-value-card,
+.mitos-faq-grid article {
+  min-height: 220px;
+  padding: 26px;
+  border-radius: 24px;
+  background: var(--mitos-blue-pale);
+  border: 1px solid var(--mitos-line);
+}
+
+.mitos-value-card svg {
+  color: var(--mitos-blue);
+  font-size: 34px;
+}
+
+.mitos-value-card h3,
+.mitos-faq-grid h3 {
+  margin: 18px 0 8px;
+  font-size: 20px;
+}
+
+.mitos-value-card p,
+.mitos-faq-grid p,
+.mitos-step p,
+.mitos-fleet-copy p {
+  margin: 0;
+  color: var(--mitos-muted);
+  line-height: 1.65;
+}
+
+.mitos-fleet {
+  background: var(--mitos-blue-pale);
+}
+
+.mitos-fleet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.mitos-fleet-card {
+  min-height: 350px;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  overflow: hidden;
+  border-radius: 30px;
+  background: #fff;
+  border: 1px solid var(--mitos-line);
+  box-shadow: 0 20px 55px rgba(31, 88, 217, 0.08);
+}
+
+.mitos-fleet-card-alt .mitos-fleet-visual {
+  background: linear-gradient(145deg, #dce8ff 0%, #fff 100%);
+}
+
+.mitos-fleet-visual {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #eef4ff 0%, #d6e4ff 100%);
+  color: var(--mitos-blue);
+}
+
+.mitos-fleet-visual svg {
+  font-size: clamp(86px, 10vw, 150px);
+}
+
+.mitos-fleet-copy {
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mitos-fleet-copy small {
+  color: var(--mitos-blue);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.mitos-fleet-copy h3 {
+  margin: 10px 0 12px;
+  font-size: 30px;
+  letter-spacing: -0.035em;
+}
+
+.mitos-fleet-copy button {
+  width: fit-content;
+  margin-top: 24px;
+  padding: 0;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  color: var(--mitos-blue);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.mitos-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.mitos-step {
+  padding: 30px;
+  border-top: 3px solid var(--mitos-blue);
+  background: #fff;
+  box-shadow: 0 14px 45px rgba(23,87,255,0.08);
+}
+
+.mitos-step b {
+  color: var(--mitos-blue);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.mitos-step h3 {
+  margin: 22px 0 8px;
+  font-size: 24px;
+}
+
+.mitos-travel-band {
+  min-height: 380px;
+  padding: clamp(58px, 8vw, 108px) clamp(22px, 7vw, 104px);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 40px;
+  background: linear-gradient(135deg, #1757ff 0%, #0f3fd8 100%);
+  color: #fff;
+}
+
+.mitos-travel-band span {
+  color: rgba(255,255,255,0.72);
+}
+
+.mitos-travel-band h2 {
+  max-width: 850px;
+  color: #fff;
+}
+
+.mitos-travel-icon {
+  font-size: clamp(90px, 12vw, 180px) !important;
+  color: rgba(255,255,255,0.16);
+}
+
+.mitos-promo-card {
+  padding: clamp(34px, 5vw, 62px);
+  border-radius: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 34px;
+  background: var(--mitos-blue-pale);
+  border: 1px solid var(--mitos-line);
+}
+
+.mitos-promo-card > div {
+  max-width: 760px;
+}
+
+.mitos-faq-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.mitos-faq-grid article {
+  min-height: 190px;
+  background: #fff;
+  box-shadow: 0 16px 50px rgba(23,87,255,0.06);
+}
+
+.mitos-final-cta {
+  padding: clamp(56px, 7vw, 92px) clamp(22px, 7vw, 104px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  background: var(--mitos-blue);
+  color: #fff;
+}
+
+.mitos-final-cta span {
+  color: rgba(255,255,255,0.74);
+  font-weight: 800;
+}
+
+.mitos-final-cta h2 {
+  max-width: 700px;
+  margin-bottom: 0;
+  color: #fff;
+}
+
+.mitos-btn-white {
+  background: #fff;
+  color: var(--mitos-blue-strong);
+}
+
+.mitos-btn-outline-white {
+  border-color: rgba(255,255,255,0.5);
+  color: #fff;
+  background: transparent;
+}
+
+.mitos-btn-ghost {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.68);
+  cursor: not-allowed;
+}
+
+@media only screen and (width <= 1080px) {
+  .mitos-hero {
+    grid-template-columns: 1fr;
+    padding-bottom: 110px;
+  }
+
+  .mitos-hero-copy {
+    max-width: 820px;
+  }
+
+  .mitos-hero-visual {
+    display: none;
+  }
+
+  .mitos-value-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mitos-fleet-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media only screen and (width <= 760px) {
+  .mitos-hero {
+    min-height: auto;
+    padding-top: 56px;
+  }
+
+  .mitos-hero h1 {
+    font-size: clamp(46px, 14vw, 64px);
+  }
+
+  .mitos-hero-support {
+    font-size: 16px;
+  }
+
+  .mitos-agent-seam {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    border-radius: 18px;
+  }
+
+  .mitos-agent-seam small {
+    width: 100%;
+  }
+
+  .mitos-search-zone {
+    width: calc(100% - 24px);
+    padding: 20px 14px;
+    border-radius: 22px;
+  }
+
+  .mitos-value-grid,
+  .mitos-faq-grid,
+  .mitos-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .mitos-fleet-card {
+    grid-template-columns: 1fr;
+  }
+
+  .mitos-fleet-visual {
+    min-height: 210px;
+  }
+
+  .mitos-travel-band {
+    grid-template-columns: 1fr;
+  }
+
+  .mitos-travel-icon {
+    display: none !important;
+  }
+
+  .mitos-promo-card,
+  .mitos-final-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mitos-hero-actions,
+  .mitos-final-actions {
+    width: 100%;
+  }
+
+  .mitos-hero-actions .mitos-btn,
+  .mitos-final-actions .mitos-btn,
+  .mitos-promo-card .mitos-btn {
+    width: 100%;
+  }
+}
