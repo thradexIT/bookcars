@@ -26,10 +26,9 @@
   height: 70px;
   border: 0;
   cursor: pointer;
-  background: transparent url('../img/mitos-header-logo-reference.svg') center / contain no-repeat;
+  background: transparent url('../img/mitos-header-logo-transparent.svg') center / contain no-repeat;
   box-shadow: none;
   outline: 0;
-  mix-blend-mode: lighten;
 }
 
 .mitos-topbar-nav {
