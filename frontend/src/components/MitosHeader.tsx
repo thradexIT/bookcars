@@ -9,6 +9,8 @@ const MitosHeader = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const isHome = location.pathname === '/'
+  const isSearch = location.pathname === '/search'
+  const isMitosPublicSurface = isHome || isSearch
 
   useEffect(() => {
     document.title = mitosBrand.name
@@ -25,7 +27,7 @@ const MitosHeader = () => {
 
   const goToSearch = () => goToSection('mitos-search')
 
-  if (!isHome) {
+  if (!isMitosPublicSurface) {
     return (
       <div className="mitos-header-shell mitos-header-shell-legacy">
         <Header />
@@ -37,8 +39,8 @@ const MitosHeader = () => {
     <header className="mitos-topbar">
       <button className="mitos-topbar-logo" type="button" aria-label="Mitos Rent a Car - Inicio" onClick={() => goToSection('inicio')} />
       <nav className="mitos-topbar-nav" aria-label="Navegación principal">
-        <button type="button" className="is-active" onClick={() => goToSection('inicio')}>Inicio</button>
-        <button type="button" onClick={() => goToSection('vehiculos')}>Vehículos</button>
+        <button type="button" className={isHome ? 'is-active' : ''} onClick={() => goToSection('inicio')}>Inicio</button>
+        <button type="button" className={isSearch ? 'is-active' : ''} onClick={() => goToSection('vehiculos')}>Vehículos</button>
         <button type="button" onClick={() => goToSection('como-funciona')}>Cómo funciona</button>
         <button type="button" onClick={() => goToSection('promociones')}>Promociones</button>
         <button type="button" onClick={() => goToSection('preguntas')}>FAQ</button>
@@ -46,7 +48,7 @@ const MitosHeader = () => {
       </nav>
       <div className="mitos-topbar-actions">
         <button type="button" className="mitos-language" aria-label="Idioma español"><Language fontSize="small" /> ES <span>⌄</span></button>
-        <button type="button" className="mitos-search-nav" onClick={goToSearch}>Buscar auto</button>
+        <button type="button" className="mitos-search-nav" onClick={goToSearch}>{isSearch ? 'Nueva búsqueda' : 'Buscar auto'}</button>
       </div>
     </header>
   )
