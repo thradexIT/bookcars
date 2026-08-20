@@ -36,7 +36,7 @@ const MitosHome = () => {
                 <span className="mitos-search-icon">⌕</span>
                 <div>
                   <h2>Encuentra tu auto ideal</h2>
-                  <p>Elige dónde y cuándo, y continúa tu reserva en el mismo flujo Mitos.</p>
+                  <p>Elige dónde y cuándo, y nosotros nos encargamos del resto.</p>
                 </div>
               </div>
               <SearchForm />
@@ -44,17 +44,18 @@ const MitosHome = () => {
           </div>
 
           <div className="mitos-trust-strip" aria-label="Beneficios Mitos">
-            <div><SecurityOutlined /><span><b>Reserva segura</b><small>Una experiencia clara desde el inicio.</small></span></div>
-            <div><DirectionsCar /><span><b>Autos modernos</b><small>Modelos comunicados para ciudad y ruta.</small></span></div>
-            <div><SupportAgent /><span><b>Atención rápida</b><small>Te acompañamos cuando necesitas ayuda.</small></span></div>
-            <div><LocalOfferOutlined /><span><b>Promociones claras</b><small>Consulta vigencia y condiciones.</small></span></div>
+            <div><SecurityOutlined /><span><b>Reserva segura</b><small>Tus datos siempre protegidos.</small></span></div>
+            <div><DirectionsCar /><span><b>Autos modernos</b><small>Flota renovada y en excelente estado.</small></span></div>
+            <div><SupportAgent /><span><b>Atención rápida</b><small>Te ayudamos en cada paso de tu viaje.</small></span></div>
+            <div><LocalOfferOutlined /><span><b>Precios claros</b><small>Sin sorpresas, todo transparente.</small></span></div>
           </div>
 
           <div className="mitos-story-block">
             <h2>Movilidad que te da libertad</h2>
             <p>
-              En Mitos Rent a Car queremos que disfrutes cada kilómetro. Ya sea por trabajo, una escapada o para moverte por la ciudad,
-              empieza con una búsqueda simple y continúa tu ruta con confianza.
+              En Mitos Rent a Car queremos que disfrutes cada kilómetro. Ya sea por trabajo,
+              vacaciones o para moverte por la ciudad, estamos aquí para acompañarte
+              con confianza y la mejor experiencia.
             </p>
             <div className="mitos-story-actions">
               <button type="button" className="mitos-btn mitos-btn-primary" onClick={goToSearch}>Buscar auto</button>
