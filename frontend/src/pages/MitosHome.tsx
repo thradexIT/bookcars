@@ -66,7 +66,7 @@ const MitosHome = () => {
 
         <section className="mitos-frame mitos-frame-why" id="por-que-mitos">
           <div className="mitos-section-heading centered">
-            <span>FRAME 02 · POR QUÉ MITOS</span>
+            <span>POR QUÉ MITOS</span>
             <h2>¿Por qué elegir Mitos?</h2>
             <p>Una experiencia de alquiler clara, directa y pensada para que avances sin fricción.</p>
           </div>
@@ -75,7 +75,7 @@ const MitosHome = () => {
             <div className="mitos-benefit-grid">
               <article><SecurityOutlined /><h3>Atención confiable</h3><p>Comunicación directa para acompañarte cuando lo necesites.</p></article>
               <article><DirectionsCarOutlined /><h3>Modelos recientes</h3><p>Vehículos publicados para ciudad, trabajo y viaje.</p></article>
-              <article><CalendarMonthOutlined /><h3>Reserva fácil</h3><p>Empieza desde ubicación y fechas en el primer frame.</p></article>
+              <article><CalendarMonthOutlined /><h3>Reserva fácil</h3><p>Empieza desde ubicación y fechas en el primer bloque.</p></article>
               <article><HeadsetMicOutlined /><h3>Ayuda cercana</h3><p>WhatsApp hoy; agente Mitos como siguiente capa.</p></article>
             </div>
             <img className="mitos-3d-visual" src={assets.mobility3d} alt="Ilustración 3D de movilidad Mitos" />
@@ -85,7 +85,7 @@ const MitosHome = () => {
         <section className="mitos-frame mitos-frame-fleet" id="vehiculos">
           <div className="mitos-section-heading split-heading">
             <div>
-              <span>FRAME 03 · NUESTRA FLOTA</span>
+              <span>NUESTRA FLOTA</span>
               <h2>Vehículos para tu próxima ruta.</h2>
               <p>Las imágenes son referencias visuales; la disponibilidad real se confirma en el buscador.</p>
             </div>
@@ -114,7 +114,7 @@ const MitosHome = () => {
 
         <section className="mitos-frame mitos-frame-how" id="como-funciona">
           <div className="mitos-how-copy">
-            <span>FRAME 04 · CÓMO FUNCIONA</span>
+            <span>CÓMO FUNCIONA</span>
             <h2>Así de fácil<br />alquilar tu auto.</h2>
             <p>La landing te guía; Rent A Car mantiene la autoridad de disponibilidad, precio y reserva.</p>
           </div>
@@ -132,7 +132,7 @@ const MitosHome = () => {
         <section className="mitos-frame mitos-frame-promos" id="promociones">
           <div className="mitos-section-heading split-heading">
             <div>
-              <span>FRAME 05 · PROMOCIONES</span>
+              <span>PROMOCIONES</span>
               <h2>Promociones para tu ruta.</h2>
               <p>Referencias de campañas publicadas por Mitos. Confirma siempre vigencia y condiciones.</p>
             </div>
@@ -148,7 +148,7 @@ const MitosHome = () => {
 
         <section className="mitos-frame mitos-frame-trust" id="experiencia">
           <div className="mitos-trust-copy">
-            <span>FRAME 06 · EXPERIENCIA</span>
+            <span>EXPERIENCIA MITOS</span>
             <h2>Lo que Mitos comunica.</h2>
             <p>Sin inventar testimonios: usamos solamente señales públicas de la marca mientras recuperamos evidencia real de clientes.</p>
           </div>
@@ -164,13 +164,13 @@ const MitosHome = () => {
 
         <section className="mitos-frame mitos-frame-faq" id="preguntas">
           <div className="mitos-faq-copy">
-            <span>FRAME 07 · PREGUNTAS FRECUENTES</span>
+            <span>PREGUNTAS FRECUENTES</span>
             <h2>Preguntas frecuentes</h2>
             <p>Todo claro antes de iniciar tu reserva.</p>
           </div>
 
           <div className="mitos-faq-grid">
-            <details><summary>¿Cómo empiezo mi reserva?</summary><p>Usa el buscador del primer frame para ingresar ubicación y fechas.</p></details>
+            <details><summary>¿Cómo empiezo mi reserva?</summary><p>Usa el buscador inicial para ingresar ubicación y fechas.</p></details>
             <details><summary>¿Qué autos están disponibles?</summary><p>La disponibilidad real se confirma dentro del flujo Rent A Car.</p></details>
             <details><summary>¿Puedo devolver el auto en otro lugar?</summary><p>El buscador permite solicitar una ubicación de devolución diferente cuando exista una opción válida.</p></details>
             <details><summary>¿El seguro está incluido?</summary><p>La cobertura exacta, sus reglas y costos deben confirmarse antes de cerrar la reserva.</p></details>
@@ -182,7 +182,7 @@ const MitosHome = () => {
         <section className="mitos-frame mitos-frame-final" id="contacto">
           <div className="mitos-final-cta">
             <div>
-              <span>FRAME 08 · EMPIEZA TU RUTA</span>
+              <span>EMPIEZA TU RUTA</span>
               <h2>¿Listo para comenzar tu viaje?</h2>
               <p>Busca tu auto o habla con Mitos.</p>
             </div>
