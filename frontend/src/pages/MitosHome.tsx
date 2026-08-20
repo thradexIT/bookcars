@@ -44,7 +44,7 @@ const MitosHome = () => {
               </div>
 
               <div className="mitos-search-runtime">
-                <SearchForm />
+                <SearchForm variant="mitos" defaultSameLocation={false} />
                 <div className="mitos-search-fallback" aria-hidden="true">
                   <div className="mitos-search-field">
                     <small>Retiro</small>
