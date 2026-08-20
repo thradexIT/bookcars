@@ -1,0 +1,100 @@
+:root {
+  --mitos-blue: #1757ff;
+  --mitos-blue-strong: #0f3fd8;
+  --mitos-blue-soft: #eaf1ff;
+  --mitos-ink: #10204a;
+  --mitos-muted: #63708f;
+  --mitos-white: #ffffff;
+  --mitos-line: #dce6ff;
+}
+
+.mitos-header-shell {
+  position: relative;
+  z-index: 1500;
+  background: var(--mitos-white);
+}
+
+.mitos-brand-ribbon {
+  min-height: 30px;
+  padding: 6px clamp(18px, 4vw, 64px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: var(--mitos-blue);
+  color: var(--mitos-white);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mitos-header-shell .header .MuiAppBar-root {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-bottom: 1px solid var(--mitos-line) !important;
+  box-shadow: 0 8px 30px rgba(24, 69, 164, 0.06) !important;
+}
+
+.mitos-header-shell .header .logo {
+  position: relative;
+  width: 140px;
+  min-width: 140px;
+  justify-content: flex-start;
+  color: transparent !important;
+  font-size: 0 !important;
+  padding-left: 0 !important;
+}
+
+.mitos-header-shell .header .logo::before {
+  content: 'MITOS';
+  color: var(--mitos-blue);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.mitos-header-shell .header .logo::after {
+  content: 'RENT A CAR';
+  color: var(--mitos-ink);
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  margin-left: 7px;
+  margin-top: 4px;
+}
+
+.mitos-header-shell .header .btn,
+.mitos-header-shell .header .MuiIconButton-root {
+  color: var(--mitos-ink) !important;
+}
+
+.mitos-header-shell .header .btn:hover,
+.mitos-header-shell .header .MuiIconButton-root:hover {
+  background: var(--mitos-blue-soft) !important;
+}
+
+@media only screen and (width <= 700px) {
+  .mitos-brand-ribbon {
+    justify-content: center;
+    min-height: 26px;
+    font-size: 11px;
+  }
+
+  .mitos-brand-ribbon-market {
+    display: none;
+  }
+
+  .mitos-header-shell .header .logo {
+    width: 112px;
+    min-width: 112px;
+  }
+
+  .mitos-header-shell .header .logo::before {
+    font-size: 21px;
+  }
+
+  .mitos-header-shell .header .logo::after {
+    font-size: 7px;
+  }
+}
