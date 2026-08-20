@@ -1,12 +1,10 @@
 import React from 'react'
 import {
   ArrowForward,
-  CalendarMonth,
-  CheckCircleOutline,
   DirectionsCar,
-  LocationOn,
+  LocalOfferOutlined,
   Route,
-  SmartToyOutlined,
+  SecurityOutlined,
   SupportAgent,
   WhatsApp,
 } from '@mui/icons-material'
@@ -24,169 +22,132 @@ const MitosHome = () => {
   return (
     <Layout strict={false}>
       <main className="mitos-home">
-        <section className="mitos-hero" id="inicio">
-          <div className="mitos-hero-copy">
-            <div className="mitos-eyebrow">MITOS RENT A CAR · LIMA, PERÚ</div>
-            <h1>Tu ruta empieza cuando tú decides.</h1>
-            <p className="mitos-hero-tagline">{mitosBrand.tagline}</p>
-            <p className="mitos-hero-support">
-              Explora opciones para ciudad, trabajo o una escapada y continúa tu reserva en el mismo flujo de Mitos.
-            </p>
+        <section className="mitos-frame mitos-hero-frame" id="inicio">
+          <div className="mitos-hero-scene">
+            <div className="mitos-hero-copy">
+              <h1>Tu ruta empieza<br />cuando tú decides.</h1>
+              <p>{mitosBrand.tagline}</p>
+            </div>
 
-            <div className="mitos-hero-actions">
-              <button type="button" className="mitos-btn mitos-btn-primary" onClick={goToSearch}>
-                Buscar auto <ArrowForward fontSize="small" />
-              </button>
-              <a className="mitos-btn mitos-btn-secondary" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer">
-                <WhatsApp fontSize="small" /> WhatsApp
+            <div className="mitos-hero-car" aria-hidden="true" />
+
+            <div className="mitos-search-panel" id="mitos-search">
+              <div className="mitos-search-heading">
+                <span className="mitos-search-icon">⌕</span>
+                <div>
+                  <h2>Encuentra tu auto ideal</h2>
+                  <p>Elige dónde y cuándo, y continúa tu reserva en el mismo flujo Mitos.</p>
+                </div>
+              </div>
+              <SearchForm />
+            </div>
+          </div>
+
+          <div className="mitos-trust-strip" aria-label="Beneficios Mitos">
+            <div><SecurityOutlined /><span><b>Reserva segura</b><small>Una experiencia clara desde el inicio.</small></span></div>
+            <div><DirectionsCar /><span><b>Autos modernos</b><small>Modelos comunicados para ciudad y ruta.</small></span></div>
+            <div><SupportAgent /><span><b>Atención rápida</b><small>Te acompañamos cuando necesitas ayuda.</small></span></div>
+            <div><LocalOfferOutlined /><span><b>Promociones claras</b><small>Consulta vigencia y condiciones.</small></span></div>
+          </div>
+
+          <div className="mitos-story-block">
+            <h2>Movilidad que te da libertad</h2>
+            <p>
+              En Mitos Rent a Car queremos que disfrutes cada kilómetro. Ya sea por trabajo, una escapada o para moverte por la ciudad,
+              empieza con una búsqueda simple y continúa tu ruta con confianza.
+            </p>
+            <div className="mitos-story-actions">
+              <button type="button" className="mitos-btn mitos-btn-primary" onClick={goToSearch}>Buscar auto</button>
+              <a className="mitos-btn mitos-btn-outline" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer">
+                <WhatsApp fontSize="small" /> Hablar con Mitos
               </a>
             </div>
-
-            <div className="mitos-agent-seam">
-              <SmartToyOutlined fontSize="small" />
-              <span>Agente Mitos</span>
-              <small>Integración preparada · runtime después</small>
-            </div>
-          </div>
-
-          <div className="mitos-hero-visual" aria-hidden="true">
-            <div className="mitos-road-card">
-              <div className="mitos-road-orbit mitos-road-orbit-one" />
-              <div className="mitos-road-orbit mitos-road-orbit-two" />
-              <div className="mitos-car-mark"><DirectionsCar /></div>
-              <div className="mitos-route-label mitos-route-label-one"><LocationOn /> Ciudad</div>
-              <div className="mitos-route-label mitos-route-label-two"><Route /> Ruta</div>
-              <div className="mitos-route-label mitos-route-label-three"><CalendarMonth /> Escapada</div>
-            </div>
           </div>
         </section>
 
-        <section className="mitos-search-zone" id="mitos-search">
-          <div className="mitos-section-intro mitos-section-intro-compact">
-            <span>Empieza aquí</span>
-            <h2>Busca tu próximo auto</h2>
-            <p>La disponibilidad real pertenece al flujo Rent A Car. Mitos solo te abre la puerta.</p>
+        <section className="mitos-frame mitos-why-frame" id="por-que-mitos">
+          <div className="mitos-frame-copy">
+            <span>POR QUÉ MITOS</span>
+            <h2>Una experiencia de alquiler pensada para avanzar.</h2>
+            <p>Menos fricción, más claridad: descubre, busca y continúa tu reserva sin cambiar de experiencia.</p>
           </div>
-          <div className="mitos-search-card">
-            <SearchForm />
+          <div className="mitos-four-cards">
+            <article><b>01</b><h3>Reserva simple</h3><p>La búsqueda real de Rent A Car vive desde el primer frame.</p></article>
+            <article><b>02</b><h3>Vehículos para tu plan</h3><p>Ciudad, trabajo o ruta: encuentra una opción adecuada para tu intención.</p></article>
+            <article><b>03</b><h3>Atención directa</h3><p>WhatsApp funciona como canal humano mientras el agente Mitos se integra después.</p></article>
+            <article><b>04</b><h3>Mismo recorrido</h3><p>De la landing al buscador, checkout y reserva bajo una sola experiencia pública.</p></article>
           </div>
         </section>
 
-        <section className="mitos-section" id="por-que-mitos">
-          <div className="mitos-section-intro">
-            <span>Por qué Mitos</span>
-            <h2>Movilidad simple, clara y lista para tu plan.</h2>
-            <p>Una experiencia pensada para ayudarte a pasar de “necesito un auto” a “ya tengo mi ruta”.</p>
+        <section className="mitos-frame mitos-fleet-frame" id="vehiculos">
+          <div className="mitos-frame-copy">
+            <span>VEHÍCULOS</span>
+            <h2>Referencias que ya forman parte de Mitos.</h2>
+            <p>Los modelos se muestran como comunicación pública; la disponibilidad real se confirma en el buscador.</p>
           </div>
-
-          <div className="mitos-value-grid">
-            <article className="mitos-value-card">
-              <CheckCircleOutline />
-              <h3>Reserva simple</h3>
-              <p>Empieza con una búsqueda directa y continúa en el funnel de reserva sin cambiar de experiencia.</p>
+          <div className="mitos-fleet-cards">
+            <article>
+              <div className="mitos-vehicle-visual"><DirectionsCar /></div>
+              <small>MODELO PUBLICADO</small>
+              <h3>Toyota Yaris 2025/26</h3>
+              <button type="button" onClick={goToSearch}>Consultar disponibilidad <ArrowForward fontSize="small" /></button>
             </article>
-            <article className="mitos-value-card">
-              <DirectionsCar />
-              <h3>Modelos para distintos planes</h3>
-              <p>Mitos ha comunicado modelos recientes para ciudad y ruta. La disponibilidad se confirma en el buscador.</p>
-            </article>
-            <article className="mitos-value-card">
-              <SupportAgent />
-              <h3>Atención directa</h3>
-              <p>Si todavía no sabes qué necesitas, WhatsApp sigue disponible como canal humano de apoyo.</p>
-            </article>
-            <article className="mitos-value-card">
-              <Route />
-              <h3>Tu ruta, tu ritmo</h3>
-              <p>Ciudad, trabajo o una escapada: la experiencia empieza por el plan que tienes en mente.</p>
+            <article>
+              <div className="mitos-vehicle-visual"><DirectionsCar /></div>
+              <small>MODELO PUBLICADO</small>
+              <h3>Toyota Raize</h3>
+              <button type="button" onClick={goToSearch}>Consultar disponibilidad <ArrowForward fontSize="small" /></button>
             </article>
           </div>
         </section>
 
-        <section className="mitos-section mitos-fleet" id="vehiculos">
-          <div className="mitos-section-intro">
-            <span>Vehículos publicados</span>
-            <h2>Dos modelos que ya forman parte de la comunicación pública de Mitos.</h2>
-            <p>Estos modelos se muestran como referencia editorial; no representan disponibilidad en tiempo real.</p>
+        <section className="mitos-frame mitos-how-frame" id="como-funciona">
+          <div className="mitos-frame-copy mitos-frame-copy-centered">
+            <span>CÓMO FUNCIONA</span>
+            <h2>Busca. Elige. Reserva. Sal a tu ruta.</h2>
           </div>
-
-          <div className="mitos-fleet-grid">
-            <article className="mitos-fleet-card">
-              <div className="mitos-fleet-visual"><DirectionsCar /></div>
-              <div className="mitos-fleet-copy">
-                <small>MODELO PUBLICADO POR MITOS</small>
-                <h3>Toyota Yaris 2025/26</h3>
-                <p>Una referencia publicada para movilidad práctica en ciudad y recorridos cotidianos.</p>
-                <button type="button" onClick={goToSearch}>Consultar disponibilidad <ArrowForward fontSize="small" /></button>
-              </div>
-            </article>
-
-            <article className="mitos-fleet-card mitos-fleet-card-alt">
-              <div className="mitos-fleet-visual"><DirectionsCar /></div>
-              <div className="mitos-fleet-copy">
-                <small>MODELO PUBLICADO POR MITOS</small>
-                <h3>Toyota Raize</h3>
-                <p>Una referencia publicada para quienes buscan una experiencia con presencia SUV y flexibilidad de ruta.</p>
-                <button type="button" onClick={goToSearch}>Consultar disponibilidad <ArrowForward fontSize="small" /></button>
-              </div>
-            </article>
+          <div className="mitos-steps-line">
+            <div><b>01</b><h3>Busca</h3><p>Ubicación y fechas.</p></div>
+            <div><b>02</b><h3>Elige</h3><p>Opciones reales del Rent A Car.</p></div>
+            <div><b>03</b><h3>Reserva</h3><p>Continúa a checkout.</p></div>
+            <div><b>04</b><h3>Viaja</h3><p>Tu experiencia Mitos continúa.</p></div>
           </div>
         </section>
 
-        <section className="mitos-section mitos-how" id="como-funciona">
-          <div className="mitos-section-intro">
-            <span>Cómo alquilar</span>
-            <h2>Una entrada simple al funnel real.</h2>
-          </div>
-          <div className="mitos-steps">
-            <div className="mitos-step"><b>01</b><h3>Busca</h3><p>Elige ubicación y fechas para iniciar una búsqueda real.</p></div>
-            <div className="mitos-step"><b>02</b><h3>Elige</h3><p>Compara las opciones que el Rent A Car Core devuelva para tu solicitud.</p></div>
-            <div className="mitos-step"><b>03</b><h3>Continúa</h3><p>Avanza a checkout y reserva dentro del mismo recorrido de Mitos.</p></div>
-          </div>
-        </section>
-
-        <section className="mitos-travel-band">
-          <div>
+        <section className="mitos-frame mitos-experience-frame" id="promociones">
+          <div className="mitos-experience-copy">
             <span>LIBERTAD · MOVIMIENTO · RUTA</span>
-            <h2>La experiencia Mitos no empieza en el checkout. Empieza cuando imaginas a dónde quieres ir.</h2>
-          </div>
-          <Route className="mitos-travel-icon" />
-        </section>
-
-        <section className="mitos-section mitos-promo" id="promociones">
-          <div className="mitos-promo-card">
-            <div>
-              <span>Promociones</span>
-              <h2>Consulta la campaña vigente antes de reservar.</h2>
-              <p>{mitosBrand.publishedPromotionReference}. Vigencia, disponibilidad y condiciones deben confirmarse antes de la reserva.</p>
-            </div>
-            <a className="mitos-btn mitos-btn-primary" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer">
-              Consultar promoción <WhatsApp fontSize="small" />
+            <h2>Tu próximo plan empieza con una llave.</h2>
+            <p>{mitosBrand.publishedPromotionReference}. Consulta vigencia, disponibilidad y condiciones antes de reservar.</p>
+            <a className="mitos-btn mitos-btn-white" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer">
+              <WhatsApp fontSize="small" /> Consultar promoción
             </a>
           </div>
+          <Route className="mitos-experience-route" />
         </section>
 
-        <section className="mitos-section" id="preguntas">
-          <div className="mitos-section-intro">
-            <span>Antes de salir</span>
-            <h2>Lo importante, sin prometer lo que todavía debe confirmarse.</h2>
+        <section className="mitos-frame mitos-faq-frame" id="preguntas">
+          <div className="mitos-frame-copy">
+            <span>FAQ</span>
+            <h2>Todo claro antes de reservar.</h2>
           </div>
-          <div className="mitos-faq-grid">
-            <article><h3>¿Cómo empiezo?</h3><p>Usa el buscador para iniciar el funnel o escríbenos por WhatsApp si primero necesitas orientación.</p></article>
-            <article><h3>¿Qué autos están disponibles?</h3><p>La disponibilidad no vive en la landing. Se confirma en el flujo real de búsqueda.</p></article>
-            <article><h3>¿Qué condiciones aplican?</h3><p>Precios, seguros, depósitos y condiciones deben confirmarse con la información vigente antes de cerrar la reserva.</p></article>
+          <div className="mitos-faq-list">
+            <article><h3>¿Cómo empiezo?</h3><p>Usa el buscador del hero para iniciar una búsqueda real.</p></article>
+            <article><h3>¿Qué autos están disponibles?</h3><p>La disponibilidad se confirma en el flujo Rent A Car, no en la landing.</p></article>
+            <article><h3>¿Necesito ayuda?</h3><p>Puedes escribir a Mitos por WhatsApp. El agente AI se integrará en un slice posterior.</p></article>
+            <article><h3>¿Qué condiciones aplican?</h3><p>Precios, seguros, depósitos y políticas se confirman con información vigente antes de cerrar la reserva.</p></article>
           </div>
         </section>
 
-        <section className="mitos-final-cta">
+        <section className="mitos-frame mitos-contact-frame" id="contacto">
           <div>
-            <span>¿Listo para tu próxima ruta?</span>
-            <h2>Busca un auto ahora o habla con Mitos.</h2>
+            <span>MITOS RENT A CAR</span>
+            <h2>¿Listo para tu próxima ruta?</h2>
+            <p>Busca un auto ahora o habla con Mitos.</p>
           </div>
-          <div className="mitos-final-actions">
+          <div className="mitos-contact-actions">
             <button type="button" className="mitos-btn mitos-btn-white" onClick={goToSearch}>Buscar auto</button>
-            <a className="mitos-btn mitos-btn-outline-white" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer"><WhatsApp fontSize="small" /> WhatsApp</a>
-            <button type="button" className="mitos-btn mitos-btn-ghost" disabled title="Agente Mitos se conectará en un slice posterior"><SmartToyOutlined fontSize="small" /> Agente Mitos · próximamente</button>
+            <a className="mitos-btn mitos-btn-outline-white" href={mitosBrand.whatsappUrl} target="_blank" rel="noreferrer"><WhatsApp fontSize="small" /> Hablar con Mitos</a>
           </div>
         </section>
 
