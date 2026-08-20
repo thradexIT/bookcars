@@ -1,11 +1,13 @@
 :root {
-  --mitos-navy: #0d347d;
-  --mitos-navy-deep: #08265f;
+  --mitos-navy: #012063;
+  --mitos-navy-deep: #012063;
   --mitos-white: #fff;
+  --mitos-header-height: 110px;
 }
 
 .mitos-topbar {
-  min-height: 118px;
+  min-height: var(--mitos-header-height);
+  height: var(--mitos-header-height);
   padding: 0 42px 0 48px;
   display: grid;
   grid-template-columns: 230px minmax(0, 1fr) 260px;
@@ -14,7 +16,7 @@
   position: sticky;
   top: 0;
   z-index: 1600;
-  background: linear-gradient(90deg, #08265f 0%, #0d347d 55%, #0b2f74 100%);
+  background: var(--mitos-navy);
   color: #fff;
   box-shadow: none;
 }
@@ -25,6 +27,8 @@
   border: 0;
   cursor: pointer;
   background: transparent url('../img/mitos-header-logo-reference.svg') center/contain no-repeat;
+  box-shadow: none;
+  outline: 0;
 }
 
 .mitos-topbar-nav {
@@ -59,7 +63,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 31px;
+  bottom: 27px;
   height: 2px;
   background: transparent;
 }
@@ -103,10 +107,14 @@
 }
 
 @media only screen and (width <= 1100px) {
+  :root { --mitos-header-height: 96px; }
+
   .mitos-topbar {
     grid-template-columns: 190px 1fr auto;
     padding-inline: 24px;
   }
+
+  .mitos-topbar-logo { width: 165px; height: 68px; }
   .mitos-topbar-nav { gap: 18px; }
   .mitos-topbar-nav button { font-size: 14px; }
   .mitos-topbar-actions { gap: 10px; }
@@ -114,10 +122,12 @@
 }
 
 @media only screen and (width <= 840px) {
+  :root { --mitos-header-height: 82px; }
+
   .mitos-topbar {
-    min-height: 82px;
     grid-template-columns: 1fr auto;
   }
+
   .mitos-topbar-logo { width: 150px; height: 62px; }
   .mitos-topbar-nav { display: none; }
   .mitos-language { display: none; }
