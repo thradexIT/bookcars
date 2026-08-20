@@ -1,6 +1,6 @@
 # Mitos Public Experience — I0 Baseline Evidence · 2026-08-19
 
-**Status:** PARTIAL — SOURCE BASELINE VERIFIED / CI BASELINE VERIFIED / LOCAL RUNTIME NOT EXECUTED  
+**Status:** PARTIAL — SOURCE + CI + LOCAL DOCKER SERVICE HEALTH + HOME VISUAL VERIFIED / SEARCH HANDOFF PENDING  
 **Protocol:** `MITOS_I0_BASELINE_EVIDENCE_PROTOCOL_v0.1.md`  
 **Repository:** `thradexIT/bookcars`  
 **Working branch:** `feature/mitos-public-experience-v1`  
@@ -11,16 +11,18 @@
 
 ## 0. I0 decision
 
-I0 has been executed as far as the currently connected GitHub environment can provide real evidence.
-
-The following layers are distinguished deliberately:
+I0 now has real local runtime evidence in addition to source inspection.
 
 ```text
-SOURCE BASELINE     ✅ VERIFIED
-CI BASELINE         ✅ VERIFIED AS NO RUN ON CURRENT HEAD
-LOCAL RUNTIME       ⛔ NOT EXECUTED IN THIS ENVIRONMENT
-VISUAL SCREENSHOTS  ⛔ NOT CAPTURED
-TRANSACTIONAL SMOKE ⛔ NOT EXECUTED
+SOURCE BASELINE                  ✅ VERIFIED
+CI BASELINE                      ✅ VERIFIED AS NO RUN ON CURRENT HEAD
+LOCAL DOCKER STACK               ✅ VERIFIED UP
+BACKEND /api/settings            ✅ VERIFIED 200
+HOME VISUAL BASELINE             ✅ CAPTURED
+SEARCHFORM CONTROLS              🟡 PENDING RE-CHECK
+SEARCHFORM → /search             ⛔ PENDING
+/search VISUAL/RUNTIME           ⛔ PENDING
+TRANSACTIONAL SMOKE              ⛔ PENDING
 ```
 
 Therefore:
@@ -30,43 +32,27 @@ I0 = PARTIAL / NOT PASS
 I1 = REMAINS LOCKED
 ```
 
-No runtime source change is authorized by this evidence record.
+No Mitos runtime source change is authorized yet.
 
 ---
 
 ## 1. Branch/source identity baseline
 
-Baseline observed immediately before creating this evidence artifact:
+Pre-runtime baseline was established from:
 
 ```text
 base branch      developer
 base SHA         8ad4a8f51598e039aca7eaeb6e260772145e80f9
 feature branch   feature/mitos-public-experience-v1
-feature HEAD     b269e38c21f762cc45f4b68e45e1606b271d869e
 PR               #3
-PR state         open
-PR draft         true
-PR merged        false
+PR state         open / draft / unmerged
 ```
 
-Git comparison at that point:
-
-```text
-feature vs developer
-status     ahead
-ahead_by   10
-behind_by  0
-```
-
-Critically, every changed file was documentation under `docs/mitos/`.
+At the original pre-runtime anchor, the feature branch was 10 commits ahead and 0 behind `developer`, and every changed file was documentation under `docs/mitos/`.
 
 No frontend/backend/Admin/Mobile/LaborSync runtime file had changed.
 
-This establishes a clean pre-runtime anchor:
-
-> The application source tree on the Mitos feature branch was still functionally identical to `developer` before I0 evidence documentation was committed.
-
-The evidence commit itself changes documentation only and does not invalidate that runtime-source baseline.
+This remains the canonical pre-Mitos runtime-source anchor.
 
 ---
 
@@ -80,111 +66,23 @@ version          8.4.0
 module type      module
 ```
 
-Repository scripts relevant to I0:
+Relevant scripts:
 
 ```text
 npm run dev
-  → npm run ts:build && vite
-
 npm run build
-  → npm run ts:build && cross-env NODE_OPTIONS=--max-old-space-size=4096 vite build
-
 npm run lint
-  → eslint . --cache --cache-location .eslintcache
-
 npm run stylelint
-  → stylelint "src/**/*.css"
-
 npm run preview
-  → npm run build && vite preview --port 3002
 ```
 
-`ts:build` runs the repository's local dependency installation chain and then TypeScript build:
-
-```text
-npm run install:dependencies
-→ currency-converter package install
-→ bookcars-helper package install
-→ reactjs-social-login package install
-→ tsc --build --verbose
-```
-
-### Frontend test command
-
-No dedicated `test` script exists in `frontend/package.json`.
-
-Classification:
-
-```text
-frontend unit test command = NOT AVAILABLE IN FRONTEND PACKAGE SCRIPTS
-```
-
-This does not mean the repository has no tests elsewhere.
+No dedicated frontend `test` script exists in `frontend/package.json`.
 
 ---
 
-## 3. Node/package-manager evidence
+## 3. CI baseline
 
-GitHub build workflow uses:
-
-```text
-node-version: lts/*
-```
-
-and runs frontend installation/build using:
-
-```text
-cd ./frontend
-npm install --force
-npm run lint
-npm run build
-```
-
-Therefore the repository-supported package-manager path is `npm`.
-
-Exact local Node/npm versions were **not executed/captured** in this environment and remain required in the local-runtime closure step.
-
----
-
-## 4. CI baseline
-
-For feature HEAD `b269e38c21f762cc45f4b68e45e1606b271d869e`:
-
-```text
-combined status entries = none
-workflow runs           = none
-```
-
-This must not be interpreted as CI PASS.
-
-The repository contains GitHub workflows, including:
-
-```text
-build.yml
-test.yml
-containerize.yml
-...
-```
-
-But current trigger configuration explains the absence of PR evidence:
-
-### `build.yml`
-
-```text
-push:         main
-pull_request: main
-```
-
-PR #3 targets `developer`, so this workflow does not provide a build gate for this PR under its current trigger configuration.
-
-### `test.yml`
-
-```text
-push: main
-pull_request trigger commented out
-```
-
-It currently runs backend tests on main pushes and does not provide a feature/developer PR test result.
+The current feature/developer PR is not covered by the repository's existing main-only GitHub Actions triggers.
 
 Classification:
 
@@ -194,83 +92,52 @@ CI FAIL                        ❌ NOT ESTABLISHED
 CI NOT RUN FOR CURRENT HEAD    ✅ ESTABLISHED
 ```
 
+This remains a documented baseline condition, not a green CI gate.
+
 ---
 
-## 5. Route registration baseline — source verified
+## 4. Route registration baseline — source verified
 
-`frontend/src/App.tsx` registers the public/transactional routes under one `AppLayout`:
-
-```text
-/                         Home
-/sign-in                  SignIn
-/sign-up                  SignUp
-/activate                 Activate
-/forgot-password          ForgotPassword
-/reset-password           ResetPassword
-/search                   Search
-/checkout                 Checkout
-/checkout-session/:id     CheckoutSession
-/bookings                 Bookings
-/booking                  Booking
-/settings                 Settings
-/notifications            Notifications
-/change-password          ChangePassword
-/about                    About
-/tos                      ToS
-/privacy                  Privacy
-/contact                  Contact
-/locations                Locations
-/faq                      Faq
-/cookie-policy            CookiePolicy
-/suppliers                conditional on !HIDE_SUPPLIERS
-*                         NoMatch
-```
-
-Classification for these routes during current I0:
+`frontend/src/App.tsx` registers the public/transactional routes under one `AppLayout`, including:
 
 ```text
-REGISTERED             ✅ source verified
-RUNTIME VERIFIED       ⛔ not executed
-AUTH/DATA BEHAVIOR     ⛔ not executed
-TRANSACTION VERIFIED   ⛔ not executed
+/
+/search
+/checkout
+/checkout-session/:sessionId
+/bookings
+/booking
+/sign-in
+/sign-up
+/settings
+/notifications
+/about
+/contact
+/locations
+/faq
+/privacy
+/tos
+/cookie-policy
 ```
 
 This confirms the architectural premise that Mitos can remain one frontend experience without creating a separate marketing application.
 
 ---
 
-## 6. SearchForm contract baseline — source verified
+## 5. SearchForm source contract — verified
 
-`frontend/src/components/SearchForm.tsx` remains unchanged from the `developer` runtime source baseline.
-
-Observed functional contract from source:
+`frontend/src/components/SearchForm.tsx` preserves the current search contract:
 
 ```text
-inputs/state
-- pickup location
-- drop-off location
-- same-location toggle
-- from date/time
-- to date/time
-- ranges
+pickup location
+drop-off location
+same-location toggle
+from date/time
+to date/time
+ranges
 ```
 
-The component reads runtime settings for:
-
-```text
-minimum pickup lead time
-minimum rental duration
-minimum pickup/drop-off hour
-maximum pickup/drop-off hour
-```
-
-On valid submission it navigates to:
-
-```text
-/search
-```
-
-with React Router state:
+On valid submission it navigates to `/search` with:
 
 ```text
 pickupLocationId
@@ -280,161 +147,187 @@ to
 ranges
 ```
 
-This is the canonical pre-rebrand handoff contract that I4 must preserve.
-
-### Runtime classification
-
-```text
-SearchForm source contract        ✅ VERIFIED
-SearchForm renders locally        ⛔ NOT EXECUTED
-valid input reaches /search       ⛔ NOT EXECUTED
-live location lookup works        ⛔ NOT EXECUTED
-settings-backed validation works  ⛔ NOT EXECUTED
-```
+This remains the canonical pre-rebrand handoff contract that later Mitos work must preserve.
 
 ---
 
-## 7. `/search` receiving contract — source verified
+## 6. Local Docker runtime — verified
 
-`frontend/src/pages/Search.tsx` consumes `location.state`.
+User brought up the development stack using:
 
-It requires at minimum:
-
-```text
-pickupLocationId
-dropOffLocationId
-from
-to
+```bash
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-If state is absent or required values are missing, it sets a no-match path.
-
-When state is present, source code resolves pickup/drop-off locations and constructs rental search payloads using current filters such as:
+Observed running services:
 
 ```text
-carSpecs
-carType
-gearbox
-mileage
-fuelPolicy
-deposit
-ranges
-multimedia
-rating
-seats
-from
-to
+bookcars-bc-dev-admin-1      Up
+bookcars-bc-dev-backend-1    Up
+bookcars-bc-dev-frontend-1   Up
+bookcars-mongo-1             Up
+bookcars-mongo-express-1     Up
+```
+
+Observed mapped ports:
+
+```text
+Admin          3001
+Backend        4002
+Frontend       8080 (+ 8443→443)
+Mongo          27018→27017
+Mongo Express  8084→8081
+```
+
+This proves the local development service stack is operational at process/container level.
+
+---
+
+## 7. Backend settings runtime — verified
+
+User executed:
+
+```bash
+curl -i http://localhost:4002/api/settings
+```
+
+Observed:
+
+```text
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+```
+
+Returned settings:
+
+```json
+{
+  "_id": "6a867a2a6ecbb6833ed0cca1",
+  "minPickupHours": 1,
+  "minRentalHours": 1,
+  "minPickupDropoffHour": 0,
+  "maxPickupDropoffHour": 23,
+  "createdAt": "2026-08-20T03:53:14.708Z",
+  "updatedAt": "2026-08-20T03:53:14.708Z",
+  "__v": 0
+}
 ```
 
 Classification:
 
 ```text
-SearchForm → /search structural contract ✅ VERIFIED
-real API/data continuation                ⛔ NOT EXECUTED
-vehicle results                           ⛔ NOT EXECUTED
-filters runtime behavior                  ⛔ NOT EXECUTED
+backend HTTP reachability      ✅
+/api/settings route            ✅
+settings record exists         ✅
+settings JSON contract         ✅
 ```
+
+This satisfies the runtime dependency used by `SettingContext` before `SearchForm` can initialize.
 
 ---
 
-## 8. Current public Home baseline — source only
+## 8. Current public Home visual baseline — verified
 
-Because no browser/runtime is connected in this I0 execution, current Home is classified from existing source, not from new visual evidence.
+A user-supplied browser capture of `https://localhost:8080/` shows the pre-Mitos BookCars public Home rendering.
 
-Known pre-rebrand source includes:
-
-```text
-generic BookCars-era hero/video presentation
-existing real SearchForm
-Why/service blocks
-generic rental marketing copy
-supplier/destination capability
-Mini/Midi/Maxi demo-price code path
-Gallo Autos map marker asset
-FAQ/Footer composition
-```
-
-These were already recovered during Identity Inventory.
-
-Required I0 visual evidence remains:
+Observed baseline:
 
 ```text
-desktop / screenshot ⛔
-mobile / screenshot  ⛔ if practical
-/search screenshot   ⛔
+BookCars header identity              ✅
+USD presentation                      ✅
+English public copy                   ✅
+legacy hero/video treatment           ✅
+legacy generic rental claims          ✅
+BookCars Customer Care block          ✅
+legacy BookCars footer                ✅
+Stripe/payment presentation           ✅
 ```
 
-Do not substitute source inspection for visual acceptance.
+This is the real pre-Mitos visual baseline.
+
+At capture time the white search container was visible but its internal controls were not visibly rendered.
+
+Because no Mitos runtime code had been changed, this is classified as a **pre-existing runtime state**, not a Mitos regression.
 
 ---
 
-## 9. Static checks — execution state
+## 9. SearchForm runtime status
 
-Repository-supported commands are known, but were not executed by this GitHub connector environment.
+Source behavior shows that `SearchForm` waits for runtime settings before rendering controls.
+
+Since `/api/settings` is now independently verified as `200`, the next browser check is:
+
+```text
+reload /
+confirm pickup/drop-off/date controls render
+confirm location options load
+submit one valid search
+verify navigation to /search
+```
+
+Useful direct location probe based on the frontend service contract:
+
+```bash
+curl -i 'http://localhost:4002/api/locations/1/30/en/?s='
+```
 
 Current classification:
 
 ```text
-npm install --force   NOT EXECUTED
-npm run lint          NOT EXECUTED
-npm run stylelint     NOT EXECUTED
-npm run build         NOT EXECUTED
-npm run dev           NOT EXECUTED
+SearchForm source contract        ✅ VERIFIED
+settings runtime dependency       ✅ VERIFIED
+SearchForm controls visible       🟡 PENDING RE-CHECK
+location data usable              🟡 PENDING
+valid input reaches /search       ⛔ PENDING
+/search real continuation         ⛔ PENDING
 ```
-
-No result should be inferred from source inspection.
 
 ---
 
-## 10. Transactional smoke baseline
+## 10. Static checks
 
-Not executed here:
+Repository-supported static/build commands are known, but I0 does not infer execution from Docker rendering.
+
+Still to record explicitly if required by the final gate:
 
 ```text
-/checkout                 NOT EXECUTED
-/checkout-session/:id     NOT EXECUTED
-/booking                  NOT EXECUTED
-/bookings                 NOT EXECUTED
-auth/session continuation NOT EXECUTED
-payment continuation      NOT EXECUTED
+npm run lint
+npm run stylelint
+npm run build
 ```
 
-Source route registration exists, but that is not transactional proof.
-
-No destructive/live booking was attempted.
+The Docker dev build has already proven TypeScript/Vite startup sufficiently to render the frontend and admin, but it is not a substitute for the explicit lint/stylelint/build evidence defined in the protocol.
 
 ---
 
-## 11. What is required to close I0
+## 11. Transactional smoke baseline
 
-Use a real local/dev environment on this exact feature branch and record:
+Still not executed:
 
 ```text
-1. git rev-parse HEAD
-2. node --version
-3. npm --version
-4. cd frontend
-5. npm install --force
-6. npm run lint
-7. npm run stylelint
-8. npm run build
-9. npm run dev
-10. local URL
-11. desktop / screenshot
-12. mobile / screenshot if practical
-13. execute Home SearchForm with valid test data
-14. verify navigation to /search
-15. record resulting state/behavior
-16. capture /search screenshot
-17. smoke /checkout, /booking, /bookings without destructive production actions
-18. record all warnings/errors as PRE-EXISTING or NEW
+/checkout
+/checkout-session/:id
+/booking
+/bookings
+auth/session continuation
+payment continuation
 ```
 
-If environment/data prevents one of these, record the blocker instead of inventing a pass.
+No destructive/live booking should be created for I0.
 
 ---
 
-## 12. I0 gate verdict
+## 12. Supporting evidence artifact
+
+Detailed local service-health evidence is also stored in:
+
+```text
+docs/mitos/evidence/MITOS_I0_RUNTIME_SERVICE_HEALTH_2026-08-19.md
+```
+
+---
+
+## 13. I0 gate verdict
 
 ```text
 Branch integrity                   ✅
@@ -443,14 +336,15 @@ Tool/scripts contract recovered    ✅
 Route matrix source verified       ✅
 Search handoff source verified     ✅
 CI absence explained               ✅
-Local Node/npm baseline            ⛔
-Install baseline                   ⛔
-Lint baseline                      ⛔
-Stylelint baseline                 ⛔
-Build baseline                     ⛔
-Runtime Home                       ⛔
+Local Docker stack                 ✅
+Backend /api/settings              ✅
+Runtime Home                       ✅
+Home visual screenshot             ✅
+SearchForm controls                🟡
+Location data                      🟡
 Runtime /search                    ⛔
-Visual screenshots                 ⛔
+SearchForm → /search               ⛔
+Explicit lint/stylelint/build      ⛔
 Transactional smoke                ⛔
 
 I0 BASELINE                        🟡 PARTIAL
@@ -458,6 +352,4 @@ I1 BRAND FOUNDATION BUILD          🔒 LOCKED
 RUNTIME SOURCE MODIFICATION        ⛔ NOT AUTHORIZED YET
 ```
 
-This is a deliberate stop, not a project failure.
-
-I0 closes only when the missing runtime evidence is attached or recorded.
+The immediate next gate is functional search continuity. If that passes, I0 is very close to closure.
