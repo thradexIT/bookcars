@@ -1,11 +1,14 @@
 import React from 'react'
 import {
   ArrowForward,
+  CalendarMonthOutlined,
   DirectionsCar,
+  HeadsetMicOutlined,
   LocalOfferOutlined,
+  LocationOnOutlined,
   Route,
+  SearchOutlined,
   SecurityOutlined,
-  SupportAgent,
   WhatsApp,
 } from '@mui/icons-material'
 import Layout from '@/components/Layout'
@@ -33,20 +36,43 @@ const MitosHome = () => {
 
             <div className="mitos-search-panel" id="mitos-search">
               <div className="mitos-search-heading">
-                <span className="mitos-search-icon">⌕</span>
+                <SearchOutlined />
                 <div>
                   <h2>Encuentra tu auto ideal</h2>
                   <p>Elige dónde y cuándo, y nosotros nos encargamos del resto.</p>
                 </div>
               </div>
-              <SearchForm />
+
+              <div className="mitos-search-runtime">
+                <SearchForm />
+                <div className="mitos-search-fallback" aria-hidden="true">
+                  <div className="mitos-search-field">
+                    <small>Retiro</small>
+                    <span><LocationOnOutlined /> Ciudad o aeropuerto</span>
+                  </div>
+                  <div className="mitos-search-field">
+                    <small>Devolución</small>
+                    <span><LocationOnOutlined /> Ciudad o aeropuerto</span>
+                  </div>
+                  <div className="mitos-search-field">
+                    <small>Fecha de retiro</small>
+                    <span><CalendarMonthOutlined /> Selecciona fecha</span>
+                  </div>
+                  <div className="mitos-search-field">
+                    <small>Fecha de devolución</small>
+                    <span><CalendarMonthOutlined /> Selecciona fecha</span>
+                  </div>
+                  <label className="mitos-search-check"><input type="checkbox" /> Devolver en otra ubicación</label>
+                  <button type="button" className="mitos-search-fallback-button" disabled><SearchOutlined /> Buscar auto</button>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="mitos-trust-strip" aria-label="Beneficios Mitos">
             <div><SecurityOutlined /><span><b>Reserva segura</b><small>Tus datos siempre protegidos.</small></span></div>
             <div><DirectionsCar /><span><b>Autos modernos</b><small>Flota renovada y en excelente estado.</small></span></div>
-            <div><SupportAgent /><span><b>Atención rápida</b><small>Te ayudamos en cada paso de tu viaje.</small></span></div>
+            <div><HeadsetMicOutlined /><span><b>Atención rápida</b><small>Te ayudamos en cada paso de tu viaje.</small></span></div>
             <div><LocalOfferOutlined /><span><b>Precios claros</b><small>Sin sorpresas, todo transparente.</small></span></div>
           </div>
 
