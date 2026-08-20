@@ -28,6 +28,8 @@ interface SearchFormProps {
   dropOffLocation?: string
   ranges?: bookcarsTypes.CarRange[]
   onCancel?: () => void
+  variant?: 'default' | 'mitos'
+  defaultSameLocation?: boolean
 }
 
 const SearchForm = ({
@@ -35,6 +37,8 @@ const SearchForm = ({
   dropOffLocation: __dropOffLocation,
   ranges: __ranges,
   onCancel,
+  variant = 'default',
+  defaultSameLocation = true,
 }: SearchFormProps) => {
   const navigate = useNavigate()
 
@@ -78,8 +82,8 @@ const SearchForm = ({
     resolver: zodResolver(schema),
     mode: 'onSubmit',
     defaultValues: {
-      sameLocation: true,
-    }
+      sameLocation: defaultSameLocation,
+    },
   })
 
   const from = useWatch({ control, name: 'from' })
@@ -176,10 +180,8 @@ const SearchForm = ({
       if (minPickupTime < minPickupDuration) {
         setError('from', { message: strings.MIN_PICK_UP_HOURS_ERROR })
         valid = false
-      } else {
-        if (errors.from) {
-          clearErrors('from')
-        }
+      } else if (errors.from) {
+        clearErrors('from')
       }
 
       const hourValid = validateHour(from.getHours())
@@ -213,10 +215,8 @@ const SearchForm = ({
       } else if (rentalDuration < minRentalDuration) {
         setError('to', { message: strings.MIN_RENTAL_HOURS_ERROR })
         valid = false
-      } else {
-        if (errors.to) {
-          clearErrors('to')
-        }
+      } else if (errors.to) {
+        clearErrors('to')
       }
 
       const hourValid = validateHour(to.getHours())
@@ -233,7 +233,6 @@ const SearchForm = ({
     validateTimes()
   }, [from, to]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guard against using `minDate` before it's ready
   if (!settings || !minDate || !fromMinDate || !minTime || !maxTime) {
     return null
   }
@@ -297,8 +296,8 @@ const SearchForm = ({
 
     setTimeout(navigate, 0, '/search', {
       state: {
-        pickupLocationId: pickupLocationId,
-        dropOffLocationId: dropOffLocationId,
+        pickupLocationId,
+        dropOffLocationId,
         from: data.from,
         to: data.to,
         ranges,
@@ -307,14 +306,15 @@ const SearchForm = ({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="home-search-form">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={`home-search-form${variant === 'mitos' ? ' mitos-search-form' : ''}`}
+    >
       <FormControl className="pickup-location">
         <LocationSelectList
           {...register('pickupLocation')}
           label={commonStrings.PICK_UP_LOCATION}
           hidePopupIcon
-          // customOpen={env.isMobile}
-          // init={!env.isMobile}
           init
           required
           variant="outlined"
@@ -322,6 +322,22 @@ const SearchForm = ({
           onChange={handlePickupLocationChange}
         />
       </FormControl>
+
+      {!sameLocation && (
+        <FormControl className="drop-off-location">
+          <LocationSelectList
+            {...register('dropOffLocation')}
+            label={commonStrings.DROP_OFF_LOCATION}
+            hidePopupIcon
+            init
+            value={dropOffLocation as bookcarsTypes.Location}
+            required
+            variant="outlined"
+            onChange={handleDropOffLocationChange}
+          />
+        </FormControl>
+      )}
+
       <FormControl fullWidth className="from">
         <Controller
           name="from"
@@ -335,15 +351,14 @@ const SearchForm = ({
               minDate={fromMinDate}
               minTime={minTime}
               maxTime={maxTime}
-              onChange={(date) => {
-                field.onChange(date)
-              }}
+              onChange={(date) => field.onChange(date)}
               language={UserService.getLanguage()}
             />
           )}
         />
         <FormHelperText error={!!errors.from}>{errors.from?.message}</FormHelperText>
       </FormControl>
+
       <FormControl fullWidth className="to">
         <Controller
           name="to"
@@ -357,49 +372,30 @@ const SearchForm = ({
               minDate={minDate}
               minTime={minTime}
               maxTime={maxTime}
-              onChange={(date) => {
-                field.onChange(date)
-              }}
+              onChange={(date) => field.onChange(date)}
               language={UserService.getLanguage()}
             />
           )}
         />
         <FormHelperText error={!!errors.to}>{errors.to?.message}</FormHelperText>
       </FormControl>
+
+      <FormControl className="chk-same-location">
+        <FormControlLabel
+          control={<Checkbox checked={sameLocation} onChange={handleSameLocationChange} />}
+          label={strings.DROP_OFF}
+        />
+      </FormControl>
+
       <Button type="submit" variant="contained" className="btn-search" disabled={isSubmitting}>
         {commonStrings.SEARCH}
       </Button>
+
       {onCancel && (
-        <Button
-          variant="outlined"
-          color="inherit"
-          className="btn-cancel"
-          onClick={() => {
-            onCancel()
-          }}
-        >
+        <Button variant="outlined" color="inherit" className="btn-cancel" onClick={onCancel}>
           {commonStrings.CANCEL}
         </Button>
       )}
-      {!sameLocation && (
-        <FormControl className="drop-off-location">
-          <LocationSelectList
-            {...register('dropOffLocation')}
-            label={commonStrings.DROP_OFF_LOCATION}
-            hidePopupIcon
-            // customOpen={env.isMobile}
-            // init={!env.isMobile}
-            init
-            value={dropOffLocation as bookcarsTypes.Location}
-            required
-            variant="outlined"
-            onChange={handleDropOffLocationChange}
-          />
-        </FormControl>
-      )}
-      <FormControl className="chk-same-location">
-        <FormControlLabel control={<Checkbox checked={sameLocation} onChange={handleSameLocationChange} />} label={strings.DROP_OFF} />
-      </FormControl>
     </form>
   )
 }
