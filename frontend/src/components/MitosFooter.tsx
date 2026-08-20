@@ -2,6 +2,7 @@ import React from 'react'
 import { Instagram, WhatsApp } from '@mui/icons-material'
 import { mitosBrand } from '@/config/mitosBrand'
 import '@/assets/css/mitos-footer.css'
+import '@/assets/css/mitos-home-fixes.css'
 
 const MitosFooter = () => (
   <footer className="mitos-footer">
