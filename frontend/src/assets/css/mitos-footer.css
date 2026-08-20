@@ -1,84 +1,76 @@
 .mitos-footer {
   width: 100%;
-  padding: 56px clamp(22px, 6vw, 88px) 24px;
-  box-sizing: border-box;
+  height: 100%;
+  padding: clamp(32px, 4vh, 48px) clamp(54px, 8vw, 126px) 22px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
-  gap: 36px;
-  background: #f7faff;
-  border-top: 1px solid var(--mitos-line, #dce6ff);
-  color: var(--mitos-ink, #10204a);
+  grid-template-columns: 1.35fr .8fr .8fr 1.1fr;
+  grid-template-rows: 1fr auto;
+  align-items: start;
+  gap: 28px 42px;
+  background: #041f54;
+  color: #fff;
+}
+
+.mitos-footer-logo {
+  width: 190px;
+  height: 74px;
+  background: transparent url('../img/mitos-logo-clean.svg') left center / contain no-repeat;
 }
 
 .mitos-footer-brand p {
-  max-width: 320px;
-  margin: 16px 0 0;
-  color: var(--mitos-muted, #63708f);
-  line-height: 1.6;
+  max-width: 300px;
+  margin: 10px 0 4px;
+  color: rgba(255,255,255,.78);
+  font-size: 13px;
 }
 
-.mitos-footer-wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
+.mitos-footer-brand small { color: rgba(255,255,255,.48); font-size: 11px; }
 
-.mitos-footer-wordmark strong {
-  color: var(--mitos-blue, #1757ff);
-  font-size: 26px;
-  letter-spacing: -0.04em;
-}
-
-.mitos-footer-wordmark span {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-}
-
-.mitos-footer-links,
-.mitos-footer-contact {
+.mitos-footer-column {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.mitos-footer a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.mitos-footer a:hover {
-  color: var(--mitos-blue, #1757ff);
-}
-
-.mitos-footer-contact a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mitos-footer-contact span {
-  color: var(--mitos-muted, #63708f);
-}
-
-.mitos-footer-bottom {
-  grid-column: 1 / -1;
-  padding-top: 22px;
-  border-top: 1px solid var(--mitos-line, #dce6ff);
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  color: var(--mitos-muted, #63708f);
+.mitos-footer-column strong {
+  margin-bottom: 4px;
+  color: #fff;
   font-size: 12px;
 }
 
-@media only screen and (width <= 820px) {
-  .mitos-footer {
-    grid-template-columns: 1fr;
-    padding-top: 42px;
-  }
+.mitos-footer a,
+.mitos-footer-column span {
+  color: rgba(255,255,255,.68);
+  font-size: 11px;
+  text-decoration: none;
+}
 
-  .mitos-footer-bottom {
-    flex-direction: column;
+.mitos-footer a:hover { color: #fff; }
+.mitos-footer-column a { display: inline-flex; align-items: center; gap: 6px; }
+
+.mitos-footer-bottom {
+  grid-column: 1 / -1;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.14);
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: rgba(255,255,255,.45);
+  font-size: 10px;
+}
+
+@media (max-width: 840px) {
+  .mitos-footer {
+    grid-template-columns: 1fr 1fr;
+    height: auto;
+    padding: 38px 24px 24px;
   }
+  .mitos-footer-brand { grid-column: 1 / -1; }
+  .mitos-footer-bottom { flex-direction: column; }
+}
+
+@media (max-width: 560px) {
+  .mitos-footer { grid-template-columns: 1fr; }
+  .mitos-footer-brand,
+  .mitos-footer-bottom { grid-column: auto; }
 }
