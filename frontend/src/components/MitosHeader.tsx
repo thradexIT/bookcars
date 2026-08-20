@@ -1,21 +1,54 @@
 import React, { useEffect } from 'react'
+import { Language } from '@mui/icons-material'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Header from '@/components/Header'
 import { mitosBrand } from '@/config/mitosBrand'
 import '@/assets/css/mitos-header.css'
 
 const MitosHeader = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const isHome = location.pathname === '/'
+
   useEffect(() => {
     document.title = mitosBrand.name
   }, [])
 
-  return (
-    <div className="mitos-header-shell">
-      <div className="mitos-brand-ribbon">
-        <span>{mitosBrand.tagline}</span>
-        <span className="mitos-brand-ribbon-market">{mitosBrand.market}</span>
+  const goToSection = (id: string) => {
+    if (!isHome) {
+      navigate('/')
+      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 80)
+      return
+    }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const goToSearch = () => goToSection('mitos-search')
+
+  if (!isHome) {
+    return (
+      <div className="mitos-header-shell mitos-header-shell-legacy">
+        <Header />
       </div>
-      <Header />
-    </div>
+    )
+  }
+
+  return (
+    <header className="mitos-topbar">
+      <button className="mitos-topbar-logo" type="button" aria-label="Mitos Rent a Car - Inicio" onClick={() => goToSection('inicio')} />
+      <nav className="mitos-topbar-nav" aria-label="Navegación principal">
+        <button type="button" className="is-active" onClick={() => goToSection('inicio')}>Inicio</button>
+        <button type="button" onClick={() => goToSection('vehiculos')}>Vehículos</button>
+        <button type="button" onClick={() => goToSection('como-funciona')}>Cómo funciona</button>
+        <button type="button" onClick={() => goToSection('promociones')}>Promociones</button>
+        <button type="button" onClick={() => goToSection('preguntas')}>FAQ</button>
+        <button type="button" onClick={() => goToSection('contacto')}>Contacto</button>
+      </nav>
+      <div className="mitos-topbar-actions">
+        <button type="button" className="mitos-language" aria-label="Idioma español"><Language fontSize="small" /> ES <span>⌄</span></button>
+        <button type="button" className="mitos-search-nav" onClick={goToSearch}>Buscar auto</button>
+      </div>
+    </header>
   )
 }
 
