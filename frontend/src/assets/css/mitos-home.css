@@ -1,590 +1,394 @@
 .mitos-home {
-  --mitos-blue: #1757ff;
-  --mitos-blue-strong: #0f3fd8;
-  --mitos-blue-soft: #eaf1ff;
-  --mitos-blue-pale: #f6f9ff;
-  --mitos-ink: #10204a;
-  --mitos-muted: #63708f;
+  --mitos-navy: #07265f;
+  --mitos-navy-2: #0a2f78;
+  --mitos-navy-3: #123f96;
+  --mitos-ink: #0b2455;
+  --mitos-muted: #53617d;
+  --mitos-line: #d9e3f5;
+  --mitos-soft: #f5f8ff;
   --mitos-white: #fff;
-  --mitos-line: #dce6ff;
-  --mitos-shadow: 0 24px 70px rgba(31, 88, 217, 0.13);
-  background: var(--mitos-white);
+  --mitos-shadow: 0 24px 65px rgba(7, 38, 95, .18);
+  background: #fff;
   color: var(--mitos-ink);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-.mitos-home * {
-  box-sizing: border-box;
-}
+.mitos-home * { box-sizing: border-box; }
 
-.mitos-hero {
-  min-height: 610px;
-  padding: clamp(56px, 8vw, 112px) clamp(22px, 7vw, 104px) 118px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
-  align-items: center;
-  gap: clamp(34px, 6vw, 90px);
+.mitos-frame {
+  width: 100%;
+  min-height: calc(100vh - 96px);
   position: relative;
-  background:
-    radial-gradient(circle at 82% 20%, rgba(23, 87, 255, 0.12), transparent 32%),
-    linear-gradient(180deg, #fff 0%, #f8fbff 100%);
 }
 
-.mitos-hero::after {
+.mitos-hero-frame {
+  min-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.mitos-hero-scene {
+  min-height: 540px;
+  padding: 58px clamp(34px, 4.7vw, 72px) 22px;
+  position: relative;
+  overflow: visible;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.88) 32%, rgba(255,255,255,.18) 59%, rgba(7,38,95,.08) 100%),
+    url('/cover.webp') center 58% / cover no-repeat;
+}
+
+.mitos-hero-scene::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--mitos-line);
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(7,38,95,.08));
 }
 
-.mitos-eyebrow,
-.mitos-section-intro > span,
-.mitos-promo-card > div > span,
-.mitos-travel-band span {
-  color: var(--mitos-blue);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.mitos-hero-copy {
+  position: relative;
+  z-index: 2;
+  width: min(680px, 55vw);
 }
 
-.mitos-hero h1 {
-  max-width: 720px;
-  margin: 14px 0 14px;
-  font-size: clamp(48px, 6.2vw, 86px);
-  line-height: 0.96;
-  letter-spacing: -0.055em;
-  color: var(--mitos-ink);
-}
-
-.mitos-hero-tagline {
+.mitos-hero-copy h1 {
   margin: 0;
-  color: var(--mitos-blue);
-  font-size: clamp(24px, 2.3vw, 34px);
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  color: var(--mitos-navy-2);
+  font-size: clamp(46px, 4.8vw, 76px);
+  line-height: .98;
+  letter-spacing: -.045em;
+  font-weight: 900;
 }
 
-.mitos-hero-support {
-  max-width: 650px;
-  margin: 22px 0 0;
+.mitos-hero-copy p {
+  margin: 14px 0 0;
+  color: #34466e;
+  font-size: clamp(22px, 2vw, 31px);
+  font-weight: 500;
+}
+
+.mitos-hero-car {
+  position: absolute;
+  z-index: 1;
+  right: 2%;
+  bottom: 0;
+  width: 47%;
+  height: 74%;
+  border-radius: 60% 0 0 0;
+  background:
+    radial-gradient(ellipse at 60% 70%, rgba(7,38,95,.28), transparent 54%),
+    linear-gradient(145deg, transparent 0 50%, rgba(7,38,95,.10) 50% 100%);
+  pointer-events: none;
+}
+
+.mitos-search-panel {
+  position: relative;
+  z-index: 4;
+  width: min(850px, 70vw);
+  margin-top: 34px;
+  padding: 24px 26px 18px;
+  border: 1px solid rgba(10,47,120,.10);
+  border-radius: 18px;
+  background: rgba(255,255,255,.98);
+  box-shadow: var(--mitos-shadow);
+}
+
+.mitos-search-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.mitos-search-icon {
+  color: var(--mitos-navy-2);
+  font-size: 40px;
+  line-height: 1;
+}
+
+.mitos-search-heading h2 {
+  margin: 0 0 3px;
+  color: var(--mitos-navy-2);
+  font-size: clamp(23px, 2vw, 31px);
+  letter-spacing: -.025em;
+}
+
+.mitos-search-heading p {
+  margin: 0;
   color: var(--mitos-muted);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 15px;
 }
 
-.mitos-hero-actions,
-.mitos-final-actions {
+.mitos-search-panel .search-form,
+.mitos-search-panel form,
+.mitos-search-panel > div:last-child { width: 100%; }
+
+.mitos-trust-strip {
+  width: 100%;
+  min-height: 130px;
+  padding: 26px clamp(34px, 7vw, 112px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 28px;
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #edf1f8;
+}
+
+.mitos-trust-strip > div {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mitos-trust-strip svg {
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  padding: 14px;
+  border-radius: 50%;
+  color: var(--mitos-navy-2);
+  background: #eef3ff;
+}
+
+.mitos-trust-strip span { display: flex; flex-direction: column; gap: 4px; }
+.mitos-trust-strip b { color: var(--mitos-navy); font-size: 15px; }
+.mitos-trust-strip small { color: var(--mitos-muted); font-size: 14px; line-height: 1.45; }
+
+.mitos-story-block {
+  flex: 1;
+  min-height: 300px;
+  padding: 56px 28px 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  background: #fff;
+}
+
+.mitos-story-block::after {
+  content: '';
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: -72px;
+  height: 105px;
+  background: linear-gradient(90deg, var(--mitos-navy) 0%, var(--mitos-navy-3) 60%, #5571af 100%);
+  border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+  transform: rotate(1deg);
+}
+
+.mitos-story-block h2 {
+  margin: 0;
+  color: var(--mitos-navy-2);
+  font-size: clamp(38px, 3.2vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+
+.mitos-story-block p {
+  width: min(780px, 90%);
+  margin: 16px auto 0;
+  color: #455574;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.mitos-story-actions,
+.mitos-contact-actions {
+  margin-top: 28px;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 30px;
+  justify-content: center;
+  gap: 18px;
 }
 
 .mitos-btn {
-  min-height: 48px;
-  padding: 0 20px;
-  border-radius: 14px;
-  border: 1px solid transparent;
+  min-width: 220px;
+  min-height: 58px;
+  padding: 0 24px;
+  border-radius: 9px;
+  border: 2px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 9px;
   font: inherit;
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
 }
 
-.mitos-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
+.mitos-btn:hover { transform: translateY(-2px); }
+.mitos-btn-primary { background: var(--mitos-navy-2); color: #fff; box-shadow: 0 12px 28px rgba(7,38,95,.16); }
+.mitos-btn-outline { background: #fff; color: var(--mitos-navy-2); border-color: var(--mitos-navy-2); }
+.mitos-btn-white { background: #fff; color: var(--mitos-navy); }
+.mitos-btn-outline-white { color: #fff; border-color: rgba(255,255,255,.72); background: transparent; }
 
-.mitos-btn-primary {
-  background: var(--mitos-blue);
-  color: #fff;
-  box-shadow: 0 14px 30px rgba(23, 87, 255, 0.2);
-}
-
-.mitos-btn-secondary {
-  background: #fff;
-  color: var(--mitos-blue-strong);
-  border-color: var(--mitos-line);
-}
-
-.mitos-agent-seam {
-  width: fit-content;
-  margin-top: 22px;
-  padding: 10px 13px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--mitos-blue-soft);
-  color: var(--mitos-blue-strong);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.mitos-agent-seam small {
-  color: var(--mitos-muted);
-  font-weight: 600;
-}
-
-.mitos-hero-visual {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mitos-road-card {
-  width: min(100%, 520px);
-  aspect-ratio: 1 / 0.92;
-  border-radius: 42px;
-  position: relative;
-  overflow: hidden;
-  background:
-    linear-gradient(150deg, rgba(255,255,255,0.98) 0 22%, rgba(255,255,255,0.68) 22% 24%, transparent 24%),
-    linear-gradient(145deg, #4c81ff 0%, #1757ff 46%, #0f3fd8 100%);
-  box-shadow: var(--mitos-shadow);
-}
-
-.mitos-road-card::before {
-  content: '';
-  position: absolute;
-  width: 68%;
-  height: 170%;
-  left: 24%;
-  top: -34%;
-  transform: rotate(26deg);
-  border-left: 2px dashed rgba(255,255,255,0.52);
-  border-right: 2px dashed rgba(255,255,255,0.24);
-}
-
-.mitos-road-orbit {
-  position: absolute;
-  border: 1px solid rgba(255,255,255,0.38);
-  border-radius: 999px;
-}
-
-.mitos-road-orbit-one {
-  width: 260px;
-  height: 260px;
-  right: -60px;
-  top: -20px;
-}
-
-.mitos-road-orbit-two {
-  width: 390px;
-  height: 390px;
-  left: -190px;
-  bottom: -160px;
-}
-
-.mitos-car-mark {
-  width: 132px;
-  height: 132px;
-  border-radius: 34px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: grid;
-  place-items: center;
-  background: #fff;
-  color: var(--mitos-blue);
-  box-shadow: 0 22px 55px rgba(0,0,0,0.16);
-}
-
-.mitos-car-mark svg {
-  font-size: 72px;
-}
-
-.mitos-route-label {
-  position: absolute;
-  padding: 9px 12px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,0.94);
-  color: var(--mitos-ink);
-  font-size: 13px;
-  font-weight: 800;
-  box-shadow: 0 12px 30px rgba(8, 49, 145, 0.13);
-}
-
-.mitos-route-label-one { top: 16%; left: 8%; }
-.mitos-route-label-two { top: 18%; right: 8%; }
-.mitos-route-label-three { bottom: 12%; right: 10%; }
-.mitos-route-label svg { color: var(--mitos-blue); font-size: 18px; }
-
-.mitos-search-zone {
-  width: min(1180px, calc(100% - 40px));
-  margin: -64px auto 0;
-  padding: 30px;
-  position: relative;
-  z-index: 5;
-  border-radius: 28px;
-  background: #fff;
-  border: 1px solid var(--mitos-line);
-  box-shadow: var(--mitos-shadow);
-}
-
-.mitos-section-intro {
-  max-width: 760px;
-  margin-bottom: 36px;
-}
-
-.mitos-section-intro-compact {
-  margin-bottom: 18px;
-}
-
-.mitos-section-intro h2,
-.mitos-promo-card h2,
-.mitos-final-cta h2,
-.mitos-travel-band h2 {
-  margin: 8px 0 12px;
-  font-size: clamp(32px, 4vw, 52px);
-  line-height: 1.04;
-  letter-spacing: -0.04em;
-}
-
-.mitos-section-intro p,
-.mitos-promo-card p {
-  margin: 0;
-  color: var(--mitos-muted);
-  font-size: 16px;
-  line-height: 1.7;
-}
-
-.mitos-search-card {
-  width: 100%;
-  padding: 4px;
-  border-radius: 20px;
-  background: var(--mitos-blue-pale);
-}
-
-.mitos-search-card > * {
-  width: 100%;
-}
-
-.mitos-section {
-  padding: clamp(76px, 9vw, 124px) clamp(22px, 7vw, 104px);
-}
-
-.mitos-value-grid,
-.mitos-faq-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-}
-
-.mitos-value-card,
-.mitos-faq-grid article {
-  min-height: 220px;
-  padding: 26px;
-  border-radius: 24px;
-  background: var(--mitos-blue-pale);
-  border: 1px solid var(--mitos-line);
-}
-
-.mitos-value-card svg {
-  color: var(--mitos-blue);
-  font-size: 34px;
-}
-
-.mitos-value-card h3,
-.mitos-faq-grid h3 {
-  margin: 18px 0 8px;
-  font-size: 20px;
-}
-
-.mitos-value-card p,
-.mitos-faq-grid p,
-.mitos-step p,
-.mitos-fleet-copy p {
-  margin: 0;
-  color: var(--mitos-muted);
-  line-height: 1.65;
-}
-
-.mitos-fleet {
-  background: var(--mitos-blue-pale);
-}
-
-.mitos-fleet-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-}
-
-.mitos-fleet-card {
-  min-height: 350px;
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  overflow: hidden;
-  border-radius: 30px;
-  background: #fff;
-  border: 1px solid var(--mitos-line);
-  box-shadow: 0 20px 55px rgba(31, 88, 217, 0.08);
-}
-
-.mitos-fleet-card-alt .mitos-fleet-visual {
-  background: linear-gradient(145deg, #dce8ff 0%, #fff 100%);
-}
-
-.mitos-fleet-visual {
-  display: grid;
-  place-items: center;
-  background: linear-gradient(145deg, #eef4ff 0%, #d6e4ff 100%);
-  color: var(--mitos-blue);
-}
-
-.mitos-fleet-visual svg {
-  font-size: clamp(86px, 10vw, 150px);
-}
-
-.mitos-fleet-copy {
-  padding: 34px;
+.mitos-why-frame,
+.mitos-fleet-frame,
+.mitos-how-frame,
+.mitos-faq-frame {
+  min-height: 100vh;
+  padding: clamp(80px, 9vw, 132px) clamp(30px, 7vw, 112px);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.mitos-fleet-copy small {
-  color: var(--mitos-blue);
+.mitos-why-frame { background: #fff; }
+.mitos-fleet-frame { background: var(--mitos-soft); }
+.mitos-how-frame { background: #fff; }
+.mitos-faq-frame { background: var(--mitos-soft); }
+
+.mitos-frame-copy { max-width: 780px; margin-bottom: 54px; }
+.mitos-frame-copy-centered { margin-left: auto; margin-right: auto; text-align: center; }
+.mitos-frame-copy > span,
+.mitos-experience-copy > span,
+.mitos-contact-frame > div > span {
+  color: var(--mitos-navy-3);
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: .16em;
 }
 
-.mitos-fleet-copy h3 {
-  margin: 10px 0 12px;
-  font-size: 30px;
-  letter-spacing: -0.035em;
+.mitos-frame-copy h2,
+.mitos-experience-copy h2,
+.mitos-contact-frame h2 {
+  margin: 9px 0 14px;
+  color: var(--mitos-navy);
+  font-size: clamp(38px, 4.2vw, 62px);
+  line-height: 1.02;
+  letter-spacing: -.045em;
 }
 
-.mitos-fleet-copy button {
-  width: fit-content;
-  margin-top: 24px;
-  padding: 0;
-  border: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: transparent;
-  color: var(--mitos-blue);
-  font: inherit;
-  font-weight: 900;
-  cursor: pointer;
-}
+.mitos-frame-copy p,
+.mitos-experience-copy p,
+.mitos-contact-frame p { margin: 0; color: var(--mitos-muted); font-size: 18px; line-height: 1.65; }
 
-.mitos-steps {
+.mitos-four-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
 
-.mitos-step {
+.mitos-four-cards article,
+.mitos-faq-list article {
   padding: 30px;
-  border-top: 3px solid var(--mitos-blue);
+  border: 1px solid var(--mitos-line);
+  border-radius: 22px;
   background: #fff;
-  box-shadow: 0 14px 45px rgba(23,87,255,0.08);
+  box-shadow: 0 14px 44px rgba(7,38,95,.06);
 }
 
-.mitos-step b {
-  color: var(--mitos-blue);
-  font-size: 13px;
-  letter-spacing: 0.08em;
-}
+.mitos-four-cards b { color: var(--mitos-navy-3); font-size: 12px; letter-spacing: .12em; }
+.mitos-four-cards h3,
+.mitos-faq-list h3 { margin: 20px 0 10px; color: var(--mitos-navy); font-size: 22px; }
+.mitos-four-cards p,
+.mitos-faq-list p { margin: 0; color: var(--mitos-muted); line-height: 1.6; }
 
-.mitos-step h3 {
-  margin: 22px 0 8px;
-  font-size: 24px;
-}
-
-.mitos-travel-band {
+.mitos-fleet-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.mitos-fleet-cards article {
   min-height: 380px;
-  padding: clamp(58px, 8vw, 108px) clamp(22px, 7vw, 104px);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 28px;
+  background: #fff;
+  border: 1px solid var(--mitos-line);
+  overflow: hidden;
+}
+.mitos-vehicle-visual {
+  flex: 1;
+  margin: -30px -30px 26px;
+  display: grid;
+  place-items: center;
+  color: var(--mitos-navy-2);
+  background: linear-gradient(145deg, #edf3ff, #dce8ff);
+}
+.mitos-vehicle-visual svg { font-size: 130px; }
+.mitos-fleet-cards small { color: var(--mitos-navy-3); font-weight: 900; }
+.mitos-fleet-cards h3 { margin: 8px 0 16px; color: var(--mitos-navy); font-size: 30px; }
+.mitos-fleet-cards button { width: fit-content; padding: 0; border: 0; display: flex; align-items: center; gap: 5px; background: transparent; color: var(--mitos-navy-3); font: inherit; font-weight: 800; cursor: pointer; }
+
+.mitos-steps-line { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+.mitos-steps-line::before { content: ''; position: absolute; left: 8%; right: 8%; top: 25px; height: 2px; background: var(--mitos-line); }
+.mitos-steps-line > div { position: relative; z-index: 1; padding: 0 28px; text-align: center; }
+.mitos-steps-line b { width: 50px; height: 50px; margin: 0 auto 22px; display: grid; place-items: center; border-radius: 50%; background: var(--mitos-navy-2); color: #fff; }
+.mitos-steps-line h3 { margin: 0 0 8px; color: var(--mitos-navy); font-size: 24px; }
+.mitos-steps-line p { margin: 0; color: var(--mitos-muted); }
+
+.mitos-experience-frame {
+  min-height: 100vh;
+  padding: clamp(80px, 9vw, 132px) clamp(30px, 7vw, 112px);
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 40px;
-  background: linear-gradient(135deg, #1757ff 0%, #0f3fd8 100%);
+  gap: 60px;
   color: #fff;
+  background: linear-gradient(135deg, #07265f 0%, #0a2f78 52%, #123f96 100%);
 }
+.mitos-experience-copy { max-width: 850px; }
+.mitos-experience-copy > span { color: rgba(255,255,255,.72); }
+.mitos-experience-copy h2 { color: #fff; }
+.mitos-experience-copy p { color: rgba(255,255,255,.82); margin-bottom: 28px; }
+.mitos-experience-route { font-size: clamp(120px, 18vw, 260px) !important; color: rgba(255,255,255,.10); }
 
-.mitos-travel-band span {
-  color: rgba(255,255,255,0.72);
-}
+.mitos-faq-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-.mitos-travel-band h2 {
-  max-width: 850px;
-  color: #fff;
-}
-
-.mitos-travel-icon {
-  font-size: clamp(90px, 12vw, 180px) !important;
-  color: rgba(255,255,255,0.16);
-}
-
-.mitos-promo-card {
-  padding: clamp(34px, 5vw, 62px);
-  border-radius: 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 34px;
-  background: var(--mitos-blue-pale);
-  border: 1px solid var(--mitos-line);
-}
-
-.mitos-promo-card > div {
-  max-width: 760px;
-}
-
-.mitos-faq-grid {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.mitos-faq-grid article {
-  min-height: 190px;
-  background: #fff;
-  box-shadow: 0 16px 50px rgba(23,87,255,0.06);
-}
-
-.mitos-final-cta {
-  padding: clamp(56px, 7vw, 92px) clamp(22px, 7vw, 104px);
+.mitos-contact-frame {
+  min-height: 68vh;
+  padding: clamp(70px, 8vw, 112px) clamp(30px, 7vw, 112px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 34px;
-  background: var(--mitos-blue);
+  gap: 50px;
+  background: var(--mitos-navy);
   color: #fff;
 }
+.mitos-contact-frame > div > span { color: rgba(255,255,255,.65); }
+.mitos-contact-frame h2 { color: #fff; }
+.mitos-contact-frame p { color: rgba(255,255,255,.78); }
 
-.mitos-final-cta span {
-  color: rgba(255,255,255,0.74);
-  font-weight: 800;
+@media (max-width: 1080px) {
+  .mitos-hero-scene { min-height: 620px; }
+  .mitos-hero-copy { width: 100%; max-width: 680px; }
+  .mitos-search-panel { width: min(94%, 850px); }
+  .mitos-hero-car { opacity: .35; width: 58%; }
+  .mitos-trust-strip { grid-template-columns: 1fr 1fr; }
+  .mitos-four-cards { grid-template-columns: 1fr 1fr; }
 }
 
-.mitos-final-cta h2 {
-  max-width: 700px;
-  margin-bottom: 0;
-  color: #fff;
-}
-
-.mitos-btn-white {
-  background: #fff;
-  color: var(--mitos-blue-strong);
-}
-
-.mitos-btn-outline-white {
-  border-color: rgba(255,255,255,0.5);
-  color: #fff;
-  background: transparent;
-}
-
-.mitos-btn-ghost {
-  border-color: rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.68);
-  cursor: not-allowed;
-}
-
-@media only screen and (width <= 1080px) {
-  .mitos-hero {
-    grid-template-columns: 1fr;
-    padding-bottom: 110px;
-  }
-
-  .mitos-hero-copy {
-    max-width: 820px;
-  }
-
-  .mitos-hero-visual {
-    display: none;
-  }
-
-  .mitos-value-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .mitos-fleet-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media only screen and (width <= 760px) {
-  .mitos-hero {
-    min-height: auto;
-    padding-top: 56px;
-  }
-
-  .mitos-hero h1 {
-    font-size: clamp(46px, 14vw, 64px);
-  }
-
-  .mitos-hero-support {
-    font-size: 16px;
-  }
-
-  .mitos-agent-seam {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    border-radius: 18px;
-  }
-
-  .mitos-agent-seam small {
-    width: 100%;
-  }
-
-  .mitos-search-zone {
-    width: calc(100% - 24px);
-    padding: 20px 14px;
-    border-radius: 22px;
-  }
-
-  .mitos-value-grid,
-  .mitos-faq-grid,
-  .mitos-steps {
-    grid-template-columns: 1fr;
-  }
-
-  .mitos-fleet-card {
-    grid-template-columns: 1fr;
-  }
-
-  .mitos-fleet-visual {
-    min-height: 210px;
-  }
-
-  .mitos-travel-band {
-    grid-template-columns: 1fr;
-  }
-
-  .mitos-travel-icon {
-    display: none !important;
-  }
-
-  .mitos-promo-card,
-  .mitos-final-cta {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .mitos-hero-actions,
-  .mitos-final-actions {
-    width: 100%;
-  }
-
-  .mitos-hero-actions .mitos-btn,
-  .mitos-final-actions .mitos-btn,
-  .mitos-promo-card .mitos-btn {
-    width: 100%;
-  }
+@media (max-width: 760px) {
+  .mitos-frame { min-height: auto; }
+  .mitos-hero-frame { min-height: auto; }
+  .mitos-hero-scene { min-height: 720px; padding: 42px 18px 26px; background-position: 62% center; }
+  .mitos-hero-copy h1 { font-size: clamp(44px, 13vw, 62px); }
+  .mitos-hero-copy p { font-size: 22px; }
+  .mitos-search-panel { width: calc(100% - 20px); margin-top: 30px; padding: 18px 14px; }
+  .mitos-search-heading { align-items: flex-start; }
+  .mitos-search-heading p { font-size: 13px; }
+  .mitos-hero-car { display: none; }
+  .mitos-trust-strip { grid-template-columns: 1fr; padding: 30px 22px; }
+  .mitos-story-block { min-height: 380px; padding: 50px 20px 88px; }
+  .mitos-story-actions,
+  .mitos-contact-actions { width: 100%; flex-direction: column; }
+  .mitos-btn { width: 100%; }
+  .mitos-why-frame,
+  .mitos-fleet-frame,
+  .mitos-how-frame,
+  .mitos-faq-frame { min-height: 100svh; padding: 76px 22px; }
+  .mitos-four-cards,
+  .mitos-fleet-cards,
+  .mitos-faq-list { grid-template-columns: 1fr; }
+  .mitos-steps-line { grid-template-columns: 1fr; gap: 34px; }
+  .mitos-steps-line::before { display: none; }
+  .mitos-experience-frame { min-height: 100svh; padding: 76px 22px; grid-template-columns: 1fr; }
+  .mitos-experience-route { display: none; }
+  .mitos-contact-frame { min-height: 75svh; padding: 70px 22px; flex-direction: column; align-items: flex-start; justify-content: center; }
 }
