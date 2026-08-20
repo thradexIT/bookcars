@@ -39,6 +39,8 @@ services:
       - ./backend:/bookcars/backend
       - /bookcars/backend/node_modules
       - backend_logs:/bookcars/backend/logs
+    environment:
+      - NODE_ENV=development
 
   bc-dev-admin:
     build:
