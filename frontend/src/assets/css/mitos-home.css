@@ -1,6 +1,6 @@
 .mitos-home {
-  --mitos-navy: #0b3278;
-  --mitos-navy-deep: #07265f;
+  --mitos-navy: #012063;
+  --mitos-navy-deep: #012063;
   --mitos-blue: #123f96;
   --mitos-blue-soft: #eaf0fa;
   --mitos-white: #fff;
@@ -15,11 +15,15 @@
 
 .mitos-home * { box-sizing: border-box; }
 
-.mitos-frame { width: 100%; position: relative; }
+.mitos-frame {
+  width: 100%;
+  position: relative;
+  scroll-margin-top: var(--mitos-header-height, 110px);
+}
 
 /* FRAME 01 — APPROVED HERO */
 .mitos-hero-frame {
-  min-height: calc(100svh - 118px);
+  min-height: calc(100svh - var(--mitos-header-height, 110px));
   background: #fff;
   overflow: hidden;
 }
@@ -231,7 +235,7 @@
   bottom: -35px;
   height: 82px;
   border-radius: 50% 50% 0 0 / 55% 55% 0 0;
-  background: linear-gradient(180deg, #123f96 0%, #08265f 100%);
+  background: linear-gradient(180deg, #123f96 0%, #012063 100%);
   transform: rotate(1.2deg);
 }
 .mitos-story-block h2 { margin: 8px 0 12px; font-size: clamp(40px, 3.35vw, 52px); color: var(--mitos-ink); letter-spacing: -.035em; }
@@ -260,19 +264,21 @@
 
 /* ONE FRAME = ONE SECTION */
 .mitos-frame:not(.mitos-hero-frame) {
-  min-height: 100svh;
-  padding: clamp(86px, 8vw, 120px) clamp(30px, 7vw, 104px);
+  min-height: calc(100svh - var(--mitos-header-height, 110px));
+  height: calc(100svh - var(--mitos-header-height, 110px));
+  padding: clamp(58px, 6vh, 96px) clamp(30px, 7vw, 104px);
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: hidden;
 }
 
-.mitos-frame-copy { max-width: 780px; margin-bottom: 48px; }
+.mitos-frame-copy { max-width: 780px; margin-bottom: 42px; }
 .mitos-frame-copy > span,
 .mitos-experience-copy > span { color: #1d57a8; font-size: 12px; font-weight: 900; letter-spacing: .13em; }
 .mitos-frame-copy h2,
 .mitos-experience-copy h2,
-.mitos-contact-frame h2 { margin: 10px 0 14px; font-size: clamp(42px, 4.4vw, 66px); line-height: 1; letter-spacing: -.045em; }
+.mitos-contact-frame h2 { margin: 10px 0 14px; font-size: clamp(38px, 4vw, 62px); line-height: 1; letter-spacing: -.045em; }
 .mitos-frame-copy p,
 .mitos-experience-copy p,
 .mitos-contact-frame p { margin: 0; color: var(--mitos-muted); font-size: 17px; line-height: 1.65; }
@@ -282,36 +288,44 @@
 .mitos-four-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .mitos-four-cards article,
 .mitos-faq-list article {
-  min-height: 235px;
-  padding: 30px;
+  min-height: 210px;
+  padding: 28px;
   background: #fff;
   border: 1px solid var(--mitos-line);
   border-radius: 22px;
 }
 .mitos-four-cards b { color: #1d57a8; font-size: 13px; }
 .mitos-four-cards h3,
-.mitos-faq-list h3 { margin: 26px 0 10px; font-size: 22px; }
+.mitos-faq-list h3 { margin: 22px 0 10px; font-size: 22px; }
 .mitos-four-cards p,
 .mitos-faq-list p { margin: 0; color: var(--mitos-muted); line-height: 1.6; }
 
 .mitos-fleet-frame { background: #fff; }
 .mitos-fleet-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.mitos-fleet-cards article { min-height: 360px; padding: 32px; border: 1px solid var(--mitos-line); border-radius: 24px; background: #f9fbff; }
-.mitos-vehicle-visual { height: 170px; display: grid; place-items: center; border-radius: 18px; background: linear-gradient(145deg,#edf3fb,#dce8f8); color: #174b99; }
-.mitos-vehicle-visual svg { font-size: 110px; }
-.mitos-fleet-cards small { display: block; margin-top: 24px; color: #1d57a8; font-weight: 900; }
+.mitos-fleet-cards article { min-height: 320px; padding: 30px; border: 1px solid var(--mitos-line); border-radius: 24px; background: #f9fbff; }
+.mitos-vehicle-visual { height: 145px; display: grid; place-items: center; border-radius: 18px; background: linear-gradient(145deg,#edf3fb,#dce8f8); color: #174b99; }
+.mitos-vehicle-visual svg { font-size: 100px; }
+.mitos-fleet-cards small { display: block; margin-top: 22px; color: #1d57a8; font-weight: 900; }
 .mitos-fleet-cards h3 { margin: 8px 0 18px; font-size: 30px; }
 .mitos-fleet-cards button { border: 0; padding: 0; background: transparent; color: #174b99; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 
 .mitos-how-frame { background: #f6f8fc; }
 .mitos-steps-line { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid #cbd7e8; }
-.mitos-steps-line > div { min-height: 210px; padding: 32px 26px; border-right: 1px solid #dce4ef; }
+.mitos-steps-line > div { min-height: 190px; padding: 28px 24px; border-right: 1px solid #dce4ef; }
 .mitos-steps-line > div:last-child { border-right: 0; }
 .mitos-steps-line b { color: #1d57a8; }
-.mitos-steps-line h3 { margin: 22px 0 8px; font-size: 28px; }
+.mitos-steps-line h3 { margin: 20px 0 8px; font-size: 28px; }
 .mitos-steps-line p { margin: 0; color: var(--mitos-muted); }
 
-.mitos-experience-frame { min-height: 100svh; display: grid !important; grid-template-columns: 1fr auto; align-items: center; background: linear-gradient(135deg,#123f96,#07265f); color: #fff; }
+.mitos-experience-frame {
+  min-height: calc(100svh - var(--mitos-header-height, 110px)) !important;
+  height: calc(100svh - var(--mitos-header-height, 110px)) !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  background: linear-gradient(135deg,#123f96,#012063);
+  color: #fff;
+}
 .mitos-experience-copy { max-width: 820px; }
 .mitos-experience-copy > span { color: rgba(255,255,255,.72); }
 .mitos-experience-copy h2 { color: #fff; }
@@ -321,7 +335,16 @@
 .mitos-faq-frame { background: #fff; }
 .mitos-faq-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; }
 
-.mitos-contact-frame { min-height: 75svh !important; flex-direction: row !important; align-items: center; justify-content: space-between !important; gap: 48px; background: #123f96; color: #fff; }
+.mitos-contact-frame {
+  min-height: calc(100svh - var(--mitos-header-height, 110px)) !important;
+  height: calc(100svh - var(--mitos-header-height, 110px)) !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between !important;
+  gap: 48px;
+  background: #123f96;
+  color: #fff;
+}
 .mitos-contact-frame > div:first-child { max-width: 760px; }
 .mitos-contact-frame > div:first-child > span { color: rgba(255,255,255,.7); font-weight: 800; }
 .mitos-contact-frame h2 { color: #fff; }
@@ -351,12 +374,12 @@
   .mitos-trust-strip { grid-template-columns: 1fr; gap: 18px; padding: 28px 24px; }
   .mitos-story-actions { flex-direction: column; width: 100%; max-width: 340px; }
   .mitos-btn { width: 100%; }
-  .mitos-frame:not(.mitos-hero-frame) { min-height: auto; padding: 84px 24px; }
+  .mitos-frame:not(.mitos-hero-frame) { min-height: auto; height: auto; padding: 84px 24px; overflow: visible; }
   .mitos-four-cards,
   .mitos-fleet-cards,
   .mitos-steps-line,
   .mitos-faq-list { grid-template-columns: 1fr; }
-  .mitos-experience-frame { display: flex !important; }
-  .mitos-contact-frame { flex-direction: column !important; align-items: flex-start; }
+  .mitos-experience-frame { min-height: auto !important; height: auto !important; display: flex !important; }
+  .mitos-contact-frame { min-height: auto !important; height: auto !important; flex-direction: column !important; align-items: flex-start; }
   .mitos-contact-actions { width: 100%; flex-direction: column; }
 }
