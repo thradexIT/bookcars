@@ -22,7 +22,7 @@ POST /api/frontend-cars/... -> date/location availability authority
 checkout/payment/booking    -> existing Rent A Car authority
 ```
 
-The new public-fleet endpoint intentionally does not accept dates or locations and does not expose prices, license plates or supplier internals. It cannot be interpreted as proof that a vehicle is available for a requested rental period.
+The new public-fleet endpoint intentionally does not accept dates or locations and does not expose prices, license plates or supplier internals. It cannot be interpreted as proof that a vehicle is available for a requested rental period. Booking-state fields such as `fullyBooked` are therefore not used to decide whether an otherwise active fleet vehicle belongs in the landing catalog.
 
 ## Implemented
 
@@ -37,7 +37,7 @@ The new public-fleet endpoint intentionally does not accept dates or locations a
 ### I5 — backend-driven Mitos landing fleet
 
 - added `GET /api/public-fleet/:size`.
-- endpoint returns only active, non-coming-soon, non-fully-booked cars belonging to non-blacklisted suppliers.
+- endpoint returns active, non-coming-soon cars belonging to non-blacklisted suppliers; per-trip booking state is left to the availability flow.
 - response is projected to presentation-safe fields only: `_id`, `name`, `image`, `type`, `gearbox`, `seats`, `doors`, `aircon`, `range`, `multimedia`.
 - `CarService.getPublicFleet()` consumes the endpoint.
 - `MitosHome` loads the fleet from backend and renders real CDN vehicle images when present.
