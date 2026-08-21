@@ -13,6 +13,8 @@ This slice closes two product seams without changing rental transaction authorit
 
 A runtime screenshot supplied on 2026-08-21 proved that a local Checkout build still displayed the recovered BookCars header. That evidence reopened the I4 branding gate and triggered a route/config hardening pass. The same feedback explicitly brought **Admin visible branding** into this rebrand pass; Admin business behavior remains untouched.
 
+A later parity review found a separate regression: the new Mitos marketing header had removed recovered BookCars account/navigation behavior. That is now treated as an I4 continuity issue rather than an intentional simplification. Mitos must preserve the working customer authentication and authenticated management/navigation capabilities while changing visible identity.
+
 The Agent, CRM and LaborSync remain outside this slice. Agent remains frozen until the final product layer.
 
 ## Authority preserved
@@ -48,6 +50,52 @@ The public-fleet endpoint intentionally does not accept dates or locations and d
 - Admin header is visibly branded `MITOS ADMIN` (mobile: `MITOS`) and uses Mitos navy.
 - Admin `.env.example` and `.env.docker.example` no longer seed `BookCars` as the visible website name.
 - Admin routes, permissions, cars, bookings, users, pricing, scheduler and other operational behavior are unchanged.
+- the recovered Admin hamburger/sidebar remains gated by authenticated Admin state; management navigation is not exposed as a public customer menu.
+
+### I4B — Customer authentication/navigation parity restoration
+
+The Mitos shell now restores the behavior that the recovered BookCars header already provided instead of reducing the product during the rebrand.
+
+Public desktop header:
+
+```text
+MITOS
++ marketing navigation
++ Registrarse
++ Iniciar sesión
++ Buscar auto
+```
+
+Authenticated customer header:
+
+```text
+MITOS
++ notifications
++ Mis reservas
++ Mi cuenta
+  ├── Configuración
+  └── Cerrar sesión
++ Buscar auto
+```
+
+The Mitos drawer also restores the recovered customer routes:
+
+```text
+Inicio
+Mis reservas          authenticated only
+Proveedores           when enabled by configuration
+Sedes
+Nosotros
+Preguntas frecuentes
+Contacto
+Privacidad
+Términos
+Cookies
+```
+
+On compact/mobile layouts, public `Registrarse` / `Iniciar sesión` actions move into the drawer, matching the recovered responsive behavior rather than disappearing.
+
+No customer authentication endpoint, booking authority, payment behavior or rental state machine was changed.
 
 ### I5 — backend-driven Mitos landing fleet
 
@@ -88,7 +136,7 @@ The 2026-08-21 Checkout screenshot is a **FAIL receipt for the prior local build
 The required next evidence is a fresh rebuild/retest of the current branch:
 
 ```text
-Frontend identity audit
+Frontend identity + navigation audit
 /                         -> MITOS
 /search                   -> MITOS
 /checkout                 -> MITOS
@@ -98,10 +146,16 @@ Frontend identity audit
 /bookings                 -> MITOS
 /booking                  -> MITOS
 legal/support/account      -> MITOS shell
+public desktop             -> Registrarse + Iniciar sesión visible
+authenticated customer     -> notifications + Mis reservas + Mi cuenta
+mobile/public              -> auth actions available in drawer
+No visible BookCars        -> required
 
-Admin identity audit
+Admin identity + navigation audit
 Admin browser title        -> MITOS ADMIN
 Admin header               -> MITOS ADMIN / MITOS
+authenticated Admin        -> hamburger/sidebar available
+Admin management routes    -> preserved
 No visible BookCars brand  -> required
 
 I6 transaction proof
