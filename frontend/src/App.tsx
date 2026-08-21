@@ -9,6 +9,7 @@ import { SettingProvider } from '@/context/SettingContext'
 import { init as initGA } from '@/utils/ga4'
 import ScrollToTop from '@/components/ScrollToTop'
 import NProgressIndicator from '@/components/NProgressIndicator'
+import '@/assets/css/mitos-rental-flow.css'
 
 if (env.GOOGLE_ANALYTICS_ENABLED) {
   initGA()
@@ -42,6 +43,7 @@ const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'))
 const AppLayout = () => {
   const location = useLocation()
   const [refreshKey, setRefreshKey] = useState(0) // refreshKey to check user and notifications when navigating between routes
+  const routeClass = location.pathname === '/' ? 'mitos-route-home' : 'mitos-route-rental'
 
   useEffect(() => {
     setRefreshKey((prev) => prev + 1)
@@ -54,7 +56,7 @@ const AppLayout = () => {
           <RecaptchaProvider>
             <PayPalProvider>
               <ScrollToTop />
-              <div className="app">
+              <div className={`app mitos-public-app ${routeClass}`}>
                 <Suspense fallback={<NProgressIndicator />}>
                   <Header />
                   <Outlet />
