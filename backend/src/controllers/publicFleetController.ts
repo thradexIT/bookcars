@@ -25,10 +25,7 @@ export const getPublicFleet = async (req: Request, res: Response) => {
       {
         $match: {
           available: true,
-          $and: [
-            { $or: [{ fullyBooked: false }, { fullyBooked: null }] },
-            { $or: [{ comingSoon: false }, { comingSoon: null }] },
-          ],
+          $or: [{ comingSoon: false }, { comingSoon: null }],
         },
       },
       {
