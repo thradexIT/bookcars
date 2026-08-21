@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Language } from '@mui/icons-material'
 import { useLocation, useNavigate } from 'react-router-dom'
-import Header from '@/components/Header'
 import { mitosBrand } from '@/config/mitosBrand'
 import '@/assets/css/mitos-header.css'
 
@@ -10,11 +9,10 @@ const MitosHeader = () => {
   const navigate = useNavigate()
   const isHome = location.pathname === '/'
   const isSearch = location.pathname === '/search'
-  const isMitosPublicSurface = isHome || isSearch
 
   useEffect(() => {
     document.title = mitosBrand.name
-  }, [])
+  }, [location.pathname])
 
   const goToSection = (id: string) => {
     if (!isHome) {
@@ -27,14 +25,6 @@ const MitosHeader = () => {
 
   const goToSearch = () => goToSection('mitos-search')
 
-  if (!isMitosPublicSurface) {
-    return (
-      <div className="mitos-header-shell mitos-header-shell-legacy">
-        <Header />
-      </div>
-    )
-  }
-
   return (
     <header className="mitos-topbar">
       <button className="mitos-topbar-logo" type="button" aria-label="Mitos Rent a Car - Inicio" onClick={() => goToSection('inicio')} />
@@ -42,7 +32,7 @@ const MitosHeader = () => {
         <button type="button" className={isHome ? 'is-active' : ''} onClick={() => goToSection('inicio')}>Inicio</button>
         <button type="button" className={isSearch ? 'is-active' : ''} onClick={() => goToSection('vehiculos')}>Vehículos</button>
         <button type="button" onClick={() => goToSection('como-funciona')}>Cómo funciona</button>
-        <button type="button" onClick={() => goToSection('promociones')}>Promociones</button>
+        <button type="button" onClick={() => goToSection('promociones')}>Viajes</button>
         <button type="button" onClick={() => goToSection('preguntas')}>FAQ</button>
         <button type="button" onClick={() => goToSection('contacto')}>Contacto</button>
       </nav>
