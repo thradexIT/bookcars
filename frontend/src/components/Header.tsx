@@ -1,5 +1,4 @@
 import React from 'react'
-import MitosHeader from '@/components/MitosHeader'
 
 interface HeaderProps {
   hidden?: boolean
@@ -8,16 +7,17 @@ interface HeaderProps {
 }
 
 /**
- * Backward-compatible public header boundary.
+ * Legacy compatibility shim.
  *
- * Older customer pages may still import `Header`. They must never be able to
- * resurrect the legacy BookCars public shell, so this compatibility component
- * delegates every visible header to MitosHeader.
+ * The public application shell (`AppLayout`) is the single authority for the
+ * customer header and always renders `MitosHeader`. Some recovered pages may
+ * still import this historical component directly; rendering anything here
+ * would either resurrect the BookCars shell or duplicate the Mitos header.
  */
 const Header = ({
-  hidden,
+  hidden: _hidden,
   hideSignin: _hideSignin,
   headerTitle: _headerTitle,
-}: HeaderProps) => (hidden ? null : <MitosHeader />)
+}: HeaderProps) => null
 
 export default Header
