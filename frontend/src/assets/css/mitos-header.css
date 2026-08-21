@@ -7,9 +7,9 @@
 .mitos-topbar {
   min-height: var(--mitos-header-height);
   height: var(--mitos-header-height);
-  padding: 0 40px 0 44px;
+  padding: 0 32px;
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr) 245px;
+  grid-template-columns: 238px minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   position: relative;
@@ -19,39 +19,76 @@
   box-shadow: none;
 }
 
+.mitos-topbar-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mitos-menu-toggle,
+.mitos-topbar-logo,
+.mitos-topbar-nav button,
+.mitos-language,
+.mitos-search-nav,
+.mitos-auth-link,
+.mitos-icon-action,
+.mitos-bookings-link,
+.mitos-account-button,
+.mitos-account-menu button,
+.mitos-drawer button {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mitos-menu-toggle {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #fff;
+  background: transparent;
+}
+
+.mitos-menu-toggle:hover,
+.mitos-menu-toggle:focus-visible {
+  background: rgba(255, 255, 255, .1);
+}
+
 .mitos-topbar-logo {
   width: 176px;
   height: 70px;
   padding: 0;
-  border: 0;
   outline: 0;
-  cursor: pointer;
   background: transparent url('../img/mitos-logo-clean.svg') center / contain no-repeat;
 }
 
 .mitos-topbar-nav {
+  min-width: 0;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(20px, 2.2vw, 38px);
+  gap: clamp(14px, 1.65vw, 30px);
 }
 
 .mitos-topbar-nav button,
 .mitos-language,
 .mitos-search-nav {
-  border: 0;
-  font: inherit;
   color: #fff;
   background: transparent;
-  cursor: pointer;
 }
 
 .mitos-topbar-nav button {
   height: 100%;
   padding: 3px 0 0;
   position: relative;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -72,48 +109,358 @@
 }
 
 .mitos-topbar-actions {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
+  gap: 10px;
 }
 
 .mitos-language {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 14px;
+  gap: 6px;
+  padding: 0 4px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.mitos-search-nav {
-  min-width: 142px;
-  height: 52px;
-  border: 1px solid rgba(255,255,255,.92);
+.mitos-auth-actions,
+.mitos-customer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mitos-auth-link,
+.mitos-bookings-link,
+.mitos-account-button {
+  min-height: 42px;
+  padding: 0 12px;
   border-radius: 8px;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  background: transparent;
+  font-size: 13px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-.mitos-search-nav:hover { background: rgba(255,255,255,.08); }
-.mitos-header-shell-legacy > .header { position: relative; }
-
-@media only screen and (width <= 1100px) {
-  :root { --mitos-header-height: 88px; }
-  .mitos-topbar { grid-template-columns: 180px 1fr auto; padding-inline: 24px; }
-  .mitos-topbar-logo { width: 158px; height: 64px; }
-  .mitos-topbar-nav { gap: 16px; }
-  .mitos-topbar-nav button { font-size: 13px; }
-  .mitos-topbar-actions { gap: 9px; }
-  .mitos-search-nav { min-width: 120px; height: 46px; }
+.mitos-auth-link {
+  border: 1px solid rgba(255, 255, 255, .5);
 }
 
-@media only screen and (width <= 840px) {
-  :root { --mitos-header-height: 78px; }
-  .mitos-topbar { grid-template-columns: 1fr auto; }
-  .mitos-topbar-logo { width: 146px; height: 58px; }
-  .mitos-topbar-nav { display: none; }
-  .mitos-language { display: none; }
-  .mitos-search-nav { min-width: 112px; height: 44px; }
+.mitos-auth-link:hover,
+.mitos-bookings-link:hover,
+.mitos-account-button:hover {
+  background: rgba(255, 255, 255, .09);
+}
+
+.mitos-auth-link-primary {
+  color: var(--mitos-navy);
+  border-color: #fff;
+  background: #fff;
+}
+
+.mitos-auth-link-primary:hover {
+  background: #f3f6ff;
+}
+
+.mitos-icon-action {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: transparent;
+}
+
+.mitos-icon-action:hover {
+  background: rgba(255, 255, 255, .09);
+}
+
+.mitos-notification-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mitos-navy);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.mitos-account-wrap {
+  position: relative;
+}
+
+.mitos-account-menu {
+  width: 190px;
+  padding: 7px;
+  border: 1px solid rgba(1, 32, 99, .12);
+  border-radius: 10px;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 1700;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(10, 24, 62, .2);
+}
+
+.mitos-account-menu button {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #17213c;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.mitos-account-menu button:hover {
+  background: #f2f5fb;
+}
+
+.mitos-search-nav {
+  min-width: 122px;
+  height: 46px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, .92);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.mitos-search-nav:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.mitos-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: rgba(8, 18, 45, .52);
+  backdrop-filter: blur(2px);
+}
+
+.mitos-drawer {
+  width: min(340px, 88vw);
+  height: 100%;
+  padding: 20px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  inset: 0 auto 0 0;
+  color: #17213c;
+  background: #fff;
+  box-shadow: 16px 0 44px rgba(8, 18, 45, .22);
+  overflow-y: auto;
+}
+
+.mitos-drawer-head {
+  min-height: 68px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e7eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mitos-drawer-logo {
+  width: 156px;
+  height: 58px;
+  background: var(--mitos-navy) url('../img/mitos-logo-clean.svg') center / 132px auto no-repeat;
+  border-radius: 8px;
+}
+
+.mitos-drawer-head > button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #28314a;
+  background: #f3f5f9;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.mitos-drawer-nav {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mitos-drawer-nav button,
+.mitos-drawer-auth button {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #1d2740;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 750;
+  text-align: left;
+}
+
+.mitos-drawer-nav button:hover,
+.mitos-drawer-auth button:hover {
+  background: #f1f5fd;
+}
+
+.mitos-drawer-auth {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #e7eaf1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.mitos-drawer-auth button.is-primary {
+  color: #fff;
+  background: var(--mitos-navy);
+}
+
+.mitos-header-shell-legacy > .header {
+  position: relative;
+}
+
+@media only screen and (width <= 1360px) {
+  .mitos-topbar {
+    grid-template-columns: 220px minmax(0, 1fr) auto;
+    padding-inline: 22px;
+    gap: 12px;
+  }
+
+  .mitos-topbar-logo {
+    width: 160px;
+  }
+
+  .mitos-topbar-nav {
+    gap: 14px;
+  }
+
+  .mitos-topbar-nav button {
+    font-size: 13px;
+  }
+
+  .mitos-auth-link,
+  .mitos-bookings-link,
+  .mitos-account-button {
+    padding-inline: 9px;
+  }
+}
+
+@media only screen and (width <= 1180px) {
+  :root {
+    --mitos-header-height: 88px;
+  }
+
+  .mitos-topbar {
+    grid-template-columns: 205px 1fr auto;
+  }
+
+  .mitos-topbar-logo {
+    width: 150px;
+    height: 62px;
+  }
+
+  .mitos-topbar-nav button:nth-child(4),
+  .mitos-topbar-nav button:nth-child(5),
+  .mitos-topbar-nav button:nth-child(6) {
+    display: none;
+  }
+
+  .mitos-language {
+    display: none;
+  }
+}
+
+@media only screen and (width <= 960px) {
+  :root {
+    --mitos-header-height: 82px;
+  }
+
+  .mitos-topbar {
+    grid-template-columns: minmax(180px, 1fr) auto;
+    padding-inline: 18px;
+  }
+
+  .mitos-topbar-nav,
+  .mitos-auth-actions,
+  .mitos-bookings-link,
+  .mitos-account-wrap {
+    display: none;
+  }
+
+  .mitos-topbar-logo {
+    width: 146px;
+    height: 58px;
+  }
+
+  .mitos-customer-actions {
+    gap: 2px;
+  }
+
+  .mitos-search-nav {
+    min-width: 112px;
+    height: 44px;
+  }
+}
+
+@media only screen and (width <= 560px) {
+  .mitos-topbar {
+    grid-template-columns: 1fr auto;
+    padding-inline: 12px;
+  }
+
+  .mitos-topbar-brand {
+    gap: 6px;
+  }
+
+  .mitos-menu-toggle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .mitos-topbar-logo {
+    width: 126px;
+  }
+
+  .mitos-search-nav {
+    min-width: 96px;
+    height: 40px;
+    padding-inline: 9px;
+    font-size: 12px;
+  }
+
+  .mitos-icon-action {
+    width: 38px;
+    height: 38px;
+  }
 }
