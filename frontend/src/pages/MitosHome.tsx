@@ -108,7 +108,7 @@ const MitosHome = () => {
 
           <div className="mitos-hero-benefits" aria-label="Beneficios de Mitos">
             <article><SecurityOutlined /><div><b>Reserva simple</b><span>Empieza tu búsqueda en pocos pasos.</span></div></article>
-            <article><DirectionsCarOutlined /><div><b>Flota real</b><span>Los vehículos publicados vienen del sistema de alquiler.</span></div></article>
+            <article><DirectionsCarOutlined /><div><b>Flota real</b><span>Los vehículos activos vienen del sistema de alquiler.</span></div></article>
             <article><HeadsetMicOutlined /><div><b>Atención rápida</b><span>Habla con Mitos cuando necesites ayuda.</span></div></article>
             <article><LocalOfferOutlined /><div><b>Condiciones claras</b><span>Disponibilidad y precio se confirman en tu búsqueda.</span></div></article>
           </div>
@@ -124,7 +124,7 @@ const MitosHome = () => {
           <div className="mitos-why-layout">
             <div className="mitos-benefit-grid">
               <article><SecurityOutlined /><h3>Atención confiable</h3><p>Comunicación directa para acompañarte cuando lo necesites.</p></article>
-              <article><DirectionsCarOutlined /><h3>Flota conectada</h3><p>La landing presenta vehículos registrados en el sistema de alquiler.</p></article>
+              <article><DirectionsCarOutlined /><h3>Flota conectada</h3><p>La landing presenta vehículos activos registrados en el sistema de alquiler.</p></article>
               <article><CalendarMonthOutlined /><h3>Reserva fácil</h3><p>Empieza desde ubicación y fechas en el primer bloque.</p></article>
               <article><HeadsetMicOutlined /><h3>Ayuda cercana</h3><p>Contacta directamente a Mitos por WhatsApp cuando necesites soporte.</p></article>
             </div>
@@ -147,7 +147,7 @@ const MitosHome = () => {
               <div className="mitos-fleet-state" role="status">
                 <DirectionsCarOutlined />
                 <strong>Cargando flota Mitos…</strong>
-                <span>Estamos consultando los vehículos registrados.</span>
+                <span>Estamos consultando los vehículos activos registrados.</span>
               </div>
             )}
 
@@ -162,7 +162,7 @@ const MitosHome = () => {
             {!fleetLoading && !fleetError && fleet.length === 0 && (
               <div className="mitos-fleet-state">
                 <DirectionsCarOutlined />
-                <strong>No hay vehículos publicados en este momento.</strong>
+                <strong>No hay vehículos activos para mostrar en este momento.</strong>
                 <span>La landing refleja el estado real del sistema y no agrega autos manualmente.</span>
               </div>
             )}
@@ -245,7 +245,7 @@ const MitosHome = () => {
 
           <div className="mitos-faq-grid">
             <details><summary>¿Cómo empiezo mi reserva?</summary><p>Usa el buscador inicial para ingresar ubicación y fechas.</p></details>
-            <details><summary>¿Qué autos están disponibles?</summary><p>La vitrina muestra la flota publicada; la disponibilidad para tu viaje se confirma después de ingresar ubicación y fechas.</p></details>
+            <details><summary>¿Qué autos están disponibles?</summary><p>La vitrina muestra la flota activa; la disponibilidad para tu viaje se confirma después de ingresar ubicación y fechas.</p></details>
             <details><summary>¿Puedo devolver el auto en otro lugar?</summary><p>El buscador permite solicitar una ubicación de devolución diferente cuando exista una opción válida.</p></details>
             <details><summary>¿El seguro está incluido?</summary><p>La cobertura exacta, sus reglas y costos deben confirmarse antes de cerrar la reserva.</p></details>
             <details><summary>¿Cómo funcionan los precios?</summary><p>El precio vigente se determina dentro del flujo de reserva según las condiciones aplicables.</p></details>
