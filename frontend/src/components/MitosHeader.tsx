@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Business as BusinessIcon,
+  CarRental as SupplierIcon,
+  Cookie as CookieIcon,
   EventSeat as BookingsIcon,
-  HelpOutline as HelpIcon,
-  HomeRounded as HomeIcon,
+  ExitToApp as LogoutIcon,
+  Feed as TermsIcon,
+  Home as HomeIcon,
   InfoOutlined as AboutIcon,
   Language,
   LocationOn as LocationIcon,
   Login as LoginIcon,
-  Logout as LogoutIcon,
-  MailOutline as ContactIcon,
+  Mail as ContactIcon,
   Menu as MenuIcon,
-  NotificationsNone as NotificationsIcon,
-  PersonAddAlt as SignUpIcon,
-  PersonOutline as AccountIcon,
+  Notifications as NotificationsIcon,
+  PersonOutline as PersonIcon,
+  PrivacyTip as PrivacyIcon,
+  QuestionAnswer as HelpIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -75,11 +77,14 @@ const MitosHeader = () => {
   const drawerLinks: DrawerLink[] = [
     { label: 'Inicio', path: '/', icon: <HomeIcon fontSize="small" /> },
     { label: 'Mis reservas', path: '/bookings', icon: <BookingsIcon fontSize="small" />, visible: isSignedIn },
-    { label: 'Proveedores', path: '/suppliers', icon: <BusinessIcon fontSize="small" />, visible: !env.HIDE_SUPPLIERS },
+    { label: 'Proveedores', path: '/suppliers', icon: <SupplierIcon fontSize="small" />, visible: !env.HIDE_SUPPLIERS },
     { label: 'Sedes', path: '/locations', icon: <LocationIcon fontSize="small" /> },
     { label: 'Nosotros', path: '/about', icon: <AboutIcon fontSize="small" /> },
     { label: 'Preguntas frecuentes', path: '/faq', icon: <HelpIcon fontSize="small" /> },
     { label: 'Contacto', path: '/contact', icon: <ContactIcon fontSize="small" /> },
+    { label: 'Privacidad', path: '/privacy', icon: <PrivacyIcon fontSize="small" /> },
+    { label: 'Términos', path: '/tos', icon: <TermsIcon fontSize="small" /> },
+    { label: 'Cookies', path: '/cookie-policy', icon: <CookieIcon fontSize="small" /> },
   ]
 
   return (
@@ -120,7 +125,7 @@ const MitosHeader = () => {
           {userLoaded && !isSignedIn && (
             <div className="mitos-auth-actions" aria-label="Acceso de cliente">
               <button type="button" className="mitos-auth-link" onClick={() => goTo('/sign-up')}>
-                <SignUpIcon fontSize="small" />
+                <PersonIcon fontSize="small" />
                 Registrarse
               </button>
               <button type="button" className="mitos-auth-link mitos-auth-link-primary" onClick={() => goTo('/sign-in')}>
@@ -155,7 +160,7 @@ const MitosHeader = () => {
                   aria-expanded={accountOpen}
                   onClick={() => setAccountOpen((open) => !open)}
                 >
-                  <AccountIcon fontSize="small" />
+                  <PersonIcon fontSize="small" />
                   Mi cuenta
                   <span>⌄</span>
                 </button>
@@ -208,7 +213,7 @@ const MitosHeader = () => {
             {!isSignedIn && userLoaded && (
               <div className="mitos-drawer-auth">
                 <button type="button" onClick={() => goTo('/sign-up')}>
-                  <SignUpIcon fontSize="small" />
+                  <PersonIcon fontSize="small" />
                   Registrarse
                 </button>
                 <button type="button" className="is-primary" onClick={() => goTo('/sign-in')}>
