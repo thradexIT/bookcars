@@ -3,11 +3,16 @@ import * as bookcarsTypes from ':bookcars-types'
 import * as env from '../config/env.config'
 import * as databaseHelper from '../utils/databaseHelper'
 import * as logger from '../utils/logger'
+import * as authHelper from '../utils/authHelper'
 import User from '../models/User'
 import Country from '../models/Country'
 import Location from '../models/Location'
 import LocationValue from '../models/LocationValue'
 import Car from '../models/Car'
+
+const DEFAULT_DEMO_PASSWORD = process.env.MITOS_DEMO_PASSWORD || 'B00kC4r5'
+const DEFAULT_CUSTOMER_EMAIL = process.env.MITOS_DEMO_CUSTOMER_EMAIL || 'jdoe@mitos.pe'
+const DEFAULT_ADMIN_EMAIL = process.env.MITOS_DEMO_ADMIN_EMAIL || 'admin@mitos.pe'
 
 const isSafeDevDatabase = () => {
   const uri = env.DB_URI || ''
@@ -20,6 +25,38 @@ const ensureValue = async (language: string, value: string) => {
   return new LocationValue({ language, value }).save()
 }
 
+const ensureDemoUser = async ({
+  email,
+  fullName,
+  type,
+  passwordHash,
+}: {
+  email: string
+  fullName: string
+  type: bookcarsTypes.UserType
+  passwordHash: string
+}) => User.findOneAndUpdate(
+  { email },
+  {
+    $set: {
+      fullName,
+      password: passwordHash,
+      language: 'es',
+      type,
+      active: true,
+      verified: true,
+      verifiedAt: new Date(),
+      blacklisted: false,
+      payLater: true,
+      location: 'Lima, Perú',
+    },
+    $unset: {
+      expireAt: 1,
+    },
+  },
+  { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
+)
+
 try {
   if (!isSafeDevDatabase()) {
     logger.error('MITOS DEV seed refused: target DB does not look local. Set MITOS_ALLOW_SEED=true only when explicitly intended.')
@@ -31,6 +68,22 @@ try {
     logger.error('MITOS DEV seed failed to connect to database')
     process.exit(1)
   }
+
+  const demoPasswordHash = await authHelper.hashPassword(DEFAULT_DEMO_PASSWORD)
+
+  await ensureDemoUser({
+    email: DEFAULT_CUSTOMER_EMAIL,
+    fullName: 'John Doe',
+    type: bookcarsTypes.UserType.User,
+    passwordHash: demoPasswordHash,
+  })
+
+  await ensureDemoUser({
+    email: DEFAULT_ADMIN_EMAIL,
+    fullName: 'MITOS Admin',
+    type: bookcarsTypes.UserType.Admin,
+    passwordHash: demoPasswordHash,
+  })
 
   const supplier = await User.findOneAndUpdate(
     { email: 'mitos.dev@local.test' },
@@ -125,8 +178,8 @@ try {
     { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true },
   )
 
-  logger.info('MITOS DEV seed ready: supplier, Peru, La Molina, Toyota Yaris 2025/26 and Toyota Raize')
-  logger.info('DEV ONLY: seeded prices are placeholders based on recovered historic campaign references, not current production price authority.')
+  logger.info(`MITOS DEV seed ready: demo customer ${DEFAULT_CUSTOMER_EMAIL}, demo admin ${DEFAULT_ADMIN_EMAIL}, supplier, Peru, La Molina, Toyota Yaris 2025/26 and Toyota Raize`)
+  logger.info('DEV ONLY: demo credentials and seeded prices are local test fixtures, not production identities or price authority.')
   process.exit(0)
 } catch (err) {
   logger.error('MITOS DEV seed failed:', err)
