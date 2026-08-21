@@ -1,6 +1,6 @@
 # Mitos — I4/I5 Rental Rebrand + Live Fleet Build v0.1
 
-**Status:** IMPLEMENTED / RUNTIME EVIDENCE PENDING  
+**Status:** SOURCE HARDENED / RUNTIME RE-TEST REQUIRED  
 **Date:** 2026-08-21  
 **Branch:** `feature/mitos-public-experience-v1`
 
@@ -11,7 +11,9 @@ This slice closes two product seams without changing rental transaction authorit
 1. keep the Mitos identity across the complete customer-facing frontend instead of falling back to the legacy BookCars header/footer or generic rental skin;
 2. remove the parallel hard-coded fleet from `MitosHome` and source the landing fleet from the Rent A Car backend.
 
-The Agent, CRM, Admin and LaborSync remain outside this slice.
+A runtime screenshot supplied on 2026-08-21 proved that a local Checkout build still displayed the recovered BookCars header. That evidence reopened the I4 branding gate and triggered a route/config hardening pass. The same feedback explicitly brought **Admin visible branding** into this rebrand pass; Admin business behavior remains untouched.
+
+The Agent, CRM and LaborSync remain outside this slice. Agent remains frozen until the final product layer.
 
 ## Authority preserved
 
@@ -20,22 +22,32 @@ Mitos landing/public shell  -> presentation
 GET /api/public-fleet/:size -> presentation-safe active-fleet projection
 POST /api/frontend-cars/... -> date/location availability authority
 checkout/payment/booking    -> existing Rent A Car authority
+Admin                        -> existing operational behavior; visible brand only changed here
 ```
 
-The new public-fleet endpoint intentionally does not accept dates or locations and does not expose prices, license plates or supplier internals. It cannot be interpreted as proof that a vehicle is available for a requested rental period. Booking-state fields such as `fullyBooked` are therefore not used to decide whether an otherwise active fleet vehicle belongs in the landing catalog.
+The public-fleet endpoint intentionally does not accept dates or locations and does not expose prices, license plates or supplier internals. It cannot be interpreted as proof that a vehicle is available for a requested rental period. Booking-state fields such as `fullyBooked` are therefore not used to decide whether an otherwise active fleet vehicle belongs in the landing catalog.
 
 ## Implemented
 
 ### I4 — Rent A Car -> Mitos customer rebrand
 
-- `MitosHeader` no longer falls back to the legacy `Header` outside `/` and `/search`.
-- customer pages using the legacy `Footer` now resolve to `MitosFooter`.
+- `AppLayout` is the single customer-header authority and renders `MitosHeader`.
+- the historical `frontend/src/components/Header.tsx` is now a no-op compatibility shim, so recovered page-level imports can neither resurrect BookCars nor duplicate the Mitos header.
+- customer pages using the historical `Footer` resolve to `MitosFooter`.
 - `MitosFooter` contains Mitos contact/social identity and legal/account navigation that works outside the landing.
-- public document metadata is Mitos-branded.
-- the frontend `WEBSITE_NAME` authority is now `MITOS RENT A CAR`, preventing legacy BookCars naming from resurfacing in customer-facing strings/payment descriptions.
-- `App` marks Home and rental routes separately and loads `mitos-rental-flow.css` for non-Home customer routes.
-- checkout, payment panels, booking detail, My Bookings, confirmation and customer-auth presentation now inherit the same navy/blue/white Mitos visual language.
-- the presentation pass does not modify submit handlers, calculations, payment integrations or booking state transitions.
+- frontend document metadata is statically Mitos-branded.
+- frontend `WEBSITE_NAME` is fixed to `MITOS RENT A CAR`; it no longer trusts a local `VITE_BC_WEBSITE_NAME=BookCars` value for visible identity.
+- frontend `.env.example` and `.env.docker.example` now use the Mitos brand to prevent new local environments from reintroducing the old name.
+- `mitos-rental-flow.css` carries the navy/blue/white Mitos presentation through checkout, confirmation, My Bookings, booking detail and customer authentication surfaces.
+- sign-in and sign-up localized copy contains generic auth terminology, not a literal BookCars brand; their header identity comes from the global Mitos shell.
+
+### I4A — Admin visible rebrand hardening
+
+- Admin `WEBSITE_NAME` is fixed to `MITOS RENT A CAR` and exposes `ADMIN_NAME = MITOS ADMIN` for product identity.
+- Admin document metadata/title is `MITOS ADMIN`.
+- Admin header is visibly branded `MITOS ADMIN` (mobile: `MITOS`) and uses Mitos navy.
+- Admin `.env.example` and `.env.docker.example` no longer seed `BookCars` as the visible website name.
+- Admin routes, permissions, cars, bookings, users, pricing, scheduler and other operational behavior are unchanged.
 
 ### I5 — backend-driven Mitos landing fleet
 
@@ -53,7 +65,7 @@ The new public-fleet endpoint intentionally does not accept dates or locations a
 
 ## Transactional protection
 
-No change was made to:
+No behavioral change was made to:
 
 ```text
 SearchForm handoff behavior
@@ -63,38 +75,44 @@ rental price calculation
 booking state transitions
 checkout business rules
 payment gateway logic
-Admin
+Admin operational/domain behavior
 LaborSync
 CRM
 Agent runtime
 ```
 
-## Branch relationship
+## Runtime evidence and remaining gate
 
-At the latest source audit the feature branch is cleanly based on `developer`:
+The 2026-08-21 Checkout screenshot is a **FAIL receipt for the prior local build**: it visibly rendered `BookCars`. Source has since been hardened, but that screenshot cannot be converted into PASS by code review alone.
 
-```text
-ahead_by  = 95
-behind_by = 0
-```
-
-This means the current source is not waiting on a `developer` update/rebase. GitHub still reports the Draft PR as non-mergeable, so no merge readiness claim is made from this fact alone.
-
-## Runtime / release evidence
-
-At this commit, implementation exists in the branch but there is no GitHub Actions run/status attached to the new head. The repository contains a guarded local `seed:mitos:dev` path that can provide a development supplier, location and vehicles for the final smoke test, but this document does not claim that the new I4/I5 head has passed that runtime yet.
-
-Required final proof:
+The required next evidence is a fresh rebuild/retest of the current branch:
 
 ```text
+Frontend identity audit
+/                         -> MITOS
+/search                   -> MITOS
+/checkout                 -> MITOS
+/checkout-session/:id     -> MITOS
+/sign-in                  -> MITOS
+/sign-up                  -> MITOS
+/bookings                 -> MITOS
+/booking                  -> MITOS
+legal/support/account      -> MITOS shell
+
+Admin identity audit
+Admin browser title        -> MITOS ADMIN
+Admin header               -> MITOS ADMIN / MITOS
+No visible BookCars brand  -> required
+
+I6 transaction proof
 Mitos landing
--> GET /api/public-fleet/:size returns seeded/real fleet
+-> GET /api/public-fleet/:size returns real/seed fleet
 -> landing renders backend vehicles
 -> choose location + dates
--> /search returns date/location availability
+-> /search returns availability
 -> select car
 -> checkout
 -> booking created
 ```
 
-Keep PR Draft until build/runtime/regression evidence is attached.
+No runtime PASS is claimed yet. Keep PR Draft until fresh runtime/regression evidence is attached.
