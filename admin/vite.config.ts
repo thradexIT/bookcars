@@ -24,7 +24,7 @@ export default ({ mode }: { mode: string }) => {
       createHtmlPlugin({
         inject: {
           data: {
-            WEBSITE_NAME: process.env.VITE_BC_WEBSITE_NAME || 'BookCars',
+            WEBSITE_NAME: process.env.VITE_BC_WEBSITE_NAME || 'MITOS RENT A CAR',
           },
         },
       }),
