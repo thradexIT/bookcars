@@ -1,6 +1,6 @@
 # Mitos — I4C Default Demo Users v0.1
 
-**Status:** SEED RUNTIME PROVEN / DEV TRANSPORT FIX IMPLEMENTED / LOGIN RE-TEST REQUIRED  
+**Status:** CUSTOMER BACKEND AUTH PROVEN / BROWSER LOGIN RE-TEST REQUIRED  
 **Date:** 2026-08-26  
 **Branch:** `feature/mitos-public-experience-v1`
 
@@ -88,11 +88,11 @@ MITOS DEV seed ready: demo customer jdoe@mitos.pe, demo admin admin@mitos.pe,
 supplier, Peru, La Molina, Toyota Yaris 2025/26 and Toyota Raize
 ```
 
-This proves seed execution and database persistence path reached completion. It does not by itself prove browser login.
+This proves seed execution and database persistence path reached completion.
 
-## Runtime receipt — first customer login attempt
+## Runtime receipt — initial browser failure
 
-Observed 2026-08-26 at the Mitos sign-in surface:
+The first customer browser login attempt displayed:
 
 ```text
 Incorrect email or password.
@@ -126,22 +126,99 @@ BC_ADMIN_HOST=http://localhost:3001/
 
 The unused DEV `8443:443` frontend mapping was removed.
 
-## Runtime acceptance
+## Runtime receipt — corrected stack rebuild
 
-After pulling/rebuilding the corrected DEV stack and reseeding:
+Observed 2026-08-26:
 
 ```text
-Frontend sign-in
+bookcars-bc-dev-frontend       Built
+bookcars-bc-dev-backend        Built
+bookcars-bc-dev-admin          Built
+bookcars-mongo-1               Started
+bookcars-bc-dev-backend-1      Started
+bookcars-bc-dev-admin-1        Started
+bookcars-bc-dev-frontend-1     Started
+```
+
+The DEV seed then completed again successfully against the rebuilt stack.
+
+## Runtime receipt — customer backend authentication
+
+Observed 2026-08-26 using the real backend sign-in endpoint:
+
+```bash
+curl -i \
+  -X POST http://localhost:4002/api/sign-in/frontend \
+  -H "Content-Type: application/json" \
+  --data '{"email":"jdoe@mitos.pe","password":"B00kC4r5","stayConnected":false}'
+```
+
+Result:
+
+```text
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"_id":"6a8f4cfa08c3c580fbdb673f","email":"jdoe@mitos.pe","fullName":"John Doe","language":"es","enableEmailNotifications":true,"blacklisted":false}
+```
+
+This is sufficient evidence that:
+
+```text
+customer fixture exists       ✅
+stored password hash matches  ✅
+frontend User role matches    ✅
+backend sign-in controller    ✅
+JWT issuance path reached     ✅
+```
+
+Because this curl request carries no browser `Origin` header, the response uses the fallback `x-access-token` cookie name. Browser verification is still required to prove the frontend-specific cookie/session path.
+
+## Runtime receipt — HTTPS URL after HTTP correction
+
+Opening the corrected DEV frontend as:
+
+```text
+https://localhost:8080/
+```
+
+returns:
+
+```text
+ERR_SSL_PROTOCOL_ERROR
+```
+
+This is expected after the DEV transport correction because port 8080 now serves plain HTTP. The correct browser URL is:
+
+```text
+http://localhost:8080/
+```
+
+The Admin DEV URL is likewise:
+
+```text
+http://localhost:3001/admin/
+```
+
+## Runtime acceptance remaining
+
+Customer browser:
+
+```text
+http://localhost:8080/sign-in
 jdoe@mitos.pe + B00kC4r5
-→ HTTP 200 authentication
 → authenticated Mitos customer shell
 → My Bookings available
+→ frontend auth cookie/session survives protected navigation
+```
 
-Admin sign-in
+Admin browser:
+
+```text
+http://localhost:3001/admin/
 admin@mitos.pe + B00kC4r5
-→ HTTP 200 authentication
 → MITOS ADMIN shell
 → authenticated management sidebar available
 ```
 
-No login PASS is claimed until those two browser logins are exercised against the rebuilt corrected DEV stack.
+Customer backend authentication is proven. Browser-session PASS and Admin authentication are still pending explicit runtime receipts.
