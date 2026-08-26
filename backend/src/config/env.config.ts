@@ -49,7 +49,7 @@ export const expireAt = 'expireAt'
  *
  * @type {string}
  */
-export const WEBSITE_NAME = __env__('BC_WEBSITE_NAME', false, 'BookCars')
+export const WEBSITE_NAME = __env__('BC_WEBSITE_NAME', false, 'MITOS RENT A CAR')
 
 /**
  * Indicate whether we are in CI environment or not.
@@ -336,11 +336,11 @@ export const ADMIN_HOST = __env__('BC_ADMIN_HOST', true)
 export const FRONTEND_HOST = __env__('BC_FRONTEND_HOST', true)
 
 /**
- * Default language. Default is en. Available options: en, fr, es.
+ * Default language. Available options: en, fr, es.
  *
  * @type {string}
  */
-export const DEFAULT_LANGUAGE = __env__('BC_DEFAULT_LANGUAGE', false, 'en')
+export const DEFAULT_LANGUAGE = __env__('BC_DEFAULT_LANGUAGE', false, 'es')
 
 /**
  * Default Minimum age for rental. Default is 21 years.
@@ -471,17 +471,16 @@ export const ADMIN_EMAIL = __env__('BC_ADMIN_EMAIL', false)
 export const RECAPTCHA_SECRET = __env__('BC_RECAPTCHA_SECRET', false)
 
 /**
- * Timezone for cenverting dates from UTC to local time.
- * Must be a valid TZ idenfidier: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
- * Default is UTC.
+ * Timezone for converting dates from UTC to local time.
+ * Must be a valid TZ identifier.
  *
  * @type {string}
  */
-export const TIMEZONE = __env__('BC_TIMEZONE', false, 'UTC')
+export const TIMEZONE = __env__('BC_TIMEZONE', false, 'America/Lima')
 
 /**
  * ipinfo.io API key.
- * Required for more tha, 1000 requests/day.
+ * Required for more than 1000 requests/day.
  *
  * @type {string}
  */
@@ -492,7 +491,7 @@ export const IPINFO_API_KEY = __env__('BC_IPINFO_API_KEY', false)
  *
  * @type {string}
  */
-export const IPINFO_DEFAULT_COUNTRY = __env__('BC_IPINFO_DEFAULT_COUNTRY', false, 'US')
+export const IPINFO_DEFAULT_COUNTRY = __env__('BC_IPINFO_DEFAULT_COUNTRY', false, 'PE')
 
 /**
  * Enables or disables Sentry error reporting. Set to true to enable.
