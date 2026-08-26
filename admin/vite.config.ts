@@ -7,6 +7,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
+  const useHttps = String(process.env.VITE_BC_API_HOST || '').toLowerCase().startsWith('https://')
 
   return defineConfig({
     base: '/admin/',
@@ -27,7 +28,7 @@ export default ({ mode }: { mode: string }) => {
           },
         },
       }),
-      basicSsl(),
+      ...(useHttps ? [basicSsl()] : []),
     ],
 
     resolve: {
@@ -45,7 +46,7 @@ export default ({ mode }: { mode: string }) => {
     },
 
     server: {
-      https: {},
+      https: useHttps ? {} : undefined,
       host: '0.0.0.0',
       port: Number.parseInt(process.env.VITE_PORT || '3001', 10),
       watch: {
@@ -53,7 +54,7 @@ export default ({ mode }: { mode: string }) => {
         interval: 500,
       },
       hmr: {
-        protocol: 'wss',
+        protocol: useHttps ? 'wss' : 'ws',
         host: process.env.VITE_HMR_HOST || 'localhost',
         port: Number.parseInt(process.env.VITE_HMR_PORT || '3001', 10),
         clientPort: Number.parseInt(process.env.VITE_HMR_CLIENT_PORT || '3001', 10),
