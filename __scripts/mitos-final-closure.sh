@@ -35,7 +35,7 @@ for file in backend/.env.docker frontend/.env.docker admin/.env.docker; do
   fi
 done
 
-info 'Checking versioned visible-identity surfaces'
+info 'Checking versioned customer/operator-visible source literals'
 VISIBLE_PATHS=(
   frontend/index.html
   frontend/.env.example
@@ -54,21 +54,27 @@ VISIBLE_PATHS=(
   backend/.env.example
   backend/.env.docker.example
 )
-if grep -RInE --exclude='*.map' 'BookCars|bookcars\.ma' "${VISIBLE_PATHS[@]}" >"$TMP_DIR/source_hits" 2>/dev/null; then
+# Literal old-brand mentions in comment-only lines are documentation, not runtime identity.
+# Everything else in these customer/operator-visible source trees is a closure defect.
+grep -RInE --exclude='*.map' 'BookCars|bookcars\.ma' "${VISIBLE_PATHS[@]}" >"$TMP_DIR/source_hits_raw" 2>/dev/null || true
+grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|/\*|\*|#)' "$TMP_DIR/source_hits_raw" >"$TMP_DIR/source_hits" || true
+if [[ -s "$TMP_DIR/source_hits" ]]; then
   cat "$TMP_DIR/source_hits" >&2
-  fail 'Versioned customer/operator-visible source still contains legacy identity'
+  fail 'Versioned customer/operator-visible runtime source still contains legacy identity'
 fi
-pass 'Versioned customer/operator-visible source has no BookCars/bookcars.ma literal'
+pass 'Versioned customer/operator-visible runtime source has no BookCars/bookcars.ma literal'
 
 info 'Checking DEV compose services'
 docker compose -f docker-compose.dev.yml ps
 
-info 'Checking effective Compose identity overrides'
+info 'Checking effective Compose identity and DEV side-effect boundary'
 COMPOSE_CONFIG="$(docker compose -f docker-compose.dev.yml config)"
 if grep -Ei 'BC_WEBSITE_NAME: BookCars|VITE_BC_WEBSITE_NAME: BookCars|bookcars\.ma' <<<"$COMPOSE_CONFIG" >/dev/null; then
   fail 'Effective DEV compose still exposes legacy visible identity'
 fi
-pass 'Effective DEV compose pins Mitos visible identity'
+grep -Eq 'BC_WEBSITE_NAME:[[:space:]]+MITOS RENT A CAR' <<<"$COMPOSE_CONFIG" || fail 'Effective DEV compose does not pin backend Mitos identity'
+grep -Eq 'BC_EMAIL_ENABLED:[[:space:]]+["'"']?false["'"']?' <<<"$COMPOSE_CONFIG" || fail 'DEV email side-effect isolation is not active'
+pass 'Effective DEV compose pins Mitos identity and isolates SMTP from booking authority'
 
 info 'Checking backend health reachability'
 HTTP_CODE="$(curl -sS -o "$TMP_DIR/health" -w '%{http_code}' "$API_ORIGIN/health" || true)"
@@ -155,6 +161,13 @@ grep -Fqi 'MITOS ADMIN' "$TMP_DIR/admin.html" || fail 'Admin served document doe
 pass 'Admin document identity is MITOS ADMIN'
 
 printf '\nSOURCE + ENV + AUTH + FLEET + DOCUMENT SWEEP: PASS\n'
-printf '\nManual browser transaction gate still required:\n'
-printf '  Mitos landing → search → select car → checkout → booking created → confirmation → Mis reservas → booking detail\n'
-printf 'When that flow is observed on the same branch/runtime, I6 may be certified.\n\n'
+printf '\nFINAL I6 BROWSER TRANSACTION GATE\n'
+printf '  1. Open %s and sign in as %s\n' "$FRONTEND_ORIGIN" "$CUSTOMER_EMAIL"
+printf '  2. Search La Molina with future dates and choose Yaris or Raize\n'
+printf '  3. On checkout select "Pagar al recoger"\n'
+printf '  4. Press "Reservar"\n'
+printf '  5. Require the Mitos success/confirmation surface with booking details\n'
+printf '  6. Open "Mis reservas" and require the new Pending booking\n'
+printf '  7. Open that booking detail and require the same car/dates/location/price\n'
+printf '  8. Require zero visible BookCars/bookcars.ma and Spanish customer copy throughout\n'
+printf '\nWhen that exact flow is observed on this same branch/runtime, I6 and the 100%% external rebrand gate may be certified.\n\n'
