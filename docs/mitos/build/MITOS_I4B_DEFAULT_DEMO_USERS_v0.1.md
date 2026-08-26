@@ -1,21 +1,21 @@
-# Mitos — I4B Default Demo Users v0.1
+# Mitos — I4C Default Demo Users v0.1
 
-**Status:** SOURCE IMPLEMENTED / RUNTIME RE-TEST REQUIRED  
-**Date:** 2026-08-21  
+**Status:** SEED RUNTIME PROVEN / DEV TRANSPORT FIX IMPLEMENTED / LOGIN RE-TEST REQUIRED  
+**Date:** 2026-08-26  
 **Branch:** `feature/mitos-public-experience-v1`
 
 ## Purpose
 
 Restore the recovered BookCars demo convenience without restoring BookCars visible identity.
 
-The Mitos DEV seed now provisions deterministic frontend and Admin demo users in addition to the existing supplier/fleet fixture.
+The Mitos DEV seed provisions deterministic frontend and Admin demo users in addition to the existing supplier/fleet fixture.
 
 ## Default DEV credentials
 
 ### Frontend customer
 
 ```text
-URL:      https://localhost:8080/
+URL:      http://localhost:8080/
 Login:    jdoe@mitos.pe
 Password: B00kC4r5
 Role:     User / customer
@@ -24,7 +24,7 @@ Role:     User / customer
 ### Admin
 
 ```text
-URL:      https://localhost:3001/admin/
+URL:      http://localhost:3001/admin/
 Login:    admin@mitos.pe
 Password: B00kC4r5
 Role:     Admin
@@ -78,20 +78,70 @@ From the repository host when the DEV compose stack is running:
 docker compose -f docker-compose.dev.yml exec bc-dev-backend npm run seed:mitos:dev
 ```
 
+## Runtime receipt — seed
+
+Observed 2026-08-26:
+
+```text
+Database connected
+MITOS DEV seed ready: demo customer jdoe@mitos.pe, demo admin admin@mitos.pe,
+supplier, Peru, La Molina, Toyota Yaris 2025/26 and Toyota Raize
+```
+
+This proves seed execution and database persistence path reached completion. It does not by itself prove browser login.
+
+## Runtime receipt — first customer login attempt
+
+Observed 2026-08-26 at the Mitos sign-in surface:
+
+```text
+Incorrect email or password.
+```
+
+Source inspection identified a DEV transport contract mismatch:
+
+```text
+frontend/admin Vite dev servers → forced HTTPS
+VITE_BC_API_HOST               → http://localhost:4002
+backend expected DEV origins    → https://localhost:8080 / https://localhost:3001
+```
+
+`SignIn.tsx` maps both non-200 authentication responses and caught request/network failures to the same credential error, so the browser message alone was not proof of a bad password.
+
+## DEV transport correction
+
+The correction keeps production HTTPS untouched and changes only the DEV server contract:
+
+```text
+HTTP API  → HTTP Vite UI + ws HMR
+HTTPS API → HTTPS Vite UI + wss HMR
+```
+
+`docker-compose.dev.yml` now defaults backend origins to:
+
+```text
+BC_FRONTEND_HOST=http://localhost:8080/
+BC_ADMIN_HOST=http://localhost:3001/
+```
+
+The unused DEV `8443:443` frontend mapping was removed.
+
 ## Runtime acceptance
 
-After reseeding:
+After pulling/rebuilding the corrected DEV stack and reseeding:
 
 ```text
 Frontend sign-in
 jdoe@mitos.pe + B00kC4r5
+→ HTTP 200 authentication
 → authenticated Mitos customer shell
 → My Bookings available
 
 Admin sign-in
 admin@mitos.pe + B00kC4r5
+→ HTTP 200 authentication
 → MITOS ADMIN shell
 → authenticated management sidebar available
 ```
 
-No runtime PASS is claimed until those logins are exercised against the rebuilt local stack.
+No login PASS is claimed until those two browser logins are exercised against the rebuilt corrected DEV stack.
