@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+FRONTEND_ORIGIN="${MITOS_FRONTEND_ORIGIN:-http://localhost:8080}"
+ADMIN_ORIGIN="${MITOS_ADMIN_ORIGIN:-http://localhost:3001}"
+API_ORIGIN="${MITOS_API_ORIGIN:-http://localhost:4002}"
+CUSTOMER_EMAIL="${MITOS_DEMO_CUSTOMER_EMAIL:-jdoe@mitos.pe}"
+ADMIN_EMAIL="${MITOS_DEMO_ADMIN_EMAIL:-admin@mitos.pe}"
+PASSWORD="${MITOS_DEMO_PASSWORD:-B00kC4r5}"
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+CUSTOMER_COOKIES="$TMP_DIR/customer.cookies"
+ADMIN_COOKIES="$TMP_DIR/admin.cookies"
+
+pass() { printf '✅ %s\n' "$1"; }
+fail() { printf '❌ %s\n' "$1" >&2; exit 1; }
+info() { printf '• %s\n' "$1"; }
+
+printf '\nMITOS FINAL CLOSURE PROBE\n=========================\n\n'
+
+info 'Checking local visible-identity env files'
+for file in backend/.env.docker frontend/.env.docker admin/.env.docker; do
+  if [[ -f "$file" ]]; then
+    if grep -nEi 'BookCars|bookcars\.ma' "$file" >"$TMP_DIR/env_hits"; then
+      cat "$TMP_DIR/env_hits" >&2
+      fail "$file still contains legacy visible identity"
+    fi
+    pass "$file has no BookCars/bookcars.ma visible-identity residue"
+  else
+    info "$file is absent locally (skipped)"
+  fi
+done
+
+info 'Checking versioned visible-identity surfaces'
+VISIBLE_PATHS=(
+  frontend/index.html
+  frontend/.env.example
+  frontend/.env.docker.example
+  frontend/src/config
+  frontend/src/components
+  frontend/src/pages
+  frontend/src/lang
+  admin/index.html
+  admin/.env.example
+  admin/.env.docker.example
+  admin/src/config
+  admin/src/components
+  admin/src/pages
+  admin/src/lang
+  backend/.env.example
+  backend/.env.docker.example
+)
+if grep -RInE --exclude='*.map' 'BookCars|bookcars\.ma' "${VISIBLE_PATHS[@]}" >"$TMP_DIR/source_hits" 2>/dev/null; then
+  cat "$TMP_DIR/source_hits" >&2
+  fail 'Versioned customer/operator-visible source still contains legacy identity'
+fi
+pass 'Versioned customer/operator-visible source has no BookCars/bookcars.ma literal'
+
+info 'Checking DEV compose services'
+docker compose -f docker-compose.dev.yml ps
+
+info 'Checking effective Compose identity overrides'
+COMPOSE_CONFIG="$(docker compose -f docker-compose.dev.yml config)"
+if grep -Ei 'BC_WEBSITE_NAME: BookCars|VITE_BC_WEBSITE_NAME: BookCars|bookcars\.ma' <<<"$COMPOSE_CONFIG" >/dev/null; then
+  fail 'Effective DEV compose still exposes legacy visible identity'
+fi
+pass 'Effective DEV compose pins Mitos visible identity'
+
+info 'Checking backend health reachability'
+HTTP_CODE="$(curl -sS -o "$TMP_DIR/health" -w '%{http_code}' "$API_ORIGIN/health" || true)"
+if [[ "$HTTP_CODE" != '200' ]]; then
+  info "Health endpoint returned $HTTP_CODE; continuing with direct auth probes"
+else
+  pass 'Backend health endpoint returned 200'
+fi
+
+info 'Authenticating Mitos customer with browser Origin semantics'
+CUSTOMER_CODE="$(curl -sS -c "$CUSTOMER_COOKIES" -b "$CUSTOMER_COOKIES" \
+  -o "$TMP_DIR/customer.json" -w '%{http_code}' \
+  -X POST "$API_ORIGIN/api/sign-in/frontend" \
+  -H "Origin: $FRONTEND_ORIGIN" \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$CUSTOMER_EMAIL\",\"password\":\"$PASSWORD\",\"stayConnected\":false}")"
+[[ "$CUSTOMER_CODE" == '200' ]] || { cat "$TMP_DIR/customer.json" >&2; fail "Customer auth returned HTTP $CUSTOMER_CODE"; }
+grep -Fq "$CUSTOMER_EMAIL" "$TMP_DIR/customer.json" || fail 'Customer auth response did not contain expected Mitos demo identity'
+pass 'Customer browser-origin authentication returned 200'
+
+info 'Authenticating Mitos Admin with browser Origin semantics'
+ADMIN_CODE="$(curl -sS -c "$ADMIN_COOKIES" -b "$ADMIN_COOKIES" \
+  -o "$TMP_DIR/admin.json" -w '%{http_code}' \
+  -X POST "$API_ORIGIN/api/sign-in/admin" \
+  -H "Origin: $ADMIN_ORIGIN" \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$PASSWORD\",\"stayConnected\":false}")"
+[[ "$ADMIN_CODE" == '200' ]] || { cat "$TMP_DIR/admin.json" >&2; fail "Admin auth returned HTTP $ADMIN_CODE"; }
+grep -Fq "$ADMIN_EMAIL" "$TMP_DIR/admin.json" || fail 'Admin auth response did not contain expected Mitos demo identity'
+pass 'Admin browser-origin authentication returned 200'
+
+info 'Checking backend-driven public fleet'
+FLEET_CODE="$(curl -sS -o "$TMP_DIR/fleet.json" -w '%{http_code}' "$API_ORIGIN/api/public-fleet/10")"
+[[ "$FLEET_CODE" == '200' ]] || fail "Public fleet returned HTTP $FLEET_CODE"
+grep -Fq 'Toyota Yaris 2025/26' "$TMP_DIR/fleet.json" || fail 'Toyota Yaris 2025/26 missing from public fleet'
+grep -Fq 'Toyota Raize' "$TMP_DIR/fleet.json" || fail 'Toyota Raize missing from public fleet'
+pass 'Public fleet contains Toyota Yaris 2025/26 and Toyota Raize'
+
+info 'Checking Mitos DEV fixture assets'
+for asset in \
+  "$API_ORIGIN/cdn/bookcars/users/mitos-dev-supplier.svg" \
+  "$API_ORIGIN/cdn/bookcars/cars/mitos-dev-toyota-yaris.svg" \
+  "$API_ORIGIN/cdn/bookcars/cars/mitos-dev-toyota-raize.svg"; do
+  CODE="$(curl -sS -o /dev/null -w '%{http_code}' "$asset")"
+  [[ "$CODE" == '200' ]] || fail "Fixture asset not reachable: $asset (HTTP $CODE)"
+done
+pass 'Supplier + Yaris + Raize CDN fixture assets are reachable'
+
+info 'Sweeping customer route document identity'
+ROUTES=(
+  '/'
+  '/search'
+  '/sign-in'
+  '/sign-up'
+  '/checkout'
+  '/bookings'
+  '/booking'
+  '/settings'
+  '/notifications'
+  '/about'
+  '/faq'
+  '/contact'
+  '/privacy'
+  '/tos'
+  '/cookie-policy'
+)
+for route in "${ROUTES[@]}"; do
+  BODY="$TMP_DIR/route$(echo "$route" | tr '/:' '__').html"
+  CODE="$(curl -sS -o "$BODY" -w '%{http_code}' "$FRONTEND_ORIGIN$route")"
+  [[ "$CODE" == '200' ]] || fail "Customer route $route returned HTTP $CODE"
+  if grep -Ei 'BookCars|bookcars\.ma' "$BODY" >/dev/null; then
+    fail "Customer route $route contains legacy identity in served document"
+  fi
+done
+pass 'Customer route documents return 200 with no legacy identity literal'
+
+info 'Checking Admin document identity'
+ADMIN_DOC_CODE="$(curl -sS -o "$TMP_DIR/admin.html" -w '%{http_code}' "$ADMIN_ORIGIN/admin")"
+[[ "$ADMIN_DOC_CODE" == '200' ]] || fail "Admin /admin returned HTTP $ADMIN_DOC_CODE"
+if grep -Ei 'BookCars|bookcars\.ma' "$TMP_DIR/admin.html" >/dev/null; then
+  fail 'Admin served document contains legacy identity'
+fi
+grep -Fqi 'MITOS ADMIN' "$TMP_DIR/admin.html" || fail 'Admin served document does not contain MITOS ADMIN metadata'
+pass 'Admin document identity is MITOS ADMIN'
+
+printf '\nSOURCE + ENV + AUTH + FLEET + DOCUMENT SWEEP: PASS\n'
+printf '\nManual browser transaction gate still required:\n'
+printf '  Mitos landing → search → select car → checkout → booking created → confirmation → Mis reservas → booking detail\n'
+printf 'When that flow is observed on the same branch/runtime, I6 may be certified.\n\n'
