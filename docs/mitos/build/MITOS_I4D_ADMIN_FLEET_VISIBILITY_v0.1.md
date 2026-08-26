@@ -1,6 +1,6 @@
 # Mitos — I4D Admin Fleet Visibility v0.1
 
-**Status:** SOURCE FIX IMPLEMENTED / RUNTIME RE-TEST REQUIRED  
+**Status:** RUNTIME PASS  
 **Date:** 2026-08-26  
 **Branch:** `feature/mitos-public-experience-v1`
 
@@ -13,7 +13,7 @@ Toyota Yaris 2025/26
 Toyota Raize
 ```
 
-while Admin → Cars rendered:
+while Admin → Cars initially rendered:
 
 ```text
 No cars.
@@ -23,7 +23,7 @@ This was not evidence of two databases or duplicated inventory. Both surfaces us
 
 ## Root cause
 
-The Mitos DEV seed creates a real Supplier user and attaches both cars to it, but the fixture does not invent an avatar/logo.
+The Mitos DEV seed creates a real Supplier user and attaches both cars to it. The original fixture did not include an avatar/logo.
 
 Admin `Cars.tsx` was loading supplier IDs through `getAllSuppliers()`. The backend implementation of that endpoint filters suppliers with:
 
@@ -59,18 +59,21 @@ public search
 Mongo database
 ```
 
-No fake avatar or placeholder supplier was introduced.
+No fake production identity was introduced.
 
-## Runtime acceptance
+## Runtime receipt
 
-After pulling the branch and refreshing/restarting only the Admin Vite service if needed:
+The operator re-tested the corrected Admin Cars surface on 2026-08-26 and explicitly confirmed the issue as resolved: the Admin now sees the two seeded Mitos fleet records.
 
 ```text
 Admin → Cars
-→ MITOS Rent a Car fleet is discoverable
 → Toyota Yaris 2025/26 visible
 → Toyota Raize visible
-→ car count = 2
+→ 2 cars
 ```
 
-This gate remains runtime-unproven until that Admin view is observed after the source fix.
+This closes the fleet-visibility mismatch as a runtime PASS.
+
+## Follow-up visual fixture hardening
+
+The Mitos DEV seed now also writes deterministic supplier/car SVG fixture assets to the real CDN volume and assigns them to the seeded records. They are explicitly marked as DEV fixtures and are not represented as production vehicle photography.
