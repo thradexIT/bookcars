@@ -41,8 +41,8 @@ services:
       - backend_logs:/bookcars/backend/logs
     environment:
       - NODE_ENV=development
-      - BC_FRONTEND_HOST=https://localhost:8080/
-      - BC_ADMIN_HOST=https://localhost:3001/
+      - BC_FRONTEND_HOST=${BC_FRONTEND_HOST:-http://localhost:8080/}
+      - BC_ADMIN_HOST=${BC_ADMIN_HOST:-http://localhost:3001/}
 
   bc-dev-admin:
     build:
@@ -71,7 +71,6 @@ services:
       - bc-dev-backend
     ports:
       - 8080:8080
-      - 8443:443
     volumes:
       - ./frontend:/bookcars/frontend
       - /bookcars/frontend/node_modules
