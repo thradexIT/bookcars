@@ -46,6 +46,7 @@ services:
       - BC_WEBSITE_NAME=MITOS RENT A CAR
       - BC_ADMIN_EMAIL=${BC_ADMIN_EMAIL:-admin@mitos.pe}
       - BC_SMTP_FROM=${BC_SMTP_FROM:-no-reply@mitos.pe}
+      - BC_EMAIL_ENABLED=false
       - BC_DEFAULT_LANGUAGE=es
       - BC_TIMEZONE=America/Lima
       - BC_IPINFO_DEFAULT_COUNTRY=PE
