@@ -2,193 +2,201 @@
 
 **Date:** 2026-08-26  
 **Branch:** `feature/mitos-public-experience-v1`  
-**Status:** OPERATIONAL CANDIDATE / NOT YET 100% CERTIFIED
+**Status:** SOURCE CLOSURE IMPLEMENTED / FINAL RUNTIME TRANSACTION PENDING
 
 ## Executive verdict
 
-Mitos is now a materially functional rental product candidate built on the recovered BookCars transactional core, with Mitos customer and Admin identity implemented across the primary surfaces.
+Mitos is now a materially functional rental product built on the recovered BookCars transactional core, with the old implementation name retained only where it is internal infrastructure.
 
-It must **not** yet be described as `100% rebranded`, `full E2E proven`, or `release-ready`.
+The source-level final closure has been hardened substantially. The product must still **not** be called `100% rebranded certified` or `full E2E PASS` until the current local runtime passes the closure probe and one complete browser booking reaches confirmation, `Mis reservas`, and booking detail.
 
-The remaining gap is no longer a missing architecture. It is final hardening + runtime certification.
+The remaining gap is runtime certification, not missing architecture or a parallel fake rental system.
 
-## What is already proven or materially observed
+## Runtime evidence already established
 
-### Customer runtime
-
-Observed in the current DEV runtime:
-
-- Mitos public shell loads.
-- customer demo seed completes against Mongo.
-- `jdoe@mitos.pe / B00kC4r5` authenticates at the real backend endpoint with HTTP 200.
-- customer browser reaches authenticated Mitos navigation (`Mis reservas`, `Mi cuenta`).
-- search at La Molina returns the two seeded cars.
-- Toyota Yaris 2025/26 and Toyota Raize are returned with real DEV pricing/availability from backend state.
-
-### Admin runtime
+### Customer
 
 Observed in the current DEV runtime:
 
-- MITOS ADMIN document identity loads.
-- Admin routing is reachable under `/admin`.
-- authenticated Admin operational surfaces are reachable.
-- an Admin Cars visibility defect was isolated to supplier discovery, not to duplicated/missing Mongo data.
-- the source fix now restores car-derived supplier discovery through `getAdminSuppliers(payload)`.
+- Mitos public shell loads;
+- Mitos DEV seed completes against Mongo;
+- `jdoe@mitos.pe / B00kC4r5` authenticates at the real backend endpoint with HTTP 200;
+- authenticated Mitos navigation exposes `Mis reservas` and `Mi cuenta`;
+- La Molina search returns the two real seeded backend records;
+- Toyota Yaris 2025/26 and Toyota Raize are returned with DEV availability/pricing from backend state.
 
-### Source rebrand
+### Admin
 
-Implemented:
+Observed in the current DEV runtime:
 
-- global Mitos customer header/footer authority;
-- Mitos public home;
-- Mitos customer auth/navigation parity;
-- Mitos Admin visible identity;
-- Mitos metadata in customer/Admin HTML;
-- backend-driven landing fleet;
-- removal of hard-coded public fleet fallbacks;
-- default DEV demo identities;
-- HTTP-coherent DEV transport;
-- Admin `/admin` basename tolerance;
-- Admin fleet visibility fix.
+- `MITOS ADMIN` document/application identity loads;
+- Admin routing is reachable under `/admin`;
+- authenticated Admin operational surfaces are reachable;
+- the operator re-tested the corrected `Admin → Cars` surface and confirmed both seeded cars are visible;
+- I4D Admin Fleet Visibility is therefore a runtime PASS.
 
-## What does NOT count as a branding defect
+## Source closure completed in this pass
 
-The following may remain `bookcars` internally unless they leak into a customer/operator-visible surface:
+### Visible identity fallbacks
 
-- repository name;
-- package names;
-- internal TypeScript aliases/types;
-- Mongo database/collection conventions;
-- container/image/service names;
-- internal CDN directory names;
-- compatibility cookie or implementation identifiers.
-
-Rebranding is an external product-identity concern, not a forced internal rename migration.
-
-## Remaining blockers to 100% certification
-
-### R1 — Backend identity fallbacks still contain BookCars
-
-Current source still includes legacy visible-identity fallbacks/examples such as:
-
-- backend `WEBSITE_NAME` fallback = `BookCars`;
-- frontend/admin Vite HTML fallback = `BookCars`;
-- backend example `BC_WEBSITE_NAME=BookCars`;
-- backend example `BC_SMTP_FROM=no-reply@bookcars.ma`;
-- backend example `BC_ADMIN_EMAIL=admin@bookcars.ma`.
-
-These are not all visible in the current running page, but they can reintroduce old identity in a new environment or email path.
-
-**Gate:** remove/replace customer-visible legacy defaults while leaving internal `bookcars` implementation identifiers intact.
-
-### R2 — Actual local untracked env must be audited
-
-`backend/.env.docker` is not present in repository source and therefore cannot be certified from GitHub.
-
-**Gate:** local runtime env must contain no customer-visible `BookCars` / `bookcars.ma` identity values.
-
-### R3 — Admin Cars source fix needs runtime receipt
-
-Latest source correction expects:
+Legacy visible defaults were removed/replaced:
 
 ```text
-Admin → Cars
-→ Toyota Yaris 2025/26
-→ Toyota Raize
-→ 2 cars
+frontend Vite fallback        → MITOS RENT A CAR
+Admin Vite fallback           → MITOS RENT A CAR
+backend WEBSITE_NAME fallback → MITOS RENT A CAR
+backend example website       → MITOS RENT A CAR
+backend example SMTP sender   → no-reply@mitos.pe
+backend example Admin email   → admin@mitos.pe
 ```
 
-**Gate:** observe this after pull/reload.
+Internal lowercase `bookcars` implementation identifiers remain allowed where they are not product identity, including repository/package names, Mongo/CDN paths, container/service names, compatibility cookies and internal secrets/defaults.
 
-### R4 — Full customer route brand sweep is incomplete
+### Peru / Spanish defaults
 
-Need fresh current-build evidence for:
+Current DEV/source defaults now establish:
 
 ```text
-/
-/search
-/sign-in
-/sign-up
-/checkout
-/checkout-session/:id
-/bookings
-/booking
-/settings
-/notifications
-legal/support pages
+customer language → es
+Admin language    → es
+backend language  → es
+timezone          → America/Lima
+IP country        → PE
+map center        → Lima
 ```
 
-**Gate:** no visible `BookCars` on any of these surfaces.
+`CheckoutStatus` now uses the Spanish `date-fns` locale when the customer language is `es`, removing the prior English-date fallback on the customer confirmation surface.
 
-### R5 — Full rental transaction E2E remains unproven
+The actual email-provider path is not part of the local I6 authority gate and remains provider-dependent; production email delivery/localization must be certified separately if advertised as a release feature.
 
-Required evidence:
+### DEV visual fixtures
+
+The guarded Mitos DEV seed now writes deterministic assets into the real CDN volume and assigns them to the seeded records:
+
+```text
+mitos-dev-supplier.svg
+mitos-dev-toyota-yaris.svg
+mitos-dev-toyota-raize.svg
+```
+
+They are explicitly labelled DEV fixtures / not production photography. This fixes broken/missing local images without inventing evidence of real vehicle photos.
+
+### DEV email side-effect boundary
+
+`BC_EMAIL_ENABLED=false` is pinned in `docker-compose.dev.yml`.
+
+When disabled, `mailHelper.sendMail()` returns a deterministic no-op result rather than contacting SMTP. Production keeps email enabled by default.
+
+This is important because a local pay-later booking must be judged by rental state creation and retrieval, not by placeholder SendGrid credentials. Email is a side effect, not booking authority.
+
+## Final I6 path recovered from source
+
+The seeded supplier has `payLater=true`, so the current frontend exposes the Spanish option:
+
+```text
+Pagar al recoger
+```
+
+Selecting it bypasses Stripe / Mercado Pago / PayPal and submits the existing checkout contract directly through:
+
+```text
+POST /api/checkout
+```
+
+The action button is:
+
+```text
+Reservar
+```
+
+For this lane, the frontend initializes the booking as `Pending`. The backend persists the booking and returns its `bookingId`. The success surface then renders `CheckoutStatus` with the actual booking details.
+
+`Mis reservas` requests bookings using the authenticated user's `_id` and initializes its status filter with all booking statuses, so the new `Pending` pay-later booking is expected to be visible. Booking detail is loaded from the persisted booking record.
+
+This gives the final transaction gate without requiring an external payment-provider proof:
 
 ```text
 Mitos landing
-→ backend fleet
-→ select location + dates
+→ La Molina + future dates
 → real availability
-→ select car
+→ select Yaris or Raize
 → checkout
-→ booking created
-→ confirmation
-→ My Bookings
+→ Pagar al recoger
+→ Reservar
+→ booking persisted as Pending
+→ Mitos confirmation
+→ Mis reservas
+→ same booking visible
 → booking detail
 ```
 
-Search availability alone is not proof of checkout/booking continuity.
+## Executable closure probe
 
-### R6 — Seed visual assets are incomplete
+`__scripts/mitos-final-closure.sh` now provides one reproducible local gate covering:
 
-The DEV supplier fixture does not invent a supplier avatar/logo and the seeded cars do not currently establish real vehicle images.
+1. actual ignored `.env.docker` identity residues when those files exist;
+2. customer/operator-visible versioned source literals;
+3. effective Docker Compose Mitos identity overrides;
+4. DEV SMTP isolation;
+5. customer authentication using browser `Origin` semantics;
+6. Admin authentication using browser `Origin` semantics;
+7. backend-driven public fleet with Yaris + Raize;
+8. seeded supplier/car CDN fixture assets;
+9. current customer route document reachability and served-document identity;
+10. `MITOS ADMIN` served-document identity.
 
-This does not invalidate inventory truth, but it prevents calling the seeded visual experience fully polished.
-
-### R7 — Localization polish
-
-Current observed Spanish shell/search output still contains some English rental-card copy.
-
-This is not a brand-authority failure, but it is a product-polish defect for an ES-selected session.
-
-### R8 — External/provider paths are not release-certified
-
-Google/social sign-in and configured payment-provider behavior require real environment/provider evidence if they are to be advertised as working release features.
-
-### R9 — CI/release receipt absent
-
-The current PR head has no attached commit status/workflow receipt proving this complete branch.
-
-Runtime evidence remains the authority for this gate.
-
-## Final classification
+Expected terminal result:
 
 ```text
-Mitos identity architecture       ✅
-Customer Mitos shell              ✅ materially proven
-Customer login                    ✅ backend + browser behavior observed
-Backend fleet/search              ✅ runtime observed
-Admin Mitos shell                 ✅ materially observed
-Admin fleet fix                   🟡 source fixed / runtime re-test
-Full branding sweep               🟡 incomplete
-Backend identity fallback cleanup 🟡 required
-Full booking E2E                  🟡 required
-Provider/payment proof            🟡 required for release claims
-Release-ready                     ❌ not yet
-100% rebranded certified          ❌ not yet
+SOURCE + ENV + AUTH + FLEET + DOCUMENT SWEEP: PASS
 ```
 
-## Closure rule
+The script deliberately does not claim browser-rendered E2E proof. React route content and the stateful checkout/booking journey remain a browser/runtime receipt.
 
-Do not merge/declare final Mitos recovery solely because the primary landing/search/Admin surfaces look correct.
+## Closure matrix
 
-The final declaration requires:
+```text
+Mitos identity architecture          ✅
+Customer Mitos shell                 ✅ materially proven
+Customer backend authentication      ✅ runtime proven
+Customer browser auth/navigation     ✅ materially observed
+Backend fleet/search                 ✅ runtime observed
+Admin Mitos shell                    ✅ materially observed
+Admin Cars                           ✅ RUNTIME PASS
+Visible identity fallback cleanup    ✅ source implemented
+Peru/Spanish default hardening       ✅ source implemented / runtime re-test
+DEV fixture images                   ✅ source implemented / reseed+runtime probe
+DEV SMTP isolation                   ✅ source implemented / service recreate required
+Local ignored env audit              ⏳ executable probe pending
+Final route/document identity sweep  ⏳ executable probe pending
+Full pay-later booking E2E           ⏳ final browser transaction pending
+External payment providers           OUTSIDE I6 pay-later gate / separately unproven
+Production email provider            OUTSIDE I6 gate / separately unproven
+Release-ready                        ❌ until final runtime gate
+100% external rebrand certified      ❌ until final runtime gate
+```
 
-1. legacy visible fallback cleanup;
-2. local env identity audit;
-3. Admin Cars runtime PASS;
-4. customer route brand sweep PASS;
-5. full booking E2E PASS;
-6. no visible BookCars identity in customer/operator surfaces.
+## Exact final runtime acceptance
 
-At that point the recovered BookCars implementation may remain internally named BookCars while the product is certified externally as MITOS Rent a Car.
+Recreate the DEV services so the new environment overrides are applied, reseed so the CDN fixture assets are written, then run the closure probe.
+
+After the probe passes, perform exactly one customer transaction on the same runtime:
+
+```text
+1. sign in: jdoe@mitos.pe / B00kC4r5
+2. search La Molina with future dates
+3. choose Toyota Yaris 2025/26 or Toyota Raize
+4. proceed to checkout
+5. select "Pagar al recoger"
+6. press "Reservar"
+7. require Mitos booking-success/confirmation details
+8. open "Mis reservas"
+9. require the new Pending booking
+10. open its detail
+11. require same vehicle + dates + location + price
+12. require zero visible BookCars/bookcars.ma and Spanish customer copy through the journey
+```
+
+Only after both receipts exist may I4/I5/I6 all be marked PASS, PR #3 be moved out of Draft, and the following statement be certified:
+
+> **BookCars quedó como motor interno recuperado; MITOS Rent a Car es el producto visible y funcional. Rebrand 100% certificado.**
