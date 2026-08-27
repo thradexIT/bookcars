@@ -1,0 +1,60 @@
+name: mitos-closure
+
+on:
+  pull_request:
+    branches: [developer]
+  workflow_dispatch:
+
+jobs:
+  source-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Build backend
+        working-directory: backend
+        run: |
+          npm install --force
+          npm run build
+
+      - name: Build MITOS ADMIN
+        working-directory: admin
+        env:
+          VITE_NODE_ENV: production
+          VITE_BC_WEBSITE_NAME: MITOS RENT A CAR
+          VITE_BC_DEFAULT_LANGUAGE: es
+          VITE_BC_API_HOST: https://api.example-mitos.pe
+        run: |
+          npm install --force
+          npm run build
+
+      - name: Build MITOS customer
+        working-directory: frontend
+        env:
+          VITE_NODE_ENV: production
+          VITE_BC_WEBSITE_NAME: MITOS RENT A CAR
+          VITE_BC_DEFAULT_LANGUAGE: es
+          VITE_BC_API_HOST: https://api.example-mitos.pe
+        run: |
+          npm install --force
+          npm run build
+
+      - name: Build Railway backend image
+        run: docker build -f backend/Dockerfile.railway -t mitos-backend:ci .
+
+      - name: Validate Vercel project configs
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('frontend/vercel.json','utf8')); JSON.parse(require('fs').readFileSync('admin/vercel.json','utf8')); console.log('Vercel configs valid JSON')"
+
+      - name: Validate Mitos closure scripts syntax
+        run: |
+          bash -n __scripts/mitos-normalize-local-env.sh
+          bash -n __scripts/mitos-final-closure.sh
