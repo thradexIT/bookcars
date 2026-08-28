@@ -183,7 +183,10 @@ RUN apk add --no-cache nginx
 
 WORKDIR /bookcars/backend
 COPY --from=backend-deps /bookcars/backend/node_modules ./node_modules
-COPY ./packages /bookcars/packages
+# Runtime imports the workspace packages directly (for example
+# /bookcars/packages/bookcars-types/index.js), so copy the compiled package tree
+# from backend-build rather than the uncompiled repository sources.
+COPY --from=backend-build /bookcars/packages /bookcars/packages
 COPY --from=backend-build /bookcars/backend/dist ./dist
 COPY ./backend/package*.json ./
 
@@ -194,5 +197,5 @@ COPY ./deploy/mitos/nginx.conf /etc/nginx/nginx.conf
 COPY ./deploy/mitos/entrypoint.sh /usr/local/bin/mitos-entrypoint
 RUN chmod +x /usr/local/bin/mitos-entrypoint
 
-EXPOSE 8080
+EXPOSE 4002
 CMD ["/usr/local/bin/mitos-entrypoint"]
