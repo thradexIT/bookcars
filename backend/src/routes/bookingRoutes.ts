@@ -3,6 +3,7 @@ import multer from 'multer'
 import routeNames from '../config/bookingRoutes.config'
 import authJwt from '../middlewares/authJwt'
 import * as bookingController from '../controllers/bookingController'
+import * as adminBookingSupplierController from '../controllers/adminBookingSupplierController'
 
 const routes = express.Router()
 
@@ -15,6 +16,7 @@ routes.route(routeNames.deleteTempBooking).delete(bookingController.deleteTempBo
 routes.route(routeNames.getBooking).get(bookingController.getBooking)
 routes.route(routeNames.getBookingId).get(bookingController.getBookingId)
 routes.route(routeNames.getBookings).post(authJwt.verifyToken, bookingController.getBookings)
+routes.route(routeNames.getAdminBookingSuppliers).get(authJwt.verifyToken, adminBookingSupplierController.getAdminBookingSuppliers)
 routes.route(routeNames.hasBookings).get(authJwt.verifyToken, bookingController.hasBookings)
 routes.route(routeNames.cancelBooking).post(authJwt.verifyToken, bookingController.cancelBooking)
 routes.route(routeNames.purchaseOrder).get(bookingController.downloadPurchaseOrder)
