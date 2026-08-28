@@ -2,17 +2,17 @@
 
 **Updated:** 2026-08-28  
 **Branch:** `feature/mitos-public-experience-v1`  
-**Status:** CUSTOMER/ADMIN BOOKING FLOW PASS / AVAILABILITY OVERLAP RE-TEST REQUIRED
+**Status:** LOCAL PRODUCT CLOSURE PASS / READY FOR REVIEW
 
 ## Executive verdict
 
-Mitos is a materially functional rental product built on the recovered BookCars transactional core. Visible identity, authentication, fleet, customer booking persistence, customer booking history, Admin booking visibility and the executable closure probe have runtime receipts.
+Mitos is a materially functional rental product built on the recovered BookCars transactional core. The local acceptance lane now has runtime evidence for visible identity, authentication, fleet, date-aware availability, customer booking persistence/history/detail, Admin fleet visibility, Admin booking visibility and the executable closure probe.
 
-A release-blocking availability inconsistency was discovered during the final runtime review: a car with an active overlapping booking could still be offered by customer search even though checkout would reject that same conflict. Therefore local product closure is reopened until date-overlap exclusion is runtime-proven.
+The final release-blocking availability inconsistency was corrected and runtime re-tested successfully. An active overlapping booking now excludes the car from customer search for the occupied interval, while the same car becomes available again for a non-overlapping period.
 
 Internal `bookcars` implementation identifiers remain acceptable only for infrastructure such as repository/package names, Mongo/CDN paths, containers and compatibility identifiers.
 
-## Runtime evidence already established
+## Runtime evidence established
 
 ### Customer booking lifecycle
 
@@ -62,11 +62,11 @@ Yaris / John Doe / 31-08→03-09 / $105 / Pending ✅
 Raize / John Doe / 31-08→03-09 / $135 / Pending ✅
 ```
 
-The prior `Sin filas` defect is closed. Admin booking suppliers now derive from persisted Booking authority through `GET /api/admin-booking-suppliers`, independent of supplier avatar/presentation state.
+The prior `Sin filas` defect is closed. Admin booking suppliers derive from persisted Booking authority through `GET /api/admin-booking-suppliers`, independent of supplier avatar/presentation state.
 
 ## Final identity/auth/fleet/document probe — PASS
 
-The current DEV runtime produced:
+The DEV runtime produced:
 
 ```text
 ✅ backend/.env.docker has no legacy visible identity
@@ -86,53 +86,25 @@ The current DEV runtime produced:
 SOURCE + ENV + AUTH + FLEET + ADMIN BOOKING AUTHORITY + DOCUMENT SWEEP: PASS
 ```
 
-`/health` returning 404 is informational for this local gate because real application endpoints above are responding successfully.
+`/health` returning 404 remains informational for this local gate because the real application endpoints above are responding successfully.
 
-## Release blocker discovered — customer availability truth
+## Availability authority correction
 
-The recovered `getFrontendCars` query did not use the same conflict semantics as checkout.
-
-### Old search behavior
-
-Blocking statuses were only:
+The recovered search behavior originally blocked only:
 
 ```text
-Paid
-Reserved
-Deposit
+Paid | Reserved | Deposit
 ```
 
-and an overlapping booking could still be ignored when legacy `car.blockOnPay=false`.
-
-Mitos `Pagar al recoger` persists a booking as `Pending`, so a real reservation could exist while the same car remained advertised for the same dates.
-
-### Checkout authority
-
-Checkout already rejects overlapping active bookings using:
+while checkout blocked:
 
 ```text
-Pending
-Deposit
-Paid
-PaidInFull
-Reserved
+Pending | Deposit | Paid | PaidInFull | Reserved
 ```
 
-with the half-open interval rule:
+and legacy `car.blockOnPay=false` could allow an overlapping booking to remain visible in search. Because Mitos `Pagar al recoger` persists a booking as `Pending`, customer search and checkout could contradict each other.
 
-```text
-booking.from < requested.to
-AND
-booking.to > requested.from
-```
-
-Therefore search and checkout contradicted each other.
-
-## Availability correction implemented
-
-Customer `/api/frontend-cars/:page/:size` now routes through `frontendAvailabilityController`.
-
-The corrected search preserves the recovered BookCars search/filter/pricing/pagination behavior while enforcing the same active-booking definition and interval semantics as checkout:
+Customer `/api/frontend-cars/:page/:size` now routes through `frontendAvailabilityController` and uses the same active booking truth as checkout:
 
 ```text
 ACTIVE = Pending | Deposit | Paid | PaidInFull | Reserved
@@ -146,13 +118,41 @@ active overlap exists
 → car excluded from customer results
 ```
 
-The legacy `blockOnPay` field no longer overrides real date availability in the customer search lane. It may remain as an internal compatibility field, but it cannot make an unbookable car look bookable.
+The legacy `blockOnPay` field no longer overrides real date availability in the customer search lane. Checkout remains the second/concurrency defense.
 
-Checkout remains the second line of defense against races/concurrent attempts.
+## Availability runtime receipt — PASS
+
+The two existing Pending reservations were preserved as the regression fixture.
+
+Runtime re-test:
+
+```text
+A — OVERLAPPING SEARCH
+La Molina
+31 Aug 2026 10:00 → 03 Sep 2026 10:00
+Toyota Yaris 2025/26   → NOT OFFERED ✅
+Toyota Raize           → NOT OFFERED ✅
+
+B — NON-OVERLAPPING SEARCH
+Period after the existing reservations
+Toyota Yaris 2025/26   → AVAILABLE AGAIN ✅
+Toyota Raize           → AVAILABLE AGAIN ✅
+```
+
+This proves both sides of the availability contract: active reservations prevent double-booking for overlapping dates, and vehicles are not globally disabled outside their occupied intervals.
 
 ## Source/build evidence
 
-The new availability controller is routed from the existing frontend-cars API. Backend compilation passed on the correction head; the complete Mitos closure workflow continues to validate backend, Admin, customer, Railway image, Vercel configs and closure scripts.
+The availability authority source compiles. The Mitos closure workflow for correction/documentation head completed successfully and validates:
+
+```text
+backend
+MITOS ADMIN
+MITOS customer
+Railway backend image
+Vercel configs
+closure scripts
+```
 
 ## Closure matrix
 
@@ -161,37 +161,25 @@ Mitos visible identity                 ✅ RUNTIME PASS
 Customer authentication                ✅ RUNTIME PASS
 Admin authentication                   ✅ RUNTIME PASS
 Backend fleet projection               ✅ RUNTIME PASS
+I5 date availability truth             ✅ RUNTIME PASS
 Admin Cars                             ✅ RUNTIME PASS
 Customer booking persistence           ✅ RUNTIME PASS
 Customer Mis reservas/detail           ✅ RUNTIME PASS
 Admin booking authority                ✅ RUNTIME PASS
 Admin Bookings table render            ✅ RUNTIME PASS
+I6B overlapping booking exclusion      ✅ RUNTIME PASS
+Non-overlap re-availability            ✅ RUNTIME PASS
 Final identity/auth/document probe     ✅ RUNTIME PASS
-I5 date availability truth             🟡 SOURCE FIXED / RUNTIME RE-TEST
-I6B overlapping booking exclusion      🔴 RUNTIME RE-TEST REQUIRED
+Closure CI                             ✅ PASS
 External payment providers             OUTSIDE pay-later gate
 Production email provider              OUTSIDE local gate
-Production deployment                  BLOCKED BY I6B
+Production deployment                  NOT STARTED
 ```
 
-## Exact remaining local acceptance
+## Certification statement
 
-Preserve the existing Pending bookings; they are now the regression fixture.
+The local Mitos recovery/rebrand and pay-later rental lifecycle are now certified for the scope of this PR:
 
-After pulling the availability correction and restarting the backend:
+> **BookCars quedó como motor interno recuperado; MITOS Rent a Car es el producto visible y funcional. Rebrand y flujo local de alquiler certificados.**
 
-```text
-A — OVERLAPPING SEARCH
-La Molina
-31 Aug 2026 10:00 → 03 Sep 2026 10:00
-Expected: booked Yaris and booked Raize are NOT offered.
-With only those two seeded cars, expected result is no available car.
-
-B — NON-OVERLAPPING SEARCH
-Use a period after the current bookings end.
-Expected: cars without another active conflict are offered again.
-```
-
-Then re-run the closure probe. No additional overlapping booking is required.
-
-Only after A and B pass may I5/I6B be closed, PR #3 move out of Draft, and the local product be certified for deployment preparation.
+This certification does not claim production deployment, external payment-provider certification or production email-provider certification. Those remain separate deployment/integration gates.
