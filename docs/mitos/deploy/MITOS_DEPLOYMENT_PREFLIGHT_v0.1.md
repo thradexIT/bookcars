@@ -1,7 +1,9 @@
 # MITOS Rent a Car — Deployment Preflight v0.1
 
 **Branch:** `feature/mitos-public-experience-v1`  
-**Status:** PREPARED / DEPLOYMENT GATED BY I6 + DURABLE STORAGE
+**Status:** HISTORICAL PREFLIGHT / SUPERSEDED BY PUBLIC TEST RUNTIME RECORD
+
+> **2026-08-28 update:** This file is preserved as the original deployment design/preflight. The actual free-tier implementation evolved into a single full-stack Railway service with MongoDB Atlas and MailerSend HTTPS. Current operational truth is documented in `docs/mitos/deploy/MITOS_RAILWAY_RUNTIME_RECOVERY_AND_EMAIL_TRANSPORT_2026-08-28.md`. Do not use the old pending matrix below as current status.
 
 ## Objective
 
@@ -135,7 +137,7 @@ VITE_BC_CDN_TEMP_LOCATIONS=<durable CDN temp locations origin>
 VITE_BC_CDN_CONTRACTS=<durable CDN contracts origin>
 VITE_BC_CDN_TEMP_CONTRACTS=<durable CDN temp contracts origin>
 VITE_BC_CDN_LICENSES=<durable CDN licenses origin>
-VITE_BC_CDN_TEMP_LICENSES=<durable CDN temp licenses origin>
+VITE_BC_CDN_TEMP_LICENSES=<durable temp licenses origin>
 ```
 
 ## Production cookie/CORS contract
@@ -179,21 +181,21 @@ Mitos must have its own database authority/credentials. A shared Mongo cluster i
 D0 local final closure probe                 -> PASS
 D1 local pay-later booking E2E               -> PASS
 D2 create isolated Railway Mitos project     -> pending
-D3 provision Mitos Mongo authority            -> pending
-D4 provision durable CDN storage              -> pending
-D5 deploy Railway API                         -> pending
-D6 expose API HTTPS origin                    -> pending
-D7 create/deploy Vercel Customer              -> pending
-D8 create/deploy Vercel Admin                 -> pending
-D9 wire exact CORS/cookie/frontend origins    -> pending
-D10 seed/migrate required production data     -> pending
-D11 production auth/search smoke              -> pending
-D12 production pay-later booking E2E          -> pending
-D13 zero visible BookCars sweep               -> pending
-D14 production certification                  -> pending
+D3 provision Mitos Mongo authority           -> pending
+D4 provision durable CDN storage             -> pending
+D5 deploy Railway API                        -> pending
+D6 expose API HTTPS origin                   -> pending
+D7 create/deploy Vercel Customer             -> pending
+D8 create/deploy Vercel Admin                -> pending
+D9 wire exact CORS/cookie/frontend origins   -> pending
+D10 seed/migrate required production data    -> pending
+D11 production auth/search smoke             -> pending
+D12 production pay-later booking E2E         -> pending
+D13 zero visible BookCars sweep              -> pending
+D14 production certification                 -> pending
 ```
 
-## Current truth
+## Original preflight truth
 
 ```text
 Deployment architecture selected       ✅
@@ -208,4 +210,57 @@ I6 local transaction                   🟡 final receipt pending
 Production deployment                  ❌ not started
 ```
 
-The deployment lane is now prepared without contaminating the current local certification gate.
+The deployment lane was prepared without contaminating the local certification gate.
+
+---
+
+# 2026-08-28 implementation addendum — actual runtime evolution
+
+The preflight above is historical. After local closure, the deployment lane materially advanced and changed shape to fit free-tier constraints.
+
+Actual public test runtime:
+
+```text
+Railway single full-stack service
+  nginx :4002
+    /          -> Customer SPA
+    /admin/    -> Admin SPA
+    /api/      -> Node/Express :4003
+    /socket.io -> Node/Express :4003
+    /cdn/      -> backend filesystem CDN
+
+MongoDB Atlas -> logical DB `mitos`
+```
+
+Material changes now completed:
+
+```text
+Public Railway deployment                        ✅
+Customer + Admin + API single-service packaging  ✅
+Atlas database authority                         ✅
+Controlled remote demo bootstrap                 ✅ test-only
+Signup field registration bug                    ✅ fixed
+Direct Railway SMTP incident                     ✅ diagnosed
+Transport-agnostic mailHelper                    ✅
+Resend HTTPS adapter                             ✅ retained but not active
+MailerSend HTTPS adapter                         ✅ active Railway lane
+MailerSend attachment conversion                 ✅
+SMTP/Nodemailer preserved as VPS default         ✅
+Shared-origin Customer/Admin auth ambiguity      ✅ diagnosed + source fixed
+Cookie/auth fix CI                               ✅
+Cookie/auth fix Railway deployment               ✅
+Durable CDN                                      ❌ still open
+Production arbitrary-recipient email             ❌ still open
+Google OAuth production certification            ❌ still open
+External payment-provider certification          ❌ still open
+Production-final certification                   ❌ still open
+```
+
+Canonical current documents:
+
+```text
+docs/mitos/deploy/MITOS_RAILWAY_RUNTIME_RECOVERY_AND_EMAIL_TRANSPORT_2026-08-28.md
+docs/mitos/evidence/MITOS_RAILWAY_EMAIL_AND_AUTH_RUNTIME_EVIDENCE_2026-08-28.md
+```
+
+The Vercel split architecture remains a valid future lane, but it is not the topology currently running on Railway.
