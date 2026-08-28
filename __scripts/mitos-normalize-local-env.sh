@@ -35,6 +35,7 @@ fi
 
 if [[ -f frontend/.env.docker ]]; then
   upsert_env frontend/.env.docker VITE_BC_WEBSITE_NAME 'MITOS RENT A CAR'
+  upsert_env frontend/.env.docker VITE_BC_CONTACT_EMAIL 'soporte@thradex.com'
   upsert_env frontend/.env.docker VITE_BC_DEFAULT_LANGUAGE 'es'
   upsert_env frontend/.env.docker VITE_BC_MAP_LATITUDE '-12.0464'
   upsert_env frontend/.env.docker VITE_BC_MAP_LONGITUDE '-77.0428'
@@ -53,4 +54,5 @@ else
 fi
 
 printf '\nNo DB/JWT/payment/SMTP credentials were modified.\n'
-printf 'Next: recreate DEV services, reseed, then run __scripts/mitos-final-closure.sh\n\n'
+printf 'Next: recreate DEV services if env values changed, then run __scripts/mitos-final-closure.sh\n'
+printf 'Do not reseed unless the guarded Mitos DEV fixture assets/data are actually missing.\n\n'
