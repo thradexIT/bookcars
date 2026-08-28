@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-28  
 **Branch:** `feature/mitos-public-experience-v1`  
-**Status:** LOCAL PRODUCT CLOSURE PASS / READY FOR REVIEW
+**Status:** LOCAL PRODUCT CLOSURE PASS / PUBLIC TEST RUNTIME ACTIVE / NOT PRODUCTION-FINAL
 
 ## Executive verdict
 
@@ -154,7 +154,7 @@ Vercel configs
 closure scripts
 ```
 
-## Closure matrix
+## Local closure matrix
 
 ```text
 Mitos visible identity                 ✅ RUNTIME PASS
@@ -173,13 +173,195 @@ Final identity/auth/document probe     ✅ RUNTIME PASS
 Closure CI                             ✅ PASS
 External payment providers             OUTSIDE pay-later gate
 Production email provider              OUTSIDE local gate
-Production deployment                  NOT STARTED
 ```
 
-## Certification statement
+## Local certification statement
 
-The local Mitos recovery/rebrand and pay-later rental lifecycle are now certified for the scope of this PR:
+The local Mitos recovery/rebrand and pay-later rental lifecycle are certified for the scope of this PR:
 
 > **BookCars quedó como motor interno recuperado; MITOS Rent a Car es el producto visible y funcional. Rebrand y flujo local de alquiler certificados.**
 
-This certification does not claim production deployment, external payment-provider certification or production email-provider certification. Those remain separate deployment/integration gates.
+This local certification does not by itself claim external payment-provider certification, durable production storage or production email-provider certification.
+
+---
+
+# Post-local public runtime addendum — 2026-08-28
+
+After the local closure above, Mitos advanced into a real public Railway test deployment. This addendum records that later state without rewriting the meaning of the local certification.
+
+## Public topology now running
+
+```text
+Railway HTTPS public origin
+  |
+  v
+nginx :4002
+  |-- /          -> MITOS Customer SPA
+  |-- /admin/    -> MITOS Admin SPA
+  |-- /api/      -> Node/Express :4003
+  |-- /socket.io -> Node/Express :4003
+  `-- /cdn/      -> backend filesystem CDN
+
+Node/Express
+  |
+  v
+MongoDB Atlas
+logical database: mitos
+```
+
+The earlier Vercel split remains a possible future deployment lane, but it is not the current free-tier runtime.
+
+## Database deployment hardening
+
+Mitos initially attempted to use an existing Railway Mongo service, but MongoDB 8 index creation failed because the available disk on that service was below the required index-build threshold.
+
+The old Gallo Mongo service was not modified to accommodate Mitos.
+
+Mitos `BC_DB_URI` was moved service-scoped to MongoDB Atlas and the runtime then proved:
+
+```text
+Database connected
+Indexes created
+Database initialized successfully
+HTTP server is running on port 4003
+```
+
+Atlas is now the Mitos database authority for this public test lane.
+
+## Signup frontend correction
+
+A public signup bug caused new addresses to behave as if already registered because explicit field `onChange` handlers overwrote React Hook Form registration handlers.
+
+Fixed in:
+
+```text
+ec5e3d9d159984165d82a6935fe7401d32c25328
+fix(mitos): preserve signup field registration handlers
+```
+
+## Railway SMTP incident
+
+Direct Nodemailer/SMTP from Railway produced a connection timeout and browser/nginx 504 during signup.
+
+The important architectural conclusion is:
+
+```text
+Railway selected lane -> HTTPS transactional provider
+future VPS            -> SMTP/Nodemailer canonical/default
+```
+
+SMTP was not deleted or replaced as an architectural standard.
+
+`mailHelper.sendMail()` was made provider-selectable while keeping the same call-site contract.
+
+Available transports:
+
+```text
+smtp        -> Nodemailer / canonical VPS default
+resend      -> HTTPS adapter, retained but not current
+mailersend  -> HTTPS adapter, current Railway lane
+```
+
+### Resend attempt
+
+Resend proved Railway HTTPS-provider connectivity but required a verified sender domain.
+
+Observed errors progressed from an unverified `thradex.com` sender to the corrected but unverified `mitos.pe` sender. Because `mitos.pe` was not owned and there was an explicit decision not to buy the domain only for this integration, Resend was retained in code but not used as the active Railway provider.
+
+### MailerSend implementation
+
+MailerSend HTTPS support was added in:
+
+```text
+58a5a7619b939d25caa2301b6321379ac315a6aa
+feat(mitos): add MailerSend HTTPS email transport
+```
+
+The adapter supports normal recipients plus attachment conversion so booking/contract email paths are not silently broken by the Railway workaround.
+
+After MailerSend activation, observed HTTP flow became:
+
+```text
+POST /api/validate-email   -> 200
+POST /api/sign-up          -> 200 (~0.6 s)
+POST /api/sign-in/frontend -> 200
+```
+
+This proves provider acceptance at the signup boundary and closes the prior SMTP-timeout failure mode.
+
+It does **not** yet certify arbitrary-recipient production delivery because the MailerSend account was still observed in Sandbox mode during this evidence window.
+
+SMTP/Nodemailer remains the future VPS path by switching:
+
+```env
+BC_EMAIL_PROVIDER=smtp
+```
+
+No controller/booking/signup call site should require rewriting.
+
+## Shared-origin Customer/Admin auth correction
+
+After successful signup/signin, a protected user read returned:
+
+```text
+GET /api/user/<id> -> 403
+{"message":"No token provided!"}
+```
+
+The endpoint remained protected. The problem was not solved by weakening authorization.
+
+Root cause: Customer `/` and Admin `/admin/` now share one Railway origin, while the inherited auth helper historically inferred surface identity from origin. Browser `Origin` has no path, so it cannot distinguish `/admin/` from `/`.
+
+Fixed in:
+
+```text
+490dbf9e16181c41c454eeebc6627c0d65fe3a80
+fix(mitos): disambiguate shared-origin auth cookies
+```
+
+The corrected boundary uses Referer/path to distinguish the Admin surface when both SPAs share an origin.
+
+CI run:
+
+```text
+mitos-closure #33215687706 -> SUCCESS
+```
+
+Railway deployment:
+
+```text
+1ccd68bf-b9fd-4e70-91b1-03d59e3dfaf3 -> SUCCESS
+```
+
+A fresh browser protected-user read after this fix is still required as the final runtime receipt for that exact cookie correction.
+
+## Current public-test matrix
+
+```text
+Public Railway full-stack service              ✅ ACTIVE
+Customer SPA                                   ✅ ACTIVE
+Admin SPA                                      ✅ ACTIVE
+Node backend                                   ✅ ACTIVE
+MongoDB Atlas authority                        ✅ ACTIVE
+Remote test bootstrap                          ✅ ACTIVE / TEST ONLY
+Signup RHF field fix                           ✅ DEPLOYED
+Direct SMTP on Railway                         ❌ NOT VIABLE ON CURRENT LANE
+SMTP/Nodemailer future VPS path                ✅ PRESERVED
+Resend HTTPS adapter                           ✅ AVAILABLE / NOT ACTIVE
+MailerSend HTTPS adapter                       ✅ ACTIVE
+MailerSend signup provider acceptance          ✅ RUNTIME PASS
+MailerSend arbitrary-recipient production      ❌ NOT CERTIFIED
+Shared-origin auth source fix                  ✅ DEPLOYED
+Shared-origin auth final browser receipt       🟡 PENDING
+Durable CDN/uploads                            ❌ OPEN
+Google OAuth production certification          ❌ OPEN
+External payment-provider certification        ❌ OPEN
+Production-final certification                 ❌ OPEN
+```
+
+Canonical detailed records:
+
+```text
+docs/mitos/deploy/MITOS_RAILWAY_RUNTIME_RECOVERY_AND_EMAIL_TRANSPORT_2026-08-28.md
+docs/mitos/evidence/MITOS_RAILWAY_EMAIL_AND_AUTH_RUNTIME_EVIDENCE_2026-08-28.md
+```
