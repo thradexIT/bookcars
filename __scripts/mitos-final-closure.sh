@@ -162,9 +162,9 @@ for route in "${ROUTES[@]}"; do
 done
 pass 'Customer route documents return 200 with no legacy identity literal'
 
-info 'Checking Admin document identity'
-ADMIN_DOC_CODE="$(curl -sS -o "$TMP_DIR/admin.html" -w '%{http_code}' "$ADMIN_ORIGIN/admin")"
-[[ "$ADMIN_DOC_CODE" == '200' ]] || fail "Admin /admin returned HTTP $ADMIN_DOC_CODE"
+info 'Checking Admin document identity at Vite base path'
+ADMIN_DOC_CODE="$(curl -sS -o "$TMP_DIR/admin.html" -w '%{http_code}' "$ADMIN_ORIGIN/admin/")"
+[[ "$ADMIN_DOC_CODE" == '200' ]] || fail "Admin /admin/ returned HTTP $ADMIN_DOC_CODE"
 if grep -Ei 'BookCars|bookcars\.ma' "$TMP_DIR/admin.html" >/dev/null; then
   fail 'Admin served document contains legacy identity'
 fi
