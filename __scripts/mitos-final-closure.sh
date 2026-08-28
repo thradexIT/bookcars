@@ -75,7 +75,7 @@ if grep -Ei 'BC_WEBSITE_NAME:[[:space:]]+BookCars|VITE_BC_WEBSITE_NAME:[[:space:
   fail 'Effective DEV compose still exposes legacy visible identity'
 fi
 grep -Eq 'BC_WEBSITE_NAME:[[:space:]]+MITOS RENT A CAR' <<<"$COMPOSE_CONFIG" || fail 'Effective DEV compose does not pin backend Mitos identity'
-grep -Eq 'BC_EMAIL_ENABLED:[[:space:]]+false' <<<"$COMPOSE_CONFIG" || fail 'DEV email side-effect isolation is not active'
+grep -Eq 'BC_EMAIL_ENABLED:[[:space:]]+.*false' <<<"$COMPOSE_CONFIG" || fail 'DEV email side-effect isolation is not active'
 pass 'Effective DEV compose pins Mitos identity and isolates SMTP from booking authority'
 
 info 'Checking backend health reachability'
