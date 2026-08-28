@@ -2,13 +2,13 @@
 
 **Updated:** 2026-08-28  
 **Branch:** `feature/mitos-public-experience-v1`  
-**Status:** CUSTOMER I6 RUNTIME PASS / ADMIN BOOKING VISIBILITY RE-TEST
+**Status:** CUSTOMER I6 RUNTIME PASS / FINAL CLOSURE PROBE PASS / ADMIN BOOKING UI RE-TEST
 
 ## Executive verdict
 
 Mitos is now a materially functional rental product built on the recovered BookCars transactional core. The old implementation name remains acceptable only for internal infrastructure identifiers such as repository/package names, Mongo/CDN paths, containers and compatibility identifiers.
 
-The customer rental lifecycle is now runtime-proven end to end. The only remaining local functional receipt is Admin booking visibility after the booking-authority correction, plus a re-run of the corrected final closure probe after local visible env normalization.
+The customer rental lifecycle is runtime-proven end to end and the executable final closure probe now passes in the current DEV runtime. The only remaining local visual receipt is that `Admin → Reservas` renders the already-persisted customer booking after the booking-authority correction.
 
 ## Runtime evidence established
 
@@ -52,11 +52,11 @@ Observed:
 - `Admin → Cars` shows Toyota Yaris 2025/26 and Toyota Raize;
 - I4D Admin Fleet Visibility is **RUNTIME PASS**.
 
-A fresh Admin Bookings screenshot showed `Sin filas` while the same booking existed and was visible to the customer. This is a real Admin projection defect, not a missing booking.
+A prior Admin Bookings screenshot showed `Sin filas` while the same booking existed and was visible to the customer. This was a real Admin projection defect, not a missing booking.
 
 ## Admin Bookings root cause and correction
 
-`admin/src/pages/Bookings.tsx` still depended on `getAllSuppliers()`. That supplier projection requires presentation completeness such as avatar state. When the Mitos supplier was omitted, Admin passed an empty supplier filter to `/api/bookings`, producing zero rows even though the booking existed.
+`admin/src/pages/Bookings.tsx` depended on a supplier projection that could exclude a supplier based on presentation completeness. When the Mitos supplier was omitted, Admin passed an empty supplier filter to `/api/bookings`, producing zero rows even though the booking existed.
 
 The correction introduces:
 
@@ -75,11 +75,11 @@ Booking.distinct('supplier')
 
 Therefore Admin booking history no longer depends on supplier avatar/logo completeness or current active fleet presentation.
 
-**Status:** source fixed / CI compiled / runtime re-test required.
+The final closure probe now authenticates the Admin and proves that this booking-supplier authority sees the persisted Mitos booking independently of avatar state.
+
+**Status:** source fixed / CI compiled / runtime authority proven / Admin table render re-test required.
 
 ## Branding and local env truth
-
-The prior closure probe was too broad: it treated every `bookcars` literal as a branding defect. That was incorrect.
 
 Allowed internal identifiers include:
 
@@ -91,29 +91,44 @@ repository/package/container names
 compatibility implementation identifiers
 ```
 
-Actual customer/operator-visible legacy values found in the local ignored backend env were:
+Customer/operator-visible local identity values were normalized to Mitos without modifying DB/JWT/payment/SMTP credentials.
+
+The final probe now proves:
 
 ```text
-BC_SMTP_FROM=no-reply@bookcars.ma
-BC_ADMIN_EMAIL=admin@bookcars.ma
-BC_WEBSITE_NAME=BookCars
+✅ backend/.env.docker has no legacy visible identity
+✅ frontend/.env.docker has no legacy visible identity
+✅ admin/.env.docker has no legacy visible identity
+✅ versioned visible runtime source has no BookCars/bookcars.ma identity
+✅ effective DEV Compose pins Mitos identity
+✅ DEV SMTP is isolated from booking authority
 ```
 
-`__scripts/mitos-normalize-local-env.sh` safely normalizes those visible identity/localization values without modifying DB/JWT/payment/SMTP credentials.
+## Final closure probe — PASS
 
-The corrected `__scripts/mitos-final-closure.sh` gates only visible identity keys and now also validates the Admin booking-supplier projection.
-
-Expected final result:
+The supplied runtime receipt completed:
 
 ```text
+MITOS FINAL CLOSURE PROBE
+...
+✅ Customer browser-origin authentication returned 200
+✅ Admin browser-origin authentication returned 200
+✅ Admin booking supplier projection sees persisted Mitos bookings independently of avatar state
+✅ Public fleet contains Toyota Yaris 2025/26 and Toyota Raize
+✅ Supplier + Yaris + Raize CDN fixture assets are reachable
+✅ Customer route documents return 200 with no legacy identity literal
+✅ Admin document identity is MITOS ADMIN
+
 SOURCE + ENV + AUTH + FLEET + ADMIN BOOKING AUTHORITY + DOCUMENT SWEEP: PASS
 ```
+
+`/health` returned 404, but this is informational rather than a closure failure because the probe's real application endpoints for auth, fleet, booking authority, CDN and documents all returned the expected successful results.
 
 ## Customer confirmation truth hardening
 
 DEV intentionally runs with `BC_EMAIL_ENABLED=false` so placeholder SMTP cannot invalidate a real local booking.
 
-The customer confirmation copy previously stated that a confirmation email had been sent even in that DEV mode. The copy is now evidence-safe: it confirms the persisted reservation and directs the customer to `Mis reservas` without asserting an email side effect that may be disabled.
+The customer confirmation copy is evidence-safe: it confirms the persisted reservation and directs the customer to `Mis reservas` without asserting an email side effect that may be disabled.
 
 Production email delivery remains a separate provider gate.
 
@@ -130,7 +145,7 @@ Vercel configs
 closure scripts
 ```
 
-The Admin booking-authority correction passed this source/build gate on the current correction series.
+The Admin booking-authority correction passed this source/build gate in the current correction series. The latest documentation/probe-only head remains subject to the normal CI completion receipt before merge/release action.
 
 ## Closure matrix
 
@@ -146,9 +161,10 @@ Customer confirmation                ✅ RUNTIME PASS
 Customer Mis reservas                ✅ RUNTIME PASS
 Customer booking detail              ✅ RUNTIME PASS
 Visible BookCars in observed UI      ✅ ZERO OBSERVED
-Admin Bookings                       🔁 SOURCE FIXED / RUNTIME RE-TEST
-Local visible env normalization      🔁 ONE RUN REQUIRED
-Corrected final closure probe        🔁 ONE RUN REQUIRED
+Local visible env normalization      ✅ RUNTIME PASS
+Final closure probe                  ✅ RUNTIME PASS
+Admin booking authority              ✅ RUNTIME PASS
+Admin Bookings table render          🔁 ONE VISUAL RE-TEST
 External payment providers           OUTSIDE pay-later I6 gate
 Production email provider            OUTSIDE local I6 gate
 Production deployment                NOT STARTED
@@ -156,27 +172,17 @@ Production deployment                NOT STARTED
 
 ## Exact remaining local acceptance
 
-Pull the current branch, normalize only visible local identity fields and recreate the app services so the backend route and env changes are active:
+No rebuild, reseed or second customer booking is required.
 
-```bash
-git pull
-bash __scripts/mitos-normalize-local-env.sh
-
-docker compose -f docker-compose.dev.yml up -d --force-recreate \
-  bc-dev-backend bc-dev-admin bc-dev-frontend
-
-bash __scripts/mitos-final-closure.sh
-```
-
-Then refresh:
+Open or refresh:
 
 ```text
-http://localhost:3001/admin
+http://localhost:3001/admin/
 ```
 
-The existing customer-created booking must appear in Admin Reservas with the same supplier/car/dates/price/status. No new customer booking is required.
+Then open `Reservas`.
 
-When the Admin row is observed and the corrected probe passes, local Mitos closure is complete and PR #3 may be moved out of Draft.
+The existing customer-created booking must render with the same supplier/car/dates/price/status. Once that row is observed, local Mitos closure is complete and PR #3 may be moved out of Draft.
 
 At that point the external product statement is certified:
 
