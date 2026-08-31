@@ -16,6 +16,11 @@ export interface MercadoPagoPaymentResponse {
   idempotentReplay?: boolean
 }
 
+/**
+ * Minimal subset of Payment Brick form data that MitoS is allowed to consume.
+ * Intentionally no catch-all index signature: browser-only fields such as
+ * `amount` must not become part of the backend payment contract accidentally.
+ */
 export interface MercadoPagoBrickFormData {
   token?: string
   installments?: number
@@ -28,7 +33,6 @@ export interface MercadoPagoBrickFormData {
       number?: string
     }
   }
-  [key: string]: unknown
 }
 
 export const quotePayment = (
