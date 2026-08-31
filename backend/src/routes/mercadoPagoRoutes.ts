@@ -18,7 +18,8 @@ routes.route(routeNames.createPayment).post(mercadoPagoController.createPayment)
 // performed inside the controller before any event is processed.
 routes.route(routeNames.webhook).post(mercadoPagoController.webhook)
 
-// Manual/provider reconciliation is an authenticated backoffice operation.
-routes.route(routeNames.reconcilePayment).post(authJwt.verifyToken, mercadoPagoController.reconcilePayment)
+// Manual/provider reconciliation can mutate payment/reservation truth and is a
+// backoffice-only operation. A normal customer token must not authorize it.
+routes.route(routeNames.reconcilePayment).post(authJwt.verifyBackofficeToken, mercadoPagoController.reconcilePayment)
 
 export default routes
