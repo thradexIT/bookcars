@@ -16,15 +16,15 @@
 
 | # | Requirement | Status | Current evidence / gap |
 |---|---|---|---|
-| 1 | Close full rental E2E | 🟡 | Backend rental lifecycle authority exists and is wired to checkout departure, check-in return and closure. Full continuous runtime journey through Admin + LaborSync still pending. |
+| 1 | Close full rental E2E | 🟡 | Backend authority now links reservation acceptance, rental checkout/return/inspection closure and reservation completion. Full continuous runtime journey through Admin + LaborSync still pending. |
 | 2 | Recover/certify authentication | 🟡 | Sign in/Register and authenticated Admin sidebar are present. Dedicated one-purpose password reset implemented for customer + Admin. Source builds proven; browser runtime certification still required. |
 | 3 | Add payment method | 🟡 | Mercado Pago Payment Brick path is integrated into Checkout. Runtime provider proof pending. |
 | 4 | Integrate Mercado Pago | 🟡 | Reservation-first flow, server quote and backend SDK create-payment path implemented. Real sandbox/test-user transaction proof pending. |
 | 5 | Validate payments by webhook | 🟡 | Signature validation + provider read-back + amount/currency verification implemented. Real webhook delivery proof pending. |
-| 6 | Reservation/payment idempotency | 🟡 | Reservation `sessionId` replay guard and provider `X-Idempotency-Key` handling implemented. Runtime duplicate/retry tests pending. |
-| 7 | Explicit reservation/payment states | ✅ | `ReservationState` and `PaymentTransaction` authorities plus transition tests implemented; unknown provider states fail closed. |
+| 6 | Reservation/payment idempotency | 🟡 | Reservation `sessionId` replay guard and provider `X-Idempotency-Key` handling implemented. Targeted source tests are gated in CI; runtime duplicate/retry proof is still pending. |
+| 7 | Explicit reservation/payment states | ✅ | `ReservationState` and `PaymentTransaction` authorities plus transition tests implemented; pay-later becomes `confirmed`, provider-approved online payment becomes `confirmed`, and a closed rental promotes a confirmed reservation to `completed`. Unknown provider states fail closed. |
 | 8 | Complete real emails | 🟡 | Persistent `(booking,event)` delivery ledger and reservation/payment/cancellation event matrix are wired. Provider calls are off the payment/webhook critical path. Real transport delivery + replay proof remains pending. |
-| 9 | Remove demo credentials/data | 🟡 | Source-code credential/identity fallbacks were removed. DEV seed is disabled by default and now requires explicit local fixture values; final runtime fixture/secret scan still pending. |
+| 9 | Remove demo credentials/data | 🟡 | Source-code credential/identity fallbacks were removed. Known fixture values (`B00kC4r5`, `jdoe@mitos.pe`, `admin@mitos.pe`, old local supplier fixture) no longer appear in the indexed source search. DEV seed is disabled by default and now requires explicit fixture values; runtime seed-refusal/secret-scan proof remains pending. |
 | 10 | Payment reconciliation | 🟡 | Authenticated provider reconciliation endpoint implemented using same provider-truth sync path as webhook. Runtime proof/runbook pending. |
 
 ## Current payment truth model
@@ -47,6 +47,8 @@ Mercado Pago payment creation uses a provider idempotency key and the webhook is
 
 ## Current reservation/payment sequence
 
+### Online payment
+
 ```text
 Checkout form
   ↓
@@ -68,6 +70,18 @@ Payment approved?
   ├─ NO → reservation remains unconfirmed
   └─ YES → reservation confirmed
 ```
+
+### Pay later
+
+```text
+Committed backend checkout
+  ↓
+payLater = true
+  ↓
+Reservation confirmed
+```
+
+Deferred collection is not modeled as an online payment waiting for Mercado Pago approval.
 
 ## Current transactional email sequence
 
@@ -128,14 +142,20 @@ No customer/admin password or identity has a source-code fallback. Remote test s
 ```text
 Reservation confirmed
   ↓
-reserved
+rental reserved
   ↓
 checked_out
   ↓
 returned
   ↓
-closed
+inspection evidence verified
+  ↓
+rental closed
+  ↓
+Reservation completed
 ```
+
+The completion bridge is deliberately conservative: a legacy Booking with no explicit MITOS `ReservationState` is not retroactively invented at closure time.
 
 ## Pricing/currency boundary
 
@@ -149,6 +169,19 @@ backend  BC_MERCADO_PAGO_CURRENCY=PEN
 
 The payment service fails closed if backend pricing currency and Mercado Pago currency differ. Insurance-client online pricing remains deliberately blocked until its deductible/FX rule is authoritative on the server; no silent USD↔PEN conversion is claimed.
 
+## Source CI gate
+
+The `mitos-closure` workflow now requires, in addition to backend/Admin/customer builds, targeted MITOS suites for:
+
+```text
+rental lifecycle transitions
+reservation/payment transitions
+Mercado Pago webhook HMAC validation
+transactional email cancellation/commit semantics
+```
+
+The tests run with isolated CI-only SMTP/CDN placeholders and do not require a production secret or a live mail/database provider.
+
 ## Hard gates before claiming completion
 
 1. customer frontend + backend/Admin source builds must pass on the final head;
@@ -158,7 +191,7 @@ The payment service fails closed if backend pricing currency and Mercado Pago cu
 5. duplicate checkout and duplicate webhook replay proof;
 6. payment reconciliation proof;
 7. transactional email real-provider delivery + duplicate/retry proof;
-8. explicit DEV fixture run + final credential/secret scan proof;
+8. explicit DEV fixture refusal/success checks + final credential/secret scan proof;
 9. full Admin + LaborSync + checkout + return + check-in + closure E2E;
 10. final documentation/evidence receipt.
 
@@ -168,7 +201,7 @@ This status does **not** claim:
 
 - production readiness;
 - deployed Mercado Pago configuration;
-- Railway changes;
+- Railway service changes;
 - live money movement;
 - real email delivery from the current branch head;
 - Insurance-client Mercado Pago pricing completion;
