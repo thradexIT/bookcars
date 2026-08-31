@@ -1,5 +1,6 @@
 import { Types } from 'mongoose'
 import RentalLifecycle, { RentalLifecycleState } from '../models/RentalLifecycle'
+import { ReservationStatus } from '../models/ReservationState'
 
 const transitionMap: Record<RentalLifecycleState, RentalLifecycleState[]> = {
   [RentalLifecycleState.Reserved]: [RentalLifecycleState.CheckedOut],
@@ -22,6 +23,16 @@ export const canTransitionRental = (current: RentalLifecycleState, next: RentalL
 
   return transitionMap[current].includes(next)
 }
+
+/**
+ * New MITOS reservations must be commercially confirmed before vehicle
+ * handover. Undefined is intentionally accepted for pre-MITOS/legacy bookings
+ * that have no ReservationState yet, preserving inherited Admin/LaborSync
+ * compatibility during migration.
+ */
+export const canCheckoutReservationStatus = (status?: ReservationStatus) => (
+  status === undefined || status === ReservationStatus.Confirmed
+)
 
 export const getRentalLifecycle = async (bookingId: string) => RentalLifecycle.findOne({
   booking: new Types.ObjectId(bookingId),
