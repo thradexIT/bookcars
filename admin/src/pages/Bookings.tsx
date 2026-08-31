@@ -11,7 +11,7 @@ import BookingList from '@/components/BookingList'
 import SupplierFilter from '@/components/SupplierFilter'
 import StatusFilter from '@/components/StatusFilter'
 import BookingFilter from '@/components/BookingFilter'
-import * as SupplierService from '@/services/SupplierService'
+import * as BookingService from '@/services/BookingService'
 
 import '@/assets/css/bookings.css'
 
@@ -57,10 +57,16 @@ const Bookings = () => {
       setLeftPanel(!_admin)
       setLoadingSuppliers(_admin)
 
-      const _allSuppliers = await SupplierService.getAllSuppliers()
-      const _suppliers = _admin ? bookcarsHelper.flattenSuppliers(_allSuppliers) : [_user._id ?? '']
-      setAllSuppliers(_allSuppliers)
-      setSuppliers(_suppliers)
+      if (_admin) {
+        const _allSuppliers = await BookingService.getAdminBookingSuppliers()
+        const _suppliers = bookcarsHelper.flattenSuppliers(_allSuppliers)
+        setAllSuppliers(_allSuppliers)
+        setSuppliers(_suppliers)
+      } else {
+        setAllSuppliers([])
+        setSuppliers([_user._id ?? ''])
+      }
+
       setLeftPanel(true)
       setLoadingSuppliers(false)
     }

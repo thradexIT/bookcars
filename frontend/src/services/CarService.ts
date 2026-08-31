@@ -2,6 +2,19 @@ import * as bookcarsTypes from ':bookcars-types'
 import axiosInstance from './axiosInstance'
 import * as UserService from './UserService'
 
+export interface PublicFleetCar {
+  _id: string
+  name: string
+  image?: string
+  type?: string
+  gearbox?: string
+  seats?: number
+  doors?: number
+  aircon?: boolean
+  range?: string
+  multimedia?: string[]
+}
+
 /**
  * Get cars.
  *
@@ -17,6 +30,18 @@ export const getCars = (data: bookcarsTypes.GetCarsPayload, page: number, size: 
       data,
       { withCredentials: true } // Send cookies for authentication
     ).then((res) => res.data)
+
+/**
+ * Get a presentation-safe projection of the active fleet.
+ * This is NOT a date/location availability request.
+ *
+ * @param {number} size
+ * @returns {Promise<PublicFleetCar[]>}
+ */
+export const getPublicFleet = (size = 4): Promise<PublicFleetCar[]> =>
+  axiosInstance
+    .get(`/api/public-fleet/${size}`)
+    .then((res) => res.data)
 
 /**
  * Get a Car by ID.

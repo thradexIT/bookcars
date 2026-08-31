@@ -46,6 +46,10 @@ const SignUp = () => {
     mode: 'onSubmit'
   })
 
+  const emailField = register('email')
+  const phoneField = register('phone')
+  const tosField = register('tos')
+
   const onSubmit = async (data: FormFields) => {
     try {
       const emailStatus = await UserService.validateEmail({ email: data.email })
@@ -127,10 +131,11 @@ const SignUp = () => {
                 <InputLabel className="required">{commonStrings.EMAIL}</InputLabel>
                 <OutlinedInput
                   type="text"
-                  {...register('email')}
+                  {...emailField}
                   label={commonStrings.EMAIL}
                   autoComplete="off"
-                  onChange={() => {
+                  onChange={(event) => {
+                    emailField.onChange(event)
                     if (errors.email) {
                       clearErrors('email')
                     }
@@ -143,10 +148,11 @@ const SignUp = () => {
                 <InputLabel className="required">{commonStrings.PHONE}</InputLabel>
                 <OutlinedInput
                   type="text"
-                  {...register('phone')}
+                  {...phoneField}
                   label={commonStrings.PHONE}
                   autoComplete="off"
-                  onChange={() => {
+                  onChange={(event) => {
+                    phoneField.onChange(event)
                     if (errors.phone) {
                       clearErrors('phone')
                     }
@@ -221,9 +227,10 @@ const SignUp = () => {
                     <tr>
                       <td aria-label="tos">
                         <Checkbox
-                          {...register('tos')}
+                          {...tosField}
                           color="primary"
-                          onChange={() => {
+                          onChange={(event) => {
+                            tosField.onChange(event)
                             if (errors.tos) {
                               clearErrors('tos')
                             }

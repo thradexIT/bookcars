@@ -53,28 +53,6 @@ const Cars = () => {
   const [rating, setRating] = useState(-1)
   const [seats, setSeats] = useState(-1)
 
-  // useEffect(() => {
-  //   const updateSuppliers = async () => {
-  //     const payload: bookcarsTypes.GetCarsPayload = {
-  //       carSpecs,
-  //       carType,
-  //       gearbox,
-  //       mileage,
-  //       fuelPolicy,
-  //       deposit,
-  //       availability,
-  //       ranges,
-  //       multimedia,
-  //       rating,
-  //       seats,
-  //     }
-  //     const _allSuppliers = await SupplierService.getAdminSuppliers(payload)
-  //     setAllSuppliers(_allSuppliers)
-  //   }
-
-  //   updateSuppliers()
-  // }, [carSpecs, carType, gearbox, mileage, fuelPolicy, deposit, availability, ranges, multimedia, rating, seats])
-
   const handleSearch = (newKeyword: string) => {
     setKeyword(newKeyword)
   }
@@ -144,21 +122,20 @@ const Cars = () => {
     setAdmin(_isAdmin)
 
     if (_isAdmin) {
-      // const payload: bookcarsTypes.GetCarsPayload = {
-      //   carSpecs,
-      //   carType,
-      //   gearbox,
-      //   mileage,
-      //   fuelPolicy,
-      //   deposit,
-      //   availability,
-      //   ranges,
-      //   multimedia,
-      //   rating,
-      //   seats,
-      // }
-      // const _allSuppliers = await SupplierService.getAdminSuppliers(payload)
-      const _allSuppliers = await SupplierService.getAllSuppliers()
+      const payload: bookcarsTypes.GetCarsPayload = {
+        carSpecs,
+        carType,
+        gearbox,
+        mileage,
+        fuelPolicy,
+        deposit,
+        availability,
+        ranges,
+        multimedia,
+        rating,
+        seats,
+      }
+      const _allSuppliers = await SupplierService.getAdminSuppliers(payload)
       const _suppliers = bookcarsHelper.flattenSuppliers(_allSuppliers)
       setAllSuppliers(_allSuppliers)
       setSuppliers(_suppliers)

@@ -3,6 +3,8 @@ import multer from 'multer'
 import routeNames from '../config/carRoutes.config'
 import authJwt from '../middlewares/authJwt'
 import * as carController from '../controllers/carController'
+import * as frontendAvailabilityController from '../controllers/frontendAvailabilityController'
+import * as publicFleetController from '../controllers/publicFleetController'
 
 const routes = express.Router()
 
@@ -19,6 +21,7 @@ routes.route(routeNames.deleteTempImage).post(authJwt.verifyToken, carController
 routes.route(routeNames.getCar).get(carController.getCar)
 routes.route(routeNames.getCars).post(authJwt.verifyToken, carController.getCars)
 routes.route(routeNames.getBookingCars).post(authJwt.verifyToken, carController.getBookingCars)
-routes.route(routeNames.getFrontendCars).post(carController.getFrontendCars)
+routes.route(routeNames.getFrontendCars).post(frontendAvailabilityController.getFrontendCars)
+routes.route(routeNames.getPublicFleet).get(publicFleetController.getPublicFleet)
 
 export default routes

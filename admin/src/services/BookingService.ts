@@ -35,6 +35,18 @@ export const getBookings = (payload: bookcarsTypes.GetBookingsPayload, page: num
     .then((res) => res.data)
 
 /**
+ * Get the suppliers that actually own persisted bookings.
+ * This keeps Admin booking visibility independent from supplier avatar/logo state.
+ */
+export const getAdminBookingSuppliers = (): Promise<bookcarsTypes.User[]> =>
+  axiosInstance
+    .get(
+      '/api/admin-booking-suppliers',
+      { withCredentials: true }
+    )
+    .then((res) => res.data)
+
+/**
  * Get booking
  *
  * @param {string} id

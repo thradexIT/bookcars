@@ -50,24 +50,69 @@ export const decryptJWT = async (input: string) => {
   return payload as SessionData
 }
 
-export const isAdmin = (req: Request): boolean => {
-  const origin = req.headers.origin
-  const referer = req.headers.referer
+const safeURL = (value?: string) => {
+  if (!value) {
+    return null
+  }
 
-  if (origin) {
-    const trimmedOrigin = helper.trimEnd(origin, '/')
-    if (
-      trimmedOrigin === helper.trimEnd(env.ADMIN_HOST, '/') ||
-      trimmedOrigin === 'http://localhost:3001' ||
-      trimmedOrigin.includes('admin.thradex.com') ||
-      trimmedOrigin.includes('ngrok-free.dev')
-    ) {
-      return true
+  try {
+    return new URL(value)
+  } catch {
+    return null
+  }
+}
+
+const isAdminPath = (pathname: string) => pathname === '/admin' || pathname.startsWith('/admin/')
+
+/**
+ * Determine whether the request belongs to the admin surface.
+ *
+ * Mitos serves customer `/` and admin `/admin/` from the same Railway origin.
+ * Browser Origin headers never include a path, so an origin match alone cannot
+ * distinguish the two surfaces when ADMIN_HOST and FRONTEND_HOST share an
+ * origin. In that topology, the Referer path is authoritative.
+ */
+export const isAdmin = (req: Request): boolean => {
+  const origin = safeURL(req.headers.origin)
+  const referer = safeURL(req.headers.referer)
+  const adminHost = safeURL(env.ADMIN_HOST)
+  const frontendHost = safeURL(env.FRONTEND_HOST)
+
+  if (referer && isAdminPath(referer.pathname)) {
+    return true
+  }
+
+  const sharedBrowserOrigin = Boolean(
+    adminHost
+    && frontendHost
+    && adminHost.origin === frontendHost.origin,
+  )
+
+  if (sharedBrowserOrigin) {
+    // On the shared Mitos host, a non-admin referer is definitively customer.
+    if (referer && adminHost && referer.origin === adminHost.origin) {
+      return false
+    }
+
+    // Origin by itself cannot prove admin because both SPAs share it.
+    if (origin && adminHost && origin.origin === adminHost.origin) {
+      return false
     }
   }
 
-  if (referer && referer.includes('/admin')) {
+  if (origin && adminHost && origin.origin === adminHost.origin) {
     return true
+  }
+
+  const rawOrigin = req.headers.origin
+  if (rawOrigin) {
+    const trimmedOrigin = helper.trimEnd(rawOrigin, '/')
+    if (
+      trimmedOrigin === 'http://localhost:3001'
+      || trimmedOrigin.includes('admin.thradex.com')
+    ) {
+      return true
+    }
   }
 
   return false
@@ -81,24 +126,51 @@ export const isAdmin = (req: Request): boolean => {
  * @returns {boolean}
  */
 export const isFrontend = (req: Request): boolean => {
-  const origin = req.headers.origin
-  const referer = req.headers.referer
+  const origin = safeURL(req.headers.origin)
+  const referer = safeURL(req.headers.referer)
+  const adminHost = safeURL(env.ADMIN_HOST)
+  const frontendHost = safeURL(env.FRONTEND_HOST)
 
-  if (origin) {
-    const trimmedOrigin = helper.trimEnd(origin, '/')
+  if (referer) {
+    if (isAdminPath(referer.pathname)) {
+      return false
+    }
+
+    if (frontendHost && referer.origin === frontendHost.origin) {
+      return true
+    }
+  }
+
+  if (origin && frontendHost && origin.origin === frontendHost.origin) {
+    return true
+  }
+
+  const rawOrigin = req.headers.origin
+  if (rawOrigin) {
+    const trimmedOrigin = helper.trimEnd(rawOrigin, '/')
     if (
-      trimmedOrigin === helper.trimEnd(env.FRONTEND_HOST, '/') ||
-      trimmedOrigin === 'http://localhost:3002' ||
-      trimmedOrigin.includes('rentacar.thradex.com') ||
-      trimmedOrigin.includes('165.1.122.9') ||
-      trimmedOrigin.startsWith('http://192.168.') ||
-      trimmedOrigin.includes('ngrok-free.dev')
+      trimmedOrigin === 'http://localhost:3002'
+      || trimmedOrigin.includes('rentacar.thradex.com')
+      || trimmedOrigin.includes('165.1.122.9')
+      || trimmedOrigin.startsWith('http://192.168.')
     ) {
       return true
     }
   }
 
-  if (referer && !referer.includes('/admin')) {
+  // Browser GETs often omit Origin. A non-admin referer is the customer surface.
+  if (referer && !isAdminPath(referer.pathname)) {
+    return true
+  }
+
+  // Keep legacy ngrok behavior customer-first unless the referer explicitly says /admin.
+  if (req.headers.origin?.includes('ngrok-free.dev')) {
+    return true
+  }
+
+  // If both configured hosts share an origin and this request has no useful
+  // browser context, default to the customer surface rather than granting admin.
+  if (adminHost && frontendHost && adminHost.origin === frontendHost.origin) {
     return true
   }
 
@@ -149,7 +221,9 @@ export const parseJwt = (token: string) => JSON.parse(Buffer.from(token.split('.
 /**
  * Validate JWT token structure.
  *
+ * @param {bookcarsTypes.SocialSignInType} socialSignInType
  * @param {string} token
+ * @param {string} email
  * @returns {Promise<boolean>}
  */
 export const validateAccessToken = async (socialSignInType: bookcarsTypes.SocialSignInType, token: string, email: string): Promise<boolean> => {

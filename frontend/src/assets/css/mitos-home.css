@@ -1,0 +1,451 @@
+.mitos-home {
+  --mitos-navy: #062866;
+  --mitos-navy-2: #0b367f;
+  --mitos-blue: #1556b8;
+  --mitos-ink: #082b6e;
+  --mitos-body: #425478;
+  --mitos-muted: #71809d;
+  --mitos-line: #dce5f2;
+  --mitos-soft: #f5f8fc;
+  height: calc(100svh - var(--mitos-header-height, 88px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  background: #fff;
+  color: var(--mitos-ink);
+}
+
+.mitos-home * { box-sizing: border-box; }
+
+.mitos-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* FRAME 01 */
+.mitos-frame-hero {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 132px;
+  background: #fff;
+}
+
+.mitos-hero-media {
+  position: relative;
+  min-height: 0;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.mitos-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.92) 22%, rgba(255,255,255,.62) 39%, rgba(255,255,255,.12) 58%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
+}
+
+.mitos-hero-copy {
+  position: absolute;
+  z-index: 3;
+  top: clamp(36px, 6vh, 74px);
+  left: clamp(46px, 6vw, 92px);
+  width: min(49vw, 650px);
+}
+
+.mitos-hero-copy > span,
+.mitos-section-heading > span,
+.mitos-how-copy > span,
+.mitos-trust-copy > span,
+.mitos-faq-copy > span,
+.mitos-final-cta span {
+  display: block;
+  color: var(--mitos-blue);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.mitos-hero-copy h1 {
+  margin: 8px 0 10px;
+  color: var(--mitos-ink);
+  font-size: clamp(46px, 4.45vw, 72px);
+  line-height: .96;
+  letter-spacing: -.055em;
+  font-weight: 900;
+}
+
+.mitos-hero-copy p {
+  margin: 0;
+  color: #3c4d70;
+  font-size: clamp(20px, 1.8vw, 29px);
+  font-weight: 500;
+}
+
+.mitos-search-card {
+  position: absolute;
+  z-index: 5;
+  left: clamp(46px, 6vw, 92px);
+  bottom: clamp(18px, 3vh, 36px);
+  width: min(760px, calc(100% - 510px));
+  padding: 18px 20px 16px;
+  border: 1px solid rgba(207,219,237,.95);
+  border-radius: 16px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 18px 50px rgba(9,44,103,.16);
+  backdrop-filter: blur(10px);
+}
+
+.mitos-search-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 4px 11px;
+  color: var(--mitos-ink);
+}
+
+.mitos-search-title > svg { font-size: 29px; }
+.mitos-search-title div { display: flex; flex-direction: column; gap: 2px; }
+.mitos-search-title strong { font-size: 20px; }
+.mitos-search-title small { color: #66738f; font-size: 12px; }
+
+.mitos-search-card form.home-search-form.mitos-search-form {
+  width: 100% !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1.15fr 1.15fr 1fr 1fr !important;
+  grid-template-areas:
+    'pickup dropoff from to'
+    'check check search search' !important;
+  grid-template-rows: minmax(58px, auto) 46px !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+  border-top: 1px solid #c8d5e7;
+}
+
+.mitos-search-card .mitos-search-form > * { min-width: 0; }
+.mitos-search-card .pickup-location,
+.mitos-search-card .drop-off-location,
+.mitos-search-card .from,
+.mitos-search-card .to,
+.mitos-search-card .mitos-drop-off-mirror {
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 7px 8px 0 !important;
+  border-right: 1px solid #dce4ef;
+}
+.mitos-search-card .pickup-location { grid-area: pickup; }
+.mitos-search-card .drop-off-location,
+.mitos-search-card .mitos-drop-off-mirror { grid-area: dropoff; }
+.mitos-search-card .from { grid-area: from; }
+.mitos-search-card .to { grid-area: to; border-right: 0; }
+.mitos-search-card .mitos-drop-off-mirror {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-inline: 13px !important;
+}
+.mitos-search-card .mitos-drop-off-mirror small { margin-bottom: 5px; color: #4d5c7b; font-size: 11px; font-weight: 700; }
+.mitos-search-card .mitos-drop-off-mirror span { overflow: hidden; color: #203f80; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.mitos-search-card .chk-same-location { grid-area: check; display: flex !important; align-items: center; margin: 0 !important; padding: 2px 4px !important; }
+.mitos-search-card .chk-same-location label { margin: 0; }
+.mitos-search-card .chk-same-location .MuiTypography-root { font-size: 12px; }
+.mitos-search-card .btn-search {
+  grid-area: search;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  align-self: center !important;
+  margin: 2px 0 0 !important;
+  border-radius: 7px !important;
+  background: var(--mitos-navy) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+.mitos-search-card .MuiOutlinedInput-root { min-height: 46px; border-radius: 7px; background: #fff; }
+.mitos-search-card .MuiInputLabel-root,
+.mitos-search-card .MuiInputBase-input { font-size: 12px; }
+.mitos-search-card .MuiFormHelperText-root { margin: 1px 0 0; font-size: 9px; line-height: 1.1; }
+
+.mitos-hero-benefits {
+  padding: 18px clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 28px;
+  border-top: 1px solid #edf1f7;
+  background: #fff;
+}
+
+.mitos-hero-benefits article { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.mitos-hero-benefits article > svg {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  border-radius: 50%;
+  color: var(--mitos-navy);
+  background: #eef4fc;
+}
+.mitos-hero-benefits article div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.mitos-hero-benefits b { font-size: 13px; }
+.mitos-hero-benefits span { color: #53617d; font-size: 11px; line-height: 1.35; }
+
+/* Shared section language */
+.mitos-section-heading,
+.mitos-how-copy,
+.mitos-trust-copy,
+.mitos-faq-copy { position: relative; z-index: 2; }
+.mitos-section-heading.centered { max-width: 760px; margin: 0 auto 34px; text-align: center; }
+.mitos-section-heading h2,
+.mitos-how-copy h2,
+.mitos-trust-copy h2,
+.mitos-faq-copy h2,
+.mitos-final-cta h2 {
+  margin: 7px 0 10px;
+  font-size: clamp(34px, 3.5vw, 54px);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+.mitos-section-heading p,
+.mitos-how-copy p,
+.mitos-trust-copy p,
+.mitos-faq-copy p,
+.mitos-final-cta p { margin: 0; color: var(--mitos-body); font-size: 15px; line-height: 1.55; }
+.split-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 30px; }
+.split-heading > div { max-width: 760px; }
+
+.mitos-outline-action,
+.mitos-white-action,
+.mitos-ghost-action {
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mitos-outline-action { border: 1px solid var(--mitos-navy); color: var(--mitos-navy); background: #fff; }
+
+/* FRAME 02 */
+.mitos-frame-why {
+  padding: clamp(40px, 5vh, 68px) clamp(48px, 7vw, 108px);
+  background: linear-gradient(180deg, #fff 0%, #f7faff 100%);
+}
+
+.mitos-why-layout {
+  height: calc(100% - 145px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.mitos-benefit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.mitos-benefit-grid article {
+  min-height: 160px;
+  padding: 24px;
+  border: 1px solid var(--mitos-line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 12px 30px rgba(15,52,112,.06);
+}
+.mitos-benefit-grid svg { width: 42px; height: 42px; padding: 10px; border-radius: 50%; color: var(--mitos-navy); background: #eef4fc; }
+.mitos-benefit-grid h3 { margin: 16px 0 7px; font-size: 19px; }
+.mitos-benefit-grid p { margin: 0; color: var(--mitos-body); font-size: 13px; line-height: 1.55; }
+
+.mitos-3d-visual,
+.mitos-how-graphic,
+.mitos-travel-3d { width: 100%; max-height: 82%; object-fit: contain; filter: drop-shadow(0 22px 28px rgba(10,44,105,.14)); }
+
+/* FRAME 03 */
+.mitos-frame-fleet {
+  padding: clamp(38px, 5vh, 66px) clamp(44px, 6vw, 94px);
+  background: #fff;
+}
+
+.mitos-fleet-grid { height: calc(100% - 150px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 17px; }
+.mitos-car-card { min-width: 0; overflow: hidden; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 12px 26px rgba(11,45,104,.07); }
+.mitos-car-card img { width: 100%; height: 58%; object-fit: cover; object-position: 64% center; display: block; }
+.mitos-car-card div { padding: 16px 18px; }
+.mitos-car-card small { color: var(--mitos-blue); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.mitos-car-card h3 { margin: 6px 0 5px; font-size: 19px; }
+.mitos-car-card p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.4; }
+
+/* FRAME 04 */
+.mitos-frame-how {
+  padding: clamp(42px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .72fr 1.5fr .8fr;
+  align-items: center;
+  gap: 30px;
+  background: #f7f9fd;
+}
+
+.mitos-how-copy { max-width: 360px; }
+.mitos-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.mitos-steps article { min-height: 250px; padding: 20px 18px; position: relative; text-align: center; border-right: 1px solid #d9e2ef; }
+.mitos-steps article:last-child { border-right: 0; }
+.mitos-steps b { position: absolute; top: 0; left: 50%; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; transform: translateX(-50%); color: #fff; background: var(--mitos-navy); font-size: 11px; }
+.mitos-steps svg { width: 58px; height: 58px; margin-top: 36px; padding: 16px; border-radius: 50%; color: var(--mitos-navy); background: #e8f0fb; }
+.mitos-steps h3 { margin: 15px 0 7px; font-size: 16px; }
+.mitos-steps p { margin: 0; color: var(--mitos-body); font-size: 11px; line-height: 1.45; }
+
+/* FRAME 05 */
+.mitos-frame-promos {
+  padding: clamp(38px, 5vh, 66px) clamp(48px, 7vw, 108px);
+  background: #fff;
+}
+
+.mitos-promo-grid { height: calc(100% - 150px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.mitos-promo-grid article { overflow: hidden; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 14px 28px rgba(11,45,104,.08); }
+.mitos-promo-grid img { width: 100%; height: 57%; object-fit: cover; display: block; }
+.mitos-promo-grid div { padding: 17px 19px; }
+.mitos-promo-grid small { color: var(--mitos-blue); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.mitos-promo-grid h3 { margin: 7px 0 6px; font-size: 22px; }
+.mitos-promo-grid p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.45; }
+
+/* FRAME 06 */
+.mitos-frame-trust {
+  padding: clamp(40px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .72fr 1.45fr .78fr;
+  align-items: center;
+  gap: 28px;
+  background: linear-gradient(180deg, #f7faff 0%, #fff 100%);
+}
+
+.mitos-trust-copy { max-width: 390px; }
+.mitos-trust-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.mitos-trust-cards article { min-height: 240px; padding: 22px; border: 1px solid var(--mitos-line); border-radius: 18px; background: #fff; box-shadow: 0 12px 25px rgba(11,45,104,.06); }
+.mitos-trust-cards article > span { color: var(--mitos-blue); font-size: 42px; line-height: 1; font-family: Georgia, serif; }
+.mitos-trust-cards h3 { margin: 14px 0 8px; font-size: 17px; line-height: 1.25; }
+.mitos-trust-cards p { margin: 0; color: var(--mitos-body); font-size: 12px; line-height: 1.5; }
+
+/* FRAME 07 */
+.mitos-frame-faq {
+  padding: clamp(40px, 6vh, 72px) clamp(48px, 7vw, 108px);
+  display: grid;
+  grid-template-columns: .62fr 1.38fr;
+  align-items: center;
+  gap: 50px;
+  background: #fff;
+}
+
+.mitos-faq-copy { max-width: 420px; }
+.mitos-faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.mitos-faq-grid details { border: 1px solid var(--mitos-line); border-radius: 12px; background: #fff; box-shadow: 0 8px 20px rgba(11,45,104,.05); }
+.mitos-faq-grid summary { min-height: 58px; padding: 17px 20px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; color: var(--mitos-ink); font-size: 13px; font-weight: 800; list-style: none; }
+.mitos-faq-grid summary::-webkit-details-marker { display: none; }
+.mitos-faq-grid summary::after { content: '+'; color: var(--mitos-navy); font-size: 20px; }
+.mitos-faq-grid details[open] summary::after { content: '−'; }
+.mitos-faq-grid details p { margin: 0; padding: 0 20px 18px; color: var(--mitos-body); font-size: 12px; line-height: 1.5; }
+
+/* FRAME 08 */
+.mitos-frame-final {
+  display: grid;
+  grid-template-rows: 37% 63%;
+  color: #fff;
+  background: var(--mitos-navy);
+}
+
+.mitos-final-cta {
+  padding: 0 clamp(54px, 8vw, 126px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  background: linear-gradient(100deg, #0b367f 0%, #062866 62%, #021d4e 100%);
+}
+.mitos-final-cta span { color: #88b8ff; }
+.mitos-final-cta h2 { color: #fff; }
+.mitos-final-cta p { color: rgba(255,255,255,.76); }
+.mitos-final-actions { display: flex; gap: 12px; }
+.mitos-white-action { border: 1px solid #fff; color: var(--mitos-navy); background: #fff; }
+.mitos-ghost-action { border: 1px solid rgba(255,255,255,.55); color: #fff; background: transparent; }
+
+@media (max-width: 1100px) {
+  .mitos-search-card { width: min(690px, calc(100% - 390px)); }
+  .mitos-fleet-grid { grid-template-columns: repeat(2, 1fr); }
+  .mitos-car-card img { height: 50%; }
+  .mitos-frame-how { grid-template-columns: .7fr 1.4fr; }
+  .mitos-how-graphic { display: none; }
+  .mitos-frame-trust { grid-template-columns: .7fr 1.3fr; }
+  .mitos-travel-3d { display: none; }
+}
+
+@media (max-width: 840px) {
+  .mitos-home {
+    height: auto;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .mitos-frame {
+    height: auto;
+    min-height: calc(100svh - var(--mitos-header-height, 82px));
+    overflow: visible;
+    scroll-snap-align: none;
+  }
+  .mitos-frame-hero { display: block; }
+  .mitos-hero-media { min-height: 720px; background-position: 65% center; }
+  .mitos-hero-shade { background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.82) 36%, rgba(255,255,255,.15) 68%, transparent 100%); }
+  .mitos-hero-copy { top: 34px; left: 24px; width: calc(100% - 48px); }
+  .mitos-hero-copy h1 { font-size: clamp(42px, 11vw, 62px); }
+  .mitos-search-card { left: 20px; right: 20px; bottom: 20px; width: auto; }
+  .mitos-search-card form.home-search-form.mitos-search-form {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas: 'pickup dropoff' 'from to' 'check check' 'search search' !important;
+    grid-template-rows: auto auto 44px 46px !important;
+  }
+  .mitos-hero-benefits { grid-template-columns: 1fr 1fr; min-height: 230px; padding: 24px; }
+  .mitos-frame-why,
+  .mitos-frame-fleet,
+  .mitos-frame-how,
+  .mitos-frame-promos,
+  .mitos-frame-trust,
+  .mitos-frame-faq { padding: 52px 24px; }
+  .mitos-why-layout,
+  .mitos-frame-how,
+  .mitos-frame-trust,
+  .mitos-frame-faq { display: block; }
+  .mitos-benefit-grid,
+  .mitos-fleet-grid,
+  .mitos-promo-grid,
+  .mitos-trust-cards,
+  .mitos-faq-grid { grid-template-columns: 1fr; height: auto; }
+  .mitos-3d-visual,
+  .mitos-how-graphic,
+  .mitos-travel-3d { max-height: 360px; margin-top: 24px; }
+  .mitos-fleet-grid { grid-template-columns: 1fr 1fr; }
+  .mitos-car-card { min-height: 340px; }
+  .mitos-steps { grid-template-columns: 1fr 1fr; margin-top: 30px; }
+  .mitos-frame-final { min-height: 900px; grid-template-rows: auto 1fr; }
+  .mitos-final-cta { min-height: 310px; padding: 44px 24px; align-items: flex-start; flex-direction: column; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .mitos-hero-benefits,
+  .mitos-benefit-grid,
+  .mitos-fleet-grid,
+  .mitos-steps { grid-template-columns: 1fr; }
+  .mitos-search-card form.home-search-form.mitos-search-form {
+    grid-template-columns: 1fr !important;
+    grid-template-areas: 'pickup' 'dropoff' 'from' 'to' 'check' 'search' !important;
+    grid-template-rows: auto !important;
+  }
+  .mitos-final-actions,
+  .split-heading { align-items: stretch; flex-direction: column; }
+}

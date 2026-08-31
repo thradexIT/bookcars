@@ -8,61 +8,415 @@ div.search div.col-1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 5px;
 }
 
 div.search div.col-1 .map {
-  margin-top: 20px;
   min-height: 0;
   height: 180px;
-  margin-bottom: 3px;
 }
 
 div.search div.col-1 .filter {
-  margin: 5px 0;
   width: 100%;
   max-width: 480px;
 }
 
 div.search .btn-filters {
   max-width: 480px;
-  margin-top: 5px;
 }
 
-/* Device width is less than or equal to 960px */
+/* MITOS public rental funnel */
+.mitos-search-page {
+  --mitos-navy: #062866;
+  --mitos-blue: #1556b8;
+  --mitos-ink: #082b6e;
+  --mitos-body: #4f5f7b;
+  --mitos-line: #dce5f2;
+  width: 100%;
+  max-width: 1480px;
+  min-height: calc(100svh - var(--mitos-header-height, 88px));
+  margin: 0 auto;
+  padding: 34px clamp(24px, 4vw, 58px) 72px;
+  gap: clamp(24px, 3vw, 42px);
+  align-items: flex-start;
+  background: #f6f8fc;
+}
+
+.mitos-search-page .mitos-search-sidebar {
+  flex: 0 0 330px;
+  width: 330px;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.mitos-search-side-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 2px 8px;
+}
+
+.mitos-search-side-heading > span {
+  color: var(--mitos-blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.mitos-search-side-heading > strong {
+  color: var(--mitos-ink);
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.mitos-search-side-heading > small {
+  color: #73809a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mitos-search-page .mitos-search-sidebar .map,
+.mitos-search-page .mitos-search-sidebar .filter,
+.mitos-search-page .mitos-search-sidebar .btn-filters {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.mitos-search-page .mitos-search-sidebar .filter {
+  overflow: hidden;
+  border: 1px solid var(--mitos-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(10, 43, 103, .06);
+}
+
+.mitos-search-page .mitos-search-sidebar .btn-filters {
+  min-height: 46px;
+  border-color: #b8c8de;
+  border-radius: 12px;
+  color: var(--mitos-navy);
+  background: #fff;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.mitos-search-page .mitos-extra-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mitos-search-page .mitos-search-results {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Results title */
+.mitos-search-page .car-list-mitos {
+  width: 100%;
+  padding: 0 0 80px;
+  align-items: stretch;
+}
+
+.mitos-search-page .car-list-mitos .mitos-results-title {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 22px;
+  padding: 2px 2px 0;
+}
+
+.mitos-results-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--mitos-blue);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.mitos-search-page .car-list-mitos .mitos-results-title .bookcars {
+  color: var(--mitos-ink);
+  font-size: clamp(30px, 2.7vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.mitos-search-page .car-list-mitos .mitos-results-title .car-count {
+  margin-top: 7px;
+  color: #6d7b95;
+  font-size: 13px;
+}
+
+/* MITOS car cards — retain original transactional component, replace only its presentation */
+.mitos-search-page .mitos-car-result {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.mitos-search-page .mitos-car-result .car-container {
+  width: 100%;
+  padding: 0;
+  align-items: stretch;
+}
+
+.mitos-search-page .mitos-car-result .car-container > article {
+  width: 100%;
+  min-height: 370px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, 39%) minmax(0, 61%);
+  overflow: hidden;
+  border: 1px solid #dce5f2;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 46px rgba(11, 45, 104, .09);
+}
+
+.mitos-search-page .mitos-car-result .car-container article div.car {
+  width: auto;
+  min-width: 0;
+  min-height: 370px;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  justify-content: flex-end;
+  background: linear-gradient(145deg, #edf3fb 0%, #dce9f8 100%);
+}
+
+.mitos-search-page .mitos-car-result.is-yaris .car-container article div.car::before,
+.mitos-search-page .mitos-car-result.is-raize .car-container article div.car::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: 64% center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.mitos-search-page .mitos-car-result.is-yaris .car-container article div.car::before {
+  background-image: linear-gradient(180deg, rgba(4, 37, 92, 0) 50%, rgba(4, 37, 92, .35) 100%), url('/ChatGPT Image Aug 20, 2026, 05_00_04 PM (1).png');
+}
+
+.mitos-search-page .mitos-car-result.is-raize .car-container article div.car::before {
+  background-image: linear-gradient(180deg, rgba(4, 37, 92, 0) 50%, rgba(4, 37, 92, .35) 100%), url('/ChatGPT Image Aug 20, 2026, 05_00_05 PM (3).png');
+}
+
+.mitos-search-page .mitos-car-result.is-yaris .car-img,
+.mitos-search-page .mitos-car-result.is-raize .car-img {
+  display: none;
+}
+
+.mitos-search-page .mitos-car-result .car-container article div.car div.car-row {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, rgba(4, 31, 78, 0), rgba(4, 31, 78, .82));
+}
+
+.mitos-search-page .mitos-car-result .car-supplier {
+  max-width: none;
+  color: #fff;
+}
+
+.mitos-search-page .mitos-car-result .car-supplier-logo {
+  display: none !important;
+}
+
+.mitos-search-page .mitos-car-result .car-supplier-info {
+  width: auto !important;
+  margin: 0 !important;
+  padding: 7px 11px;
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 999px;
+  color: #fff !important;
+  background: rgba(6, 40, 102, .72);
+  font-size: 11px !important;
+  font-weight: 800;
+  backdrop-filter: blur(8px);
+}
+
+.mitos-search-page .mitos-car-result .car-footer {
+  display: none !important;
+}
+
+.mitos-search-page .mitos-car-result .car-container article div.car-info {
+  width: auto;
+  min-width: 0;
+  padding: 28px 30px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mitos-search-page .mitos-car-result .car-info-header {
+  gap: 24px;
+  align-items: flex-start !important;
+}
+
+.mitos-search-page .mitos-car-result .car-info-header .name {
+  padding: 0 !important;
+  color: var(--mitos-ink);
+  font-size: clamp(23px, 2vw, 31px) !important;
+  line-height: 1.08 !important;
+  letter-spacing: -.03em;
+}
+
+.mitos-search-page .mitos-car-result .price {
+  flex: 0 0 auto;
+  min-width: 132px;
+}
+
+.mitos-search-page .mitos-car-result .price-main {
+  color: var(--mitos-navy) !important;
+  font-size: 34px !important;
+}
+
+.mitos-search-page .mitos-car-result .price-days,
+.mitos-search-page .mitos-car-result .price-day {
+  color: #8490a7 !important;
+  font-size: 11px !important;
+}
+
+.mitos-search-page .mitos-car-result ul.car-info-list {
+  margin: 22px 0 16px;
+  gap: 8px;
+}
+
+.mitos-search-page .mitos-car-result ul.car-info-list li.car-type,
+.mitos-search-page .mitos-car-result ul.car-info-list li.gearbox,
+.mitos-search-page .mitos-car-result ul.car-info-list li.seats,
+.mitos-search-page .mitos-car-result ul.car-info-list li.doors,
+.mitos-search-page .mitos-car-result ul.car-info-list li.aircon {
+  width: 64px;
+  min-height: 42px;
+  margin: 0;
+  padding-top: 4px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #dbe5f2 inset;
+  background: #f7faff;
+}
+
+.mitos-search-page .mitos-car-result ul.extras-list {
+  margin: 0 0 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 18px;
+}
+
+.mitos-search-page .mitos-car-result ul.extras-list li {
+  width: auto !important;
+  margin: 0 !important;
+  color: #4e5e79;
+  line-height: 1.35;
+}
+
+.mitos-search-page .mitos-car-result ul.extras-list svg {
+  color: var(--mitos-blue);
+}
+
+.mitos-search-page .mitos-car-result .action {
+  margin-top: auto;
+}
+
+.mitos-search-page .mitos-car-result .btn-book {
+  min-width: 190px;
+  height: 48px !important;
+  border-radius: 10px !important;
+  background: var(--mitos-navy) !important;
+  font-weight: 800 !important;
+  text-transform: none !important;
+  box-shadow: 0 10px 24px rgba(6, 40, 102, .16);
+}
+
+@media only screen and (width <=1180px) {
+  .mitos-search-page {
+    padding-inline: 24px;
+    gap: 24px;
+  }
+
+  .mitos-search-page .mitos-search-sidebar {
+    flex-basis: 292px;
+    width: 292px;
+  }
+
+  .mitos-search-page .mitos-car-result .car-container > article {
+    grid-template-columns: minmax(260px, 36%) minmax(0, 64%);
+  }
+
+  .mitos-search-page .mitos-car-result ul.extras-list {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media only screen and (width <=960px) {
-  div.search {
+  div.search,
+  .mitos-search-page {
     flex: 0 1 auto;
     flex-direction: column;
   }
 
-  div.search div.col-1 {
-    padding: 5px;
-    margin-bottom: 5px;
+  .mitos-search-page {
+    padding: 24px 16px 56px;
   }
 
-  div.search div.col-2 {
-    padding: 1px;
+  .mitos-search-page .mitos-search-sidebar {
+    width: 100%;
+    flex-basis: auto;
+    padding: 0;
+    margin: 0;
+  }
+
+  .mitos-search-page .mitos-search-results {
+    width: 100%;
+    padding: 0;
+  }
+
+  .mitos-search-page .mitos-car-result .car-container > article {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .mitos-search-page .mitos-car-result .car-container article div.car {
+    width: 100%;
+    min-height: 280px;
+  }
+
+  .mitos-search-page .mitos-car-result .car-container article div.car-info {
+    width: 100%;
+    padding: 22px;
+  }
+
+  .mitos-search-page .mitos-car-result ul.extras-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* Device width is greater than or equal to 960px */
-
-@media only screen and (width >=960px) {
-  div.search {
-    flex-direction: row;
-  }
-
-  div.search div.col-1 {
-    width: 300px;
-    margin-left: 20px;
-  }
-
-  div.search div.col-2 {
-    display: flex;
+@media only screen and (width <=620px) {
+  .mitos-search-page .mitos-car-result .car-info-header {
     flex-direction: column;
-    align-items: center;
-    flex: 1 0 auto;
+  }
+
+  .mitos-search-page .mitos-car-result .price {
+    align-items: flex-start;
+  }
+
+  .mitos-search-page .mitos-car-result .price-days,
+  .mitos-search-page .mitos-car-result .price-day {
+    justify-content: flex-start;
+  }
+
+  .mitos-search-page .mitos-car-result ul.extras-list {
+    grid-template-columns: 1fr;
+  }
+
+  .mitos-search-page .mitos-car-result .btn-book {
+    width: 100%;
   }
 }

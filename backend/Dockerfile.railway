@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1
+
+FROM node:lts-alpine AS packages
+WORKDIR /bookcars/packages
+COPY ./packages /bookcars/packages
+RUN set -e && \
+  find ./ -mindepth 1 -maxdepth 1 -type d \
+  -exec sh -c 'for dir; do \
+    if [ -f "$dir/package.json" ]; then \
+      echo "Installing dependencies in $dir"; \
+      npm --prefix "$dir" install; \
+    fi; \
+  done' _ {} +
+
+FROM node:lts-alpine AS deps
+WORKDIR /bookcars/backend
+COPY ./backend/package*.json ./
+RUN npm install --force && npm cache clean --force
+
+FROM node:lts-alpine AS build
+WORKDIR /bookcars/backend
+COPY --from=deps /bookcars/backend/node_modules ./node_modules
+COPY --from=packages /bookcars/packages /bookcars/packages
+COPY ./backend ./
+RUN npm run build
+
+FROM node:lts-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /bookcars/backend
+COPY --from=deps /bookcars/backend/node_modules ./node_modules
+COPY --from=packages /bookcars/packages /bookcars/packages
+COPY --from=build /bookcars/backend/dist ./dist
+COPY ./backend/package*.json ./
+
+EXPOSE 4002
+
+# Runtime configuration comes from Railway variables. Never bake .env.docker into the image.
+# Production bootstrap/setup is intentionally not run on every restart.
+CMD ["node", "--import", "./dist/src/monitoring/instrument.js", "dist/src"]
