@@ -1,58 +1,160 @@
 import { NextFunction, Request, Response } from 'express'
-import Booking from '../models/Booking'
+import { Types } from 'mongoose'
 import PaymentTransaction, {
   PaymentProvider,
   PaymentStatus,
 } from '../models/PaymentTransaction'
+import { getAuthoritativeBookingCharge } from '../services/bookingPricingService'
+import { getMercadoPagoActiveKey } from '../services/paymentStateService'
 import * as logger from '../utils/logger'
 
+const activeStatuses = [PaymentStatus.Pending, PaymentStatus.Approved]
+
+const isDuplicateKeyError = (err: unknown) => (
+  !!err
+  && typeof err === 'object'
+  && 'code' in err
+  && Number((err as { code?: unknown }).code) === 11000
+)
+
 /**
- * Prevent a reservation from opening a second active Mercado Pago payment with
- * a different idempotency key.
+ * Atomically reserve the right to create an active Mercado Pago payment.
  *
- * Same-key retries continue to the controller, which already performs provider
- * read-back and returns the original transaction. Rejected/failed/refunded
- * attempts are not considered active and therefore do not block a later retry.
+ * The previous implementation did a read-before-write check, which allowed two
+ * simultaneous requests with different idempotency keys to both observe "no
+ * active payment" and then both call the provider. This middleware now inserts
+ * the pending PaymentTransaction claim before provider I/O. A unique sparse
+ * activeKey index makes MongoDB the cross-process serialization boundary.
+ *
+ * Same-key retries are still safe: they reuse the same PaymentTransaction and
+ * the controller/provider idempotency contract remains authoritative. Terminal
+ * provider states release activeKey in paymentStateService, enabling a later
+ * legitimate retry with a new key.
  */
 const mercadoPagoPaymentGuard = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const bookingId = String(req.body?.bookingId || '')
-    const reservationSessionId = String(req.body?.reservationSessionId || '')
+    const {
+      bookingId,
+      reservationSessionId,
+      token,
+      paymentMethodId,
+      payer,
+    } = req.body || {}
     const idempotencyKey = String(req.headers['x-idempotency-key'] || '').trim()
 
-    // Keep the controller authoritative for malformed requests and its existing
-    // 400 contract. The guard only acts once the identifiers it needs exist.
-    if (!bookingId || !reservationSessionId || !idempotencyKey) {
+    // Preserve the controller's existing malformed-request contract. Only
+    // create a financial claim once all pre-provider identifiers are present.
+    if (
+      !bookingId
+      || !reservationSessionId
+      || !paymentMethodId
+      || !token
+      || !payer?.email
+      || !idempotencyKey
+    ) {
       next()
       return
     }
 
-    const booking = await Booking.findById(bookingId).select('_id sessionId')
-    if (!booking || !booking.sessionId || booking.sessionId !== reservationSessionId) {
+    const bookingIdString = String(bookingId)
+    const { amount, currency, booking, driver } = await getAuthoritativeBookingCharge(bookingIdString)
+
+    if (!booking.sessionId || booking.sessionId !== String(reservationSessionId)) {
       res.sendStatus(404)
       return
     }
 
-    const activePayment = await PaymentTransaction.findOne({
+    if (driver.email && driver.email.toLowerCase() !== String(payer.email).toLowerCase()) {
+      res.status(400).json({ error: 'Payment payer does not match reservation customer' })
+      return
+    }
+
+    // Preserve compatibility with active transactions created before activeKey
+    // existed. This read is not the concurrency primitive; the unique claim
+    // below is. It simply prevents a legacy active transaction from being
+    // bypassed by a new key.
+    const existingActive = await PaymentTransaction.findOne({
       booking: booking._id,
       provider: PaymentProvider.MercadoPago,
-      idempotencyKey: { $ne: idempotencyKey },
-      status: { $in: [PaymentStatus.Pending, PaymentStatus.Approved] },
+      status: { $in: activeStatuses },
     }).sort({ _id: -1 })
 
-    if (activePayment) {
+    if (existingActive && existingActive.idempotencyKey !== idempotencyKey) {
       res.status(409).json({
         error: 'Reservation already has an active Mercado Pago payment',
-        status: activePayment.status,
+        status: existingActive.status,
       })
       return
     }
 
-    next()
+    const activeKey = getMercadoPagoActiveKey(bookingIdString)
+
+    try {
+      const claim = await PaymentTransaction.findOneAndUpdate(
+        { idempotencyKey },
+        {
+          $setOnInsert: {
+            booking: new Types.ObjectId(bookingIdString),
+            provider: PaymentProvider.MercadoPago,
+            externalReference: bookingIdString,
+            idempotencyKey,
+            activeKey,
+            status: PaymentStatus.Pending,
+            amount,
+            currency,
+            paymentMethodId,
+          },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+
+      if (!claim) {
+        throw new Error('Mercado Pago payment claim was not created')
+      }
+
+      if (claim.booking.toString() !== bookingIdString) {
+        res.status(409).json({ error: 'Idempotency key already belongs to another reservation' })
+        return
+      }
+
+      next()
+      return
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err
+      }
+
+      // A duplicate can mean either:
+      // 1) same idempotency key racing with itself -> safe to continue because
+      //    the provider receives the same key, or
+      // 2) a different key lost the unique activeKey race -> block it before
+      //    any provider call.
+      const existingByKey = await PaymentTransaction.findOne({ idempotencyKey })
+      if (existingByKey) {
+        if (existingByKey.booking.toString() !== bookingIdString) {
+          res.status(409).json({ error: 'Idempotency key already belongs to another reservation' })
+          return
+        }
+
+        next()
+        return
+      }
+
+      const winningActiveClaim = await PaymentTransaction.findOne({ activeKey })
+      if (winningActiveClaim) {
+        res.status(409).json({
+          error: 'Reservation already has an active Mercado Pago payment',
+          status: winningActiveClaim.status,
+        })
+        return
+      }
+
+      throw err
+    }
   } catch (err) {
-    logger.error('[MercadoPago.paymentGuard] Failed to verify active payment', err)
+    logger.error('[MercadoPago.paymentGuard] Failed to reserve active payment', err)
     // Payment creation is a financial mutation: guard failures fail closed.
-    res.status(500).json({ error: 'Unable to verify active payment state' })
+    res.status(500).json({ error: 'Unable to reserve active payment state' })
   }
 }
 
