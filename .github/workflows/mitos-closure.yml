@@ -30,6 +30,7 @@ jobs:
       - name: Run MITOS lifecycle/payment security tests
         working-directory: backend
         env:
+          NODE_OPTIONS: --experimental-vm-modules
           BC_EMAIL_ENABLED: "false"
           BC_SMTP_HOST: localhost
           BC_SMTP_PORT: "2525"
