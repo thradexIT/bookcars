@@ -10,6 +10,7 @@ import { ReservationStatus } from '../models/ReservationState'
 import {
   InvalidRentalTransitionError,
   assertRentalTransition,
+  canCheckoutReservationStatus,
   closeRentalIfReady,
   getRentalLifecycle as findRentalLifecycle,
   transitionRental,
@@ -53,6 +54,15 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
     const booking = await Booking.findById(id).populate<{ car: env.Car }>('car')
     if (!booking) {
       res.status(404).send('Booking not found')
+      return
+    }
+
+    // If this booking participates in the new MITOS ReservationState model,
+    // physical handover is forbidden until the commercial reservation is
+    // confirmed. Legacy bookings without ReservationState remain compatible.
+    const reservation = await getReservationState(id)
+    if (!canCheckoutReservationStatus(reservation?.status)) {
+      res.status(409).send(`Reservation must be confirmed before checkout (current: ${reservation?.status})`)
       return
     }
 
