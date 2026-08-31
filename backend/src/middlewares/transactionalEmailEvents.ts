@@ -13,6 +13,22 @@ import * as logger from '../utils/logger'
 
 export const isCommittedTransactionalMutation = (statusCode: number) => statusCode === 200
 
+const recordReservationReceived = async (bookingId: string, payLater: boolean) => {
+  await ensureReservationState(bookingId, ReservationStatus.Pending)
+
+  // Pay-later is a confirmed reservation with deferred collection, not an
+  // online payment that must remain awaiting_payment. Keep this in the new
+  // reservation authority without changing inherited BookingStatus semantics.
+  if (payLater) {
+    await transitionReservation(bookingId, ReservationStatus.Confirmed)
+  }
+
+  await sendBookingEventEmailNonBlocking({
+    bookingId,
+    event: TransactionalEmailEvent.ReservationReceived,
+  })
+}
+
 /**
  * Capture the Booking id returned by checkout without changing the inherited
  * checkout response contract. Works for both the normal controller and the
@@ -29,11 +45,7 @@ export const reservationReceivedEmail = (req: Request, res: Response, next: Next
     if (!bookingId) return
 
     emitted = true
-    void ensureReservationState(bookingId, ReservationStatus.Pending)
-      .then(() => sendBookingEventEmailNonBlocking({
-        bookingId,
-        event: TransactionalEmailEvent.ReservationReceived,
-      }))
+    void recordReservationReceived(bookingId, req.body?.payLater === true)
       .catch((err) => logger.error(`[reservationReceivedEmail] Booking ${bookingId}`, err))
   }
 
