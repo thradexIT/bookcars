@@ -11,7 +11,7 @@ import {
 } from '../services/reservationStateService'
 import * as logger from '../utils/logger'
 
-const isCommitted = (statusCode: number) => statusCode === 200
+export const isCommittedTransactionalMutation = (statusCode: number) => statusCode === 200
 
 /**
  * Capture the Booking id returned by checkout without changing the inherited
@@ -24,7 +24,7 @@ export const reservationReceivedEmail = (req: Request, res: Response, next: Next
   const originalSend = res.send.bind(res)
 
   const emit = (body: any) => {
-    if (emitted || !isCommitted(res.statusCode)) return
+    if (emitted || !isCommittedTransactionalMutation(res.statusCode)) return
     const bookingId = body && typeof body === 'object' ? String(body.bookingId || '') : ''
     if (!bookingId) return
 
@@ -59,7 +59,7 @@ export const reservationReceivedEmail = (req: Request, res: Response, next: Next
  */
 export const cancellationRequestedEmail = (req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
-    if (!isCommitted(res.statusCode)) return
+    if (!isCommittedTransactionalMutation(res.statusCode)) return
     const bookingId = String(req.params.id || '')
     if (!bookingId) return
 
@@ -91,7 +91,7 @@ const cancelReservationAfterSuccess = async (bookingId: string) => {
  */
 export const reservationCancelledOnUpdate = (req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
-    if (!isCommitted(res.statusCode)) return
+    if (!isCommittedTransactionalMutation(res.statusCode)) return
     const booking = req.body?.booking
     if (booking?.status !== bookcarsTypes.BookingStatus.Cancelled) return
     void cancelReservationAfterSuccess(String(booking._id || ''))
@@ -104,7 +104,7 @@ export const reservationCancelledOnUpdate = (req: Request, res: Response, next: 
  */
 export const reservationCancelledOnBulkUpdate = (req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
-    if (!isCommitted(res.statusCode)) return
+    if (!isCommittedTransactionalMutation(res.statusCode)) return
     if (req.body?.status !== bookcarsTypes.BookingStatus.Cancelled) return
 
     const ids = Array.isArray(req.body?.ids) ? req.body.ids : []
