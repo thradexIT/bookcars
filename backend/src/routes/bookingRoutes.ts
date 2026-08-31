@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import routeNames from '../config/bookingRoutes.config'
 import authJwt from '../middlewares/authJwt'
+import { reuseCheckoutSession } from '../middlewares/idempotentCheckout'
 import * as bookingController from '../controllers/bookingController'
 import * as rentalLifecycleController from '../controllers/rentalLifecycleController'
 import * as adminBookingSupplierController from '../controllers/adminBookingSupplierController'
@@ -9,7 +10,7 @@ import * as adminBookingSupplierController from '../controllers/adminBookingSupp
 const routes = express.Router()
 
 routes.route(routeNames.create).post(authJwt.verifyToken, bookingController.create)
-routes.route(routeNames.checkout).post(bookingController.checkout)
+routes.route(routeNames.checkout).post(reuseCheckoutSession, bookingController.checkout)
 routes.route(routeNames.update).put(authJwt.verifyToken, bookingController.update)
 routes.route(routeNames.updateStatus).post(authJwt.verifyToken, bookingController.updateStatus)
 routes.route(routeNames.delete).post(authJwt.verifyToken, bookingController.deleteBookings)
