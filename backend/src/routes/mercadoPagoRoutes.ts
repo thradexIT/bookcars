@@ -1,6 +1,7 @@
 import express from 'express'
 import routeNames from '../config/mercadoPagoRoutes.config'
 import authJwt from '../middlewares/authJwt'
+import mercadoPagoPaymentGuard from '../middlewares/mercadoPagoPaymentGuard'
 import * as mercadoPagoController from '../controllers/mercadoPagoController'
 
 const routes = express.Router()
@@ -11,8 +12,9 @@ routes.route(routeNames.quotePayment).get(mercadoPagoController.quotePayment)
 
 // Public to support guest checkout. Security comes from the persisted booking,
 // reservation session id, server-owned amount and provider idempotency key, not
-// from client-supplied pricing data.
-routes.route(routeNames.createPayment).post(mercadoPagoController.createPayment)
+// from client-supplied pricing data. The guard prevents a second active payment
+// from being opened for the same reservation under a different key.
+routes.route(routeNames.createPayment).post(mercadoPagoPaymentGuard, mercadoPagoController.createPayment)
 
 // Mercado Pago calls this endpoint directly; provider signature validation is
 // performed inside the controller before any event is processed.
