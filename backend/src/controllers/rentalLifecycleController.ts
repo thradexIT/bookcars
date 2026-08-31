@@ -70,9 +70,10 @@ export const checkoutDeparture = async (req: Request, res: Response) => {
     }
 
     await booking.save()
-    const lifecycle = await transitionRental(id, RentalLifecycleState.CheckedOut)
+    await transitionRental(id, RentalLifecycleState.CheckedOut)
 
-    res.json({ booking, lifecycle })
+    // Preserve the legacy HTTP contract consumed by Admin/LaborSync.
+    res.json(booking)
   } catch (err) {
     if (sendLifecycleError(res, err)) {
       return
@@ -134,9 +135,10 @@ export const checkinReturn = async (req: Request, res: Response) => {
 
     await booking.save()
     await transitionRental(id, RentalLifecycleState.Returned)
-    const lifecycle = await closeRentalIfReady(id, booking)
+    await closeRentalIfReady(id, booking)
 
-    res.json({ booking, lifecycle })
+    // Preserve the legacy HTTP contract consumed by Admin/LaborSync.
+    res.json(booking)
   } catch (err) {
     if (sendLifecycleError(res, err)) {
       return
@@ -176,7 +178,7 @@ export const verifyInspection = async (req: Request, res: Response) => {
     }
 
     await booking.save()
-    const lifecycle = await closeRentalIfReady(id, booking)
+    await closeRentalIfReady(id, booking)
 
     const updatedBooking = await Booking.findById(id)
       .populate<{ supplier: env.UserInfo }>('supplier')
@@ -205,7 +207,8 @@ export const verifyInspection = async (req: Request, res: Response) => {
       .populate<{ _additionalDriver: env.AdditionalDriver }>('_additionalDriver')
       .lean()
 
-    res.json({ booking: updatedBooking, lifecycle })
+    // Preserve the legacy HTTP contract consumed by Admin/LaborSync.
+    res.json(updatedBooking)
   } catch (err) {
     if (sendLifecycleError(res, err)) {
       return
