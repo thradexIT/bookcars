@@ -28,6 +28,12 @@ const getCopy = (language?: string) => {
   return en
 }
 
+const getVehicleLabel = (language?: string) => {
+  if (language === 'fr') return 'Véhicule'
+  if (language === 'en') return 'Vehicle'
+  return 'Vehículo'
+}
+
 const eventCopy = (event: TransactionalEmailEvent, copy: typeof en) => {
   switch (event) {
     case TransactionalEmailEvent.ReservationReceived:
@@ -142,7 +148,8 @@ export const sendBookingEventEmail = async ({
     if (!driver?.email) throw new Error(`Booking ${bookingId} has no customer email`)
 
     const car = await Car.findById(booking.car)
-    const copy = getCopy(driver.language || env.DEFAULT_LANGUAGE)
+    const language = driver.language || env.DEFAULT_LANGUAGE
+    const copy = getCopy(language)
     const eventText = eventCopy(event, copy)
     const bookingUrl = helper.joinURL(env.FRONTEND_HOST, `booking?b=${encodeURIComponent(bookingId)}`)
 
@@ -158,7 +165,7 @@ export const sendBookingEventEmail = async ({
         ${copy.HELLO}${escapeHtml(driver.fullName)},<br><br>
         ${escapeHtml(eventText.body)}<br><br>
         <strong>${escapeHtml(copy.BOOKING_CONFIRMED_SUBJECT_PART1)}:</strong> ${escapeHtml(bookingId)}<br>
-        ${car?.name ? `<strong>${escapeHtml(copy.CAR_IMAGE_REQUIRED.split(':')[0])}:</strong> ${escapeHtml(car.name)}<br>` : ''}
+        ${car?.name ? `<strong>${escapeHtml(getVehicleLabel(language))}:</strong> ${escapeHtml(car.name)}<br>` : ''}
         ${providerReference}<br><br>
         ${bookingUrl ? `<a href="${escapeHtml(bookingUrl)}">${escapeHtml(copy.BOOKING_CONFIRMED_PART14)}</a><br><br>` : ''}
         ${copy.REGARDS}
@@ -196,15 +203,28 @@ export const sendBookingEventEmail = async ({
   }
 }
 
+/**
+ * Persist the delivery intent before returning to the business-state caller,
+ * then move the external provider call off the request/webhook critical path.
+ * State transitions therefore cannot be rolled back or delayed by email.
+ */
 export const sendBookingEventEmailNonBlocking = async (args: {
   bookingId: string
   event: TransactionalEmailEvent
   providerPaymentId?: string
 }) => {
   try {
-    return await sendBookingEventEmail(args)
+    await ensureDelivery(args.bookingId, args.event)
+
+    setImmediate(() => {
+      void sendBookingEventEmail(args).catch((err) => {
+        logger.error(`[transactionalEmail] ${args.event} failed for booking ${args.bookingId}`, err)
+      })
+    })
+
+    return { sent: false, deduplicated: false, queued: true }
   } catch (err) {
-    logger.error(`[transactionalEmail] ${args.event} failed for booking ${args.bookingId}`, err)
-    return { sent: false, deduplicated: false, error: true }
+    logger.error(`[transactionalEmail] Failed to queue ${args.event} for booking ${args.bookingId}`, err)
+    return { sent: false, deduplicated: false, queued: false, error: true }
   }
 }
