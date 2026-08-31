@@ -6,6 +6,7 @@ import * as env from '../config/env.config'
 import i18n from '../lang/i18n'
 import * as logger from '../utils/logger'
 import { RentalLifecycleState } from '../models/RentalLifecycle'
+import { ReservationStatus } from '../models/ReservationState'
 import {
   InvalidRentalTransitionError,
   assertRentalTransition,
@@ -13,6 +14,10 @@ import {
   getRentalLifecycle as findRentalLifecycle,
   transitionRental,
 } from '../services/rentalLifecycleService'
+import {
+  getReservationState,
+  transitionReservation,
+} from '../services/reservationStateService'
 
 const sendLifecycleError = (res: Response, err: unknown) => {
   if (err instanceof InvalidRentalTransitionError) {
@@ -20,6 +25,20 @@ const sendLifecycleError = (res: Response, err: unknown) => {
     return true
   }
   return false
+}
+
+/**
+ * Closing the physical rental is the authoritative completion boundary for a
+ * confirmed MITOS reservation. Legacy bookings that have no explicit
+ * ReservationState are left untouched rather than inventing history.
+ */
+const completeReservationIfRentalClosed = async (bookingId: string, lifecycle: any) => {
+  if (!lifecycle || lifecycle.state !== RentalLifecycleState.Closed) return
+
+  const reservation = await getReservationState(bookingId)
+  if (!reservation || reservation.status !== ReservationStatus.Confirmed) return
+
+  await transitionReservation(bookingId, ReservationStatus.Completed)
 }
 
 /**
@@ -135,7 +154,8 @@ export const checkinReturn = async (req: Request, res: Response) => {
 
     await booking.save()
     await transitionRental(id, RentalLifecycleState.Returned)
-    await closeRentalIfReady(id, booking)
+    const lifecycle = await closeRentalIfReady(id, booking)
+    await completeReservationIfRentalClosed(id, lifecycle)
 
     // Preserve the legacy HTTP contract consumed by Admin/LaborSync.
     res.json(booking)
@@ -178,7 +198,8 @@ export const verifyInspection = async (req: Request, res: Response) => {
     }
 
     await booking.save()
-    await closeRentalIfReady(id, booking)
+    const lifecycle = await closeRentalIfReady(id, booking)
+    await completeReservationIfRentalClosed(id, lifecycle)
 
     const updatedBooking = await Booking.findById(id)
       .populate<{ supplier: env.UserInfo }>('supplier')
