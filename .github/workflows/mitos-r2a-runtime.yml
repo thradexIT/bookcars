@@ -136,15 +136,15 @@ jobs:
         working-directory: backend
         run: npm run seed:mitos:dev
 
-      - name: Execute R2A provider-simulated runtime certification
+      - name: Execute R2A provider-simulated runtime certification v2
         working-directory: backend
-        run: npx tsx scripts/mitos-r2a-runtime-cert.ts
+        run: npx tsx scripts/mitos-r2a-runtime-cert-v2.ts
 
-      - name: Upload R2A evidence artifact
+      - name: Upload R2A v2 evidence artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mitos-r2a-runtime-evidence-${{ github.run_id }}
-          path: /tmp/mitos-r2/evidence/mitos-r2a-runtime.json
+          name: mitos-r2a-runtime-v2-evidence-${{ github.run_id }}
+          path: /tmp/mitos-r2/evidence/mitos-r2a-runtime-v2.json
           if-no-files-found: warn
           retention-days: 14
