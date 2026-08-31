@@ -7,6 +7,7 @@ import i18n from '../lang/i18n'
 import Booking from '../models/Booking'
 import PaymentTransaction, { PaymentStatus } from '../models/PaymentTransaction'
 import { ReservationStatus } from '../models/ReservationState'
+import { TransactionalEmailEvent } from '../models/TransactionalEmailDelivery'
 import { getAuthoritativeBookingCharge } from '../services/bookingPricingService'
 import {
   getMercadoPagoPaymentByProviderId,
@@ -16,6 +17,7 @@ import {
   ensureReservationState,
   transitionReservation,
 } from '../services/reservationStateService'
+import { sendBookingEventEmailNonBlocking } from '../services/transactionalEmailService'
 import * as logger from '../utils/logger'
 
 const client = new MercadoPagoConfig({ accessToken: env.MERCADO_PAGO_ACCESS_TOKEN })
@@ -80,6 +82,19 @@ const applyApprovedPayment = async (bookingId: string, transactionId: string) =>
   await booking.save()
 
   await transitionReservation(bookingId, ReservationStatus.Confirmed)
+
+  // Payment approval and reservation confirmation are separate customer events.
+  // The persistent delivery ledger makes repeated webhook/reconciliation calls
+  // safe without relying on browser state.
+  await sendBookingEventEmailNonBlocking({
+    bookingId,
+    event: TransactionalEmailEvent.PaymentApproved,
+    providerPaymentId: transaction.providerPaymentId,
+  })
+  await sendBookingEventEmailNonBlocking({
+    bookingId,
+    event: TransactionalEmailEvent.ReservationConfirmed,
+  })
 
   if (!transaction.processedApprovalAt) {
     transaction.processedApprovalAt = new Date()
@@ -322,8 +337,8 @@ export const webhook = async (req: Request, res: Response) => {
     }
 
     // Acknowledge valid notifications quickly. Repeated notifications are safe
-    // because provider state synchronization and reservation transitions are
-    // idempotent.
+    // because provider state synchronization, reservation transitions and
+    // transactional email delivery are idempotent.
     res.sendStatus(200)
   } catch (err) {
     logger.error('[MercadoPago.webhook] Failed to synchronize payment', err)
