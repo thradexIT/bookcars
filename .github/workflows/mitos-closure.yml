@@ -34,6 +34,7 @@ jobs:
             __tests__/rentalLifecycleService.test.ts \
             __tests__/paymentStateService.test.ts \
             __tests__/mercadoPagoWebhook.test.ts \
+            __tests__/transactionalEmailSemantics.test.ts \
             --runInBand --no-cache
 
       - name: Build MITOS ADMIN
