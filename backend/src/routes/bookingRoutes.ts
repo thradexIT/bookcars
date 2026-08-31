@@ -3,6 +3,7 @@ import multer from 'multer'
 import routeNames from '../config/bookingRoutes.config'
 import authJwt from '../middlewares/authJwt'
 import * as bookingController from '../controllers/bookingController'
+import * as rentalLifecycleController from '../controllers/rentalLifecycleController'
 import * as adminBookingSupplierController from '../controllers/adminBookingSupplierController'
 
 const routes = express.Router()
@@ -23,12 +24,14 @@ routes.route(routeNames.purchaseOrder).get(bookingController.downloadPurchaseOrd
 routes.route(routeNames.checkoutReportPdf).get(bookingController.downloadCheckoutReport)
 routes.route(routeNames.checkoutDeparture).post(
   [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
-  bookingController.checkoutDeparture
+  rentalLifecycleController.checkoutDeparture,
 )
 routes.route(routeNames.checkinReturn).post(
   [authJwt.verifyToken, multer({ storage: multer.memoryStorage() }).any()],
-  bookingController.checkinReturn
+  rentalLifecycleController.checkinReturn,
 )
 routes.route(routeNames.saveSignatures).patch(authJwt.verifyToken, bookingController.saveSignatures)
-routes.route(routeNames.verifyInspection).post(authJwt.verifyToken, bookingController.verifyInspection)
+routes.route(routeNames.verifyInspection).post(authJwt.verifyToken, rentalLifecycleController.verifyInspection)
+routes.route(routeNames.getRentalLifecycle).get(authJwt.verifyToken, rentalLifecycleController.getRentalLifecycle)
+
 export default routes
