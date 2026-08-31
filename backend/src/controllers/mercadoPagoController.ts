@@ -55,6 +55,10 @@ export const validateMercadoPagoWebhookSignature = ({
     && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
 }
 
+const validateReservationSession = (bookingSessionId: string | undefined, suppliedSessionId: string) => (
+  !!bookingSessionId && bookingSessionId === suppliedSessionId
+)
+
 const applyApprovedPayment = async (bookingId: string, transactionId: string) => {
   const transaction = await PaymentTransaction.findById(transactionId)
   if (!transaction || transaction.status !== PaymentStatus.Approved) return
@@ -105,11 +109,11 @@ export const syncMercadoPagoPayment = async (providerPaymentId: string) => {
     providerPaymentId,
     externalReference: bookingId,
     idempotencyKey: existing?.idempotencyKey || `recovered-${providerPaymentId}`,
-    providerStatus: providerPayment.status,
-    statusDetail: providerPayment.status_detail,
+    providerStatus: providerPayment.status || undefined,
+    statusDetail: providerPayment.status_detail || undefined,
     amount,
     currency,
-    paymentMethodId: providerPayment.payment_method_id,
+    paymentMethodId: providerPayment.payment_method_id || undefined,
   })
 
   if (transaction.status === PaymentStatus.Approved) {
@@ -117,6 +121,36 @@ export const syncMercadoPagoPayment = async (providerPaymentId: string) => {
   }
 
   return transaction
+}
+
+/**
+ * Return the server-owned amount shown by the Mercado Pago Brick. The caller
+ * must prove it owns the temporary checkout session, not merely know a booking
+ * identifier.
+ */
+export const quotePayment = async (req: Request, res: Response) => {
+  try {
+    const bookingId = String(req.params.bookingId || '')
+    const reservationSessionId = String(req.params.sessionId || '')
+    const charge = await getAuthoritativeBookingCharge(bookingId)
+
+    if (!validateReservationSession(charge.booking.sessionId, reservationSessionId)) {
+      res.sendStatus(404)
+      return
+    }
+
+    await ensureReservationState(bookingId, ReservationStatus.Pending)
+    await transitionReservation(bookingId, ReservationStatus.AwaitingPayment)
+
+    res.json({
+      bookingId,
+      amount: charge.amount,
+      currency: charge.currency,
+    })
+  } catch (err) {
+    logger.error('[MercadoPago.quotePayment] Failed to create authoritative quote', err)
+    res.status(400).json({ error: i18n.t('ERROR') })
+  }
 }
 
 /**
@@ -129,6 +163,7 @@ export const createPayment = async (req: Request, res: Response) => {
   try {
     const {
       bookingId,
+      reservationSessionId,
       token,
       installments,
       paymentMethodId,
@@ -137,8 +172,8 @@ export const createPayment = async (req: Request, res: Response) => {
     } = req.body || {}
     const idempotencyKey = getIdempotencyKey(req)
 
-    if (!bookingId || !paymentMethodId || !token || !payer?.email || !idempotencyKey) {
-      res.status(400).json({ error: 'bookingId, payment details and X-Idempotency-Key are required' })
+    if (!bookingId || !reservationSessionId || !paymentMethodId || !token || !payer?.email || !idempotencyKey) {
+      res.status(400).json({ error: 'bookingId, reservation session, payment details and X-Idempotency-Key are required' })
       return
     }
 
@@ -161,7 +196,11 @@ export const createPayment = async (req: Request, res: Response) => {
       }
     }
 
-    const { amount, currency, driver } = await getAuthoritativeBookingCharge(bookingId)
+    const { amount, currency, driver, booking } = await getAuthoritativeBookingCharge(bookingId)
+    if (!validateReservationSession(booking.sessionId, String(reservationSessionId))) {
+      res.sendStatus(404)
+      return
+    }
     if (driver.email && driver.email.toLowerCase() !== String(payer.email).toLowerCase()) {
       res.status(400).json({ error: 'Payment payer does not match reservation customer' })
       return
@@ -217,8 +256,8 @@ export const createPayment = async (req: Request, res: Response) => {
       providerPaymentId,
       externalReference: bookingId,
       idempotencyKey,
-      providerStatus: data.status,
-      statusDetail: data.status_detail,
+      providerStatus: data.status || undefined,
+      statusDetail: data.status_detail || undefined,
       amount,
       currency,
       paymentMethodId,
