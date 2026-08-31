@@ -27,6 +27,15 @@ jobs:
           npm install --force
           npm run build
 
+      - name: Run MITOS lifecycle/payment security tests
+        working-directory: backend
+        run: |
+          npx jest \
+            __tests__/rentalLifecycleService.test.ts \
+            __tests__/paymentStateService.test.ts \
+            __tests__/mercadoPagoWebhook.test.ts \
+            --runInBand --no-cache
+
       - name: Build MITOS ADMIN
         working-directory: admin
         env:
