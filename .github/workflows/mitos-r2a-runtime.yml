@@ -140,11 +140,17 @@ jobs:
         working-directory: backend
         run: npx tsx scripts/mitos-r2a-runtime-cert-v2.ts
 
-      - name: Upload R2A v2 evidence artifact
+      - name: Execute R2A concurrent double-payment gate
+        working-directory: backend
+        run: npx tsx scripts/mitos-r2a-concurrency-cert.ts
+
+      - name: Upload R2A evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mitos-r2a-runtime-v2-evidence-${{ github.run_id }}
-          path: /tmp/mitos-r2/evidence/mitos-r2a-runtime-v2.json
+          name: mitos-r2a-runtime-evidence-${{ github.run_id }}
+          path: |
+            /tmp/mitos-r2/evidence/mitos-r2a-runtime-v2.json
+            /tmp/mitos-r2/evidence/mitos-r2a-concurrency.json
           if-no-files-found: warn
           retention-days: 14
