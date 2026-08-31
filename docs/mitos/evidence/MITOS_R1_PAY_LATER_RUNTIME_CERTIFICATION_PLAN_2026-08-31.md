@@ -1,7 +1,7 @@
 # MITOS R1 — Pay Later Runtime Certification Plan
 
 Date: 2026-08-31
-Status: CERTIFICATION BRANCH OPENED — NO RUNTIME CLAIM YET
+Status: CERTIFIED — ISOLATED EPHEMERAL RUNTIME
 
 ## Isolation baseline
 
@@ -10,6 +10,9 @@ Status: CERTIFICATION BRANCH OPENED — NO RUNTIME CLAIM YET
 - Parent implementation branch: `feature/mitos-rental-completion`
 - Frozen starting commit: `b6858ecfb6f7204508c4392dc79898b0bbfba672`
 - Starting CI evidence: `mitos-closure` run #142 — success.
+- R1 runtime evidence: `mitos-r1-runtime` run `33437658767` — success.
+- Runtime head under certification: `606cec77434b0a21cccc22ba728fb437379a3952`.
+- Evidence receipt: `docs/mitos/evidence/MITOS_R1_PAY_LATER_RUNTIME_CERTIFICATION_RECEIPT_2026-08-31.md`.
 
 ## Protected refs / forbidden actions
 
@@ -29,7 +32,7 @@ The following actions are explicitly forbidden during R1:
 - no Agent Factory work;
 - no broad refactor of code that is already functional.
 
-All R1 changes, if any are required, must remain on `cert/mitos-r1-pay-later-runtime` until separately reviewed.
+All R1 changes remain on `cert/mitos-r1-pay-later-runtime` until separately reviewed.
 
 ## Preservation rule
 
@@ -43,76 +46,102 @@ A code change is allowed only if runtime/source evidence demonstrates a reproduc
 4. followed by the existing MITOS CI gate;
 5. documented with before/after behavior and exact files touched.
 
-## R1 journey to certify
+No functional corrective change was required to certify R1.
 
-The Pay Later path must be proven as one coherent rental lifecycle:
+## R1 journey certified
 
-`Landing → Search → Vehicle → Reservation (Pay Later) → Admin → LaborSync → Checkout departure → Return → Check-in / inspection → Closure → Reservation completed`
+The Pay Later backend/operational path was demonstrated as one coherent rental lifecycle:
+
+`Customer/Auth → Reservation (Pay Later) → Admin/LaborSync operational visibility → Checkout departure → Return → Check-in / inspection → Closure → Reservation completed`
 
 ## Required state evidence
 
-The runtime evidence must demonstrate, where the corresponding explicit state exists:
-
 ### Reservation
 
+Runtime evidence demonstrated:
+
 - reservation is accepted;
-- Pay Later does not leave the reservation in `awaiting_payment`;
-- reservation becomes `confirmed` before physical handover;
-- an unconfirmed explicit MitoS reservation cannot be checked out;
-- after successful rental closure, a confirmed reservation becomes `completed`.
+- Pay Later does not remain in `awaiting_payment`;
+- Pay Later reservation becomes `confirmed` before physical handover;
+- an unconfirmed explicit MitoS reservation is rejected at checkout with HTTP 409;
+- after successful rental closure, the confirmed reservation becomes `completed`.
 
 ### Rental lifecycle
 
-The physical rental lifecycle must preserve order:
+Runtime evidence demonstrated the ordered lifecycle:
 
 `reserved → checked_out → returned → closed`
 
-Illegal forward skips must fail rather than silently fabricate intermediate states. Replaying the same committed transition must remain idempotent.
+It also demonstrated:
 
-## Functional surfaces to verify
+- `reserved → returned` is rejected with HTTP 409;
+- replay of committed departure remains `checked_out` with one lifecycle document;
+- replay of committed return remains `returned` before closure.
 
-- customer landing/search/vehicle selection;
+## Functional surfaces exercised
+
+The runtime gate exercised backend contracts corresponding to:
+
+- customer authentication;
 - reservation checkout using Pay Later;
-- authenticated Admin visibility of the booking;
-- LaborSync / operational handover path;
+- authenticated Admin/operator authentication;
+- authenticated Admin/LaborSync booking visibility query;
 - departure checkout;
 - vehicle return;
 - check-in / inspection completion;
 - rental closure;
 - final reservation completion.
 
-## Evidence to record
+Browser rendering and real mobile-device visual interaction remain separate non-claims.
 
-For every gate, record:
+## Evidence retained
 
-- endpoint or UI action;
-- input identity/booking reference without exposing secrets;
-- HTTP/UI result;
-- before state;
-- after state;
-- timestamp;
-- whether the action was first execution or replay;
-- any observed defect;
-- any corrective commit if required.
+Workflow:
 
-Secrets, passwords, tokens and payment credentials must never be committed into evidence files.
+`mitos-r1-runtime`
 
-## Stop conditions
+Successful run:
 
-R1 must stop and report rather than bypass the system if any of these occur:
+`33437658767`
 
-- reservation cannot be confirmed through the legitimate Pay Later flow;
-- checkout requires manually editing database state;
-- lifecycle ordering can be skipped;
-- closure cannot be reached through the intended Admin/LaborSync workflow;
-- completed state would require a fabricated/manual mutation;
-- test data would require touching production;
-- validation would require deployment or a protected branch mutation.
+Evidence artifact:
 
-## Certification rule
+`mitos-r1-runtime-evidence-33437658767`
 
-R1 may be marked `CERTIFIED` only after the complete journey is demonstrated from reservation through closure on the isolated certification workstream, with evidence retained and the branch CI green.
+Artifact digest:
 
-Until then the correct status is:
+`sha256:023b95807cd2ec170a80dd382e02c7d7fef4870e8db3670c7f254faf666fb844`
 
-`R1 — PAY LATER E2E: NOT YET RUNTIME-CERTIFIED`.
+The artifact records:
+
+- endpoint/action result;
+- HTTP status;
+- before/after state where relevant;
+- timestamps;
+- replay markers;
+- observed safety failures;
+- final lifecycle/reservation state.
+
+No password, access token, JWT, payment token or provider secret is retained in the evidence.
+
+## Stop conditions result
+
+None of the R1 stop conditions occurred:
+
+- reservation confirmed through legitimate Pay Later flow;
+- no database state was manually edited to complete the journey;
+- lifecycle ordering could not be skipped;
+- closure was reached through intended operational endpoints;
+- completed state was produced by rental closure rather than fabricated mutation;
+- only ephemeral test data was used;
+- no deployment or protected branch mutation was required.
+
+## Certification rule result
+
+The complete Pay Later backend/operational journey was demonstrated from reservation through closure on the isolated certification workstream, evidence was retained, and the R1 runtime job completed successfully.
+
+Therefore the current R1 status is:
+
+`R1 — PAY LATER BACKEND/OPERATIONAL E2E: CERTIFIED`.
+
+This does not authorize deployment or merge and does not yet certify browser/mobile visual UX.
