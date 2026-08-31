@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, Types, model } from 'mongoose'
 
 export enum RentalLifecycleState {
   Reserved = 'reserved',
@@ -8,7 +8,7 @@ export enum RentalLifecycleState {
 }
 
 export interface RentalLifecycleDocument {
-  booking: Schema.Types.ObjectId
+  booking: Types.ObjectId
   state: RentalLifecycleState
   checkedOutAt?: Date
   returnedAt?: Date
