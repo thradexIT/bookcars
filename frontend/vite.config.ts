@@ -7,6 +7,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
+  const useHttps = String(process.env.VITE_BC_API_HOST || '').toLowerCase().startsWith('https://')
 
   return defineConfig({
     plugins: [
@@ -22,11 +23,11 @@ export default ({ mode }: { mode: string }) => {
       createHtmlPlugin({
         inject: {
           data: {
-            WEBSITE_NAME: process.env.VITE_BC_WEBSITE_NAME || 'BookCars',
+            WEBSITE_NAME: process.env.VITE_BC_WEBSITE_NAME || 'MITOS RENT A CAR',
           },
         },
       }),
-      basicSsl(),
+      ...(useHttps ? [basicSsl()] : []),
     ],
 
     resolve: {
@@ -45,7 +46,7 @@ export default ({ mode }: { mode: string }) => {
     },
 
     server: {
-      https: {},
+      https: useHttps ? {} : undefined,
       host: '0.0.0.0',
       port: Number.parseInt(process.env.VITE_PORT || '3002', 10),
       watch: {
@@ -53,7 +54,7 @@ export default ({ mode }: { mode: string }) => {
         interval: 500,
       },
       hmr: {
-        protocol: 'wss',
+        protocol: useHttps ? 'wss' : 'ws',
         host: process.env.VITE_HMR_HOST || 'localhost',
         port: Number.parseInt(process.env.VITE_HMR_PORT || '8080', 10),
         clientPort: Number.parseInt(process.env.VITE_HMR_CLIENT_PORT || '8080', 10),
@@ -73,11 +74,11 @@ export default ({ mode }: { mode: string }) => {
         compress: {
           drop_console: false, // Keep console.* calls
           drop_debugger: true, // Removes debugger statements
-          dead_code: true, // Removes unreachable code
+          dead_code: true, // Removes unreachable statements
           passes: 3, // Number of compression passes
           unsafe_math: true, // Optimize math expressions
           conditionals: true, // Optimize if-s and conditional expressions
-          sequences: true, // Join consecutive simple statements using the comma operator
+          sequences: true, // Join consecutive simple var statements using comma operator
           booleans: true, // various optimizations for boolean context
           unused: true, // Drop unreferenced functions and variables
           if_return: true, // Optimizations for if/return and if/continue
@@ -96,11 +97,11 @@ export default ({ mode }: { mode: string }) => {
 
       // Chunk splitting strategy
       rollupOptions: {
-        treeshake: true, // Enable Tree Shaking: Ensure unused code is removed by leveraging ES modules and proper imports
+        treeshake: true, // Enable Tree Shaking: Ensure unused code is removed by leveraging ES modules
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom'], // Create a separate vendor chunk
-            router: ['react-router-dom'], // Create a separate router chunk
+            router: ['react-router-dom'], // Create a separate chunk for routing libraries
           },
           // Generate chunk names
           assetFileNames: 'assets/[name]-[hash][extname]',
@@ -108,7 +109,7 @@ export default ({ mode }: { mode: string }) => {
           entryFileNames: 'entries/[name]-[hash].js',
         },
       },
-      assetsInlineLimit: 8192, // This reduces the number of small chunk files
+      assetsInlineLimit: 8192, // This reduces the number of small files
     },
   })
 }

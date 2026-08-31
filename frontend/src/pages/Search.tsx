@@ -4,12 +4,10 @@ import { Button } from '@mui/material'
 import { Tune as FiltersIcon } from '@mui/icons-material'
 import * as bookcarsTypes from ':bookcars-types'
 import * as bookcarsHelper from ':bookcars-helper'
-import { strings } from '@/lang/search'
 import * as helper from '@/utils/helper'
 import env from '@/config/env.config'
 import * as LocationService from '@/services/LocationService'
 import * as SupplierService from '@/services/SupplierService'
-// import * as UserService from '@/services/UserService'
 import Layout from '@/components/Layout'
 import NoMatch from './NoMatch'
 import CarFilter from '@/components/CarFilter'
@@ -26,7 +24,6 @@ import CarRangeFilter from '@/components/CarRangeFilter'
 import CarMultimediaFilter from '@/components/CarMultimediaFilter'
 import CarSeatsFilter from '@/components/CarSeatsFilter'
 import Map from '@/components/Map'
-// import Progress from '@/components/Progress'
 import ViewOnMapButton from '@/components/ViewOnMapButton'
 import MapDialog from '@/components/MapDialog'
 
@@ -57,9 +54,7 @@ const Search = () => {
   const [rating, setRating] = useState(-1)
   const [seats, setSeats] = useState(-1)
   const [openMapDialog, setOpenMapDialog] = useState(false)
-  // const [distance, setDistance] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-  // const [loadingPage, setLoadingPage] = useState(true)
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -115,49 +110,17 @@ const Search = () => {
     setTo(filter.to)
   }
 
-  const handleSupplierFilterChange = (newSuppliers: string[]) => {
-    setSupplierIds(newSuppliers)
-  }
-
-  const handleRatingFilterChange = (value: number) => {
-    setRating(value)
-  }
-
-  const handleRangeFilterChange = (value: bookcarsTypes.CarRange[]) => {
-    setRanges(value)
-  }
-
-  const handleMultimediaFilterChange = (value: bookcarsTypes.CarMultimedia[]) => {
-    setMultimedia(value)
-  }
-
-  const handleSeatsFilterChange = (value: number) => {
-    setSeats(value)
-  }
-
-  const handleCarSpecsFilterChange = (value: bookcarsTypes.CarSpecs) => {
-    setCarSpecs(value)
-  }
-
-  const handleCarTypeFilterChange = (values: bookcarsTypes.CarType[]) => {
-    setCarType(values)
-  }
-
-  const handleGearboxFilterChange = (values: bookcarsTypes.GearboxType[]) => {
-    setGearbox(values)
-  }
-
-  const handleMileageFilterChange = (values: bookcarsTypes.Mileage[]) => {
-    setMileage(values)
-  }
-
-  const handleFuelPolicyFilterChange = (values: bookcarsTypes.FuelPolicy[]) => {
-    setFuelPolicy(values)
-  }
-
-  const handleDepositFilterChange = (value: number) => {
-    setDeposit(value)
-  }
+  const handleSupplierFilterChange = (newSuppliers: string[]) => setSupplierIds(newSuppliers)
+  const handleRatingFilterChange = (value: number) => setRating(value)
+  const handleRangeFilterChange = (value: bookcarsTypes.CarRange[]) => setRanges(value)
+  const handleMultimediaFilterChange = (value: bookcarsTypes.CarMultimedia[]) => setMultimedia(value)
+  const handleSeatsFilterChange = (value: number) => setSeats(value)
+  const handleCarSpecsFilterChange = (value: bookcarsTypes.CarSpecs) => setCarSpecs(value)
+  const handleCarTypeFilterChange = (values: bookcarsTypes.CarType[]) => setCarType(values)
+  const handleGearboxFilterChange = (values: bookcarsTypes.GearboxType[]) => setGearbox(values)
+  const handleMileageFilterChange = (values: bookcarsTypes.Mileage[]) => setMileage(values)
+  const handleFuelPolicyFilterChange = (values: bookcarsTypes.FuelPolicy[]) => setFuelPolicy(values)
+  const handleDepositFilterChange = (value: number) => setDeposit(value)
 
   const onLoad = async (user?: bookcarsTypes.User) => {
     const { state } = location
@@ -166,10 +129,7 @@ const Search = () => {
       return
     }
 
-    const { pickupLocationId } = state
-    const { dropOffLocationId } = state
-    const { from: _from } = state
-    const { to: _to } = state
+    const { pickupLocationId, dropOffLocationId, from: _from, to: _to } = state
 
     if (!pickupLocationId || !dropOffLocationId || !_from || !_to) {
       setLoading(false)
@@ -177,22 +137,17 @@ const Search = () => {
       return
     }
 
-    let _pickupLocation
-    let _dropOffLocation
     try {
-      _pickupLocation = await LocationService.getLocation(pickupLocationId)
-
+      const _pickupLocation = await LocationService.getLocation(pickupLocationId)
       if (!_pickupLocation) {
         setLoading(false)
         setNoMatch(true)
         return
       }
 
-      if (dropOffLocationId !== pickupLocationId) {
-        _dropOffLocation = await LocationService.getLocation(dropOffLocationId)
-      } else {
-        _dropOffLocation = _pickupLocation
-      }
+      const _dropOffLocation = dropOffLocationId !== pickupLocationId
+        ? await LocationService.getLocation(dropOffLocationId)
+        : _pickupLocation
 
       if (!_dropOffLocation) {
         setLoading(false)
@@ -226,22 +181,10 @@ const Search = () => {
       setSupplierIds(_supplierIds)
 
       const { ranges: _ranges } = state
-      if (_ranges) {
-        setRanges(_ranges)
-      }
-
-      // if (_pickupLocation.latitude && _pickupLocation.longitude) {
-      //   const l = await helper.getLocation()
-      //   if (l) {
-      //     const d = bookcarsHelper.distance(_pickupLocation.latitude, _pickupLocation.longitude, l[0], l[1], 'K')
-      //     setDistance(bookcarsHelper.formatDistance(d, UserService.getLanguage()))
-      //   }
-      // }
+      if (_ranges) setRanges(_ranges)
 
       setLoading(false)
-      if (!user || (user && user.verified)) {
-        setVisible(true)
-      }
+      if (!user || user.verified) setVisible(true)
     } catch (err) {
       helper.error(err)
     }
@@ -251,10 +194,16 @@ const Search = () => {
     <>
       <Layout onLoad={onLoad} strict={false}>
         {visible && supplierIds && pickupLocation && dropOffLocation && from && to && (
-          <div className="search">
-            <div className="col-1">
+          <div className="search mitos-search-page">
+            <aside className="col-1 mitos-search-sidebar">
               {!loading && (
                 <>
+                  <div className="mitos-search-side-heading">
+                    <span>TU BÚSQUEDA</span>
+                    <strong>{pickupLocation.name}</strong>
+                    <small>Modifica ubicación o fechas cuando lo necesites.</small>
+                  </div>
+
                   {((pickupLocation.latitude && pickupLocation.longitude)
                     || (pickupLocation.parkingSpots && pickupLocation.parkingSpots.length > 0)) && (
                       <Map
@@ -287,31 +236,30 @@ const Search = () => {
                     className="btn btn-filters"
                     onClick={() => setShowFilters((prev) => !prev)}
                   >
-                    {showFilters ? strings.HILE_FILTERS : strings.SHOW_FILTERS}
+                    {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                   </Button>
 
-                  {
-                    showFilters && (
-                      <>
-                        {!env.HIDE_SUPPLIERS && <SupplierFilter className="filter" suppliers={suppliers} onChange={handleSupplierFilterChange} />}
-                        <CarRatingFilter className="filter" onChange={handleRatingFilterChange} />
-                        <CarRangeFilter className="filter" onChange={handleRangeFilterChange} />
-                        <CarMultimediaFilter className="filter" onChange={handleMultimediaFilterChange} />
-                        <CarSeatsFilter className="filter" onChange={handleSeatsFilterChange} />
-                        <CarSpecsFilter className="filter" onChange={handleCarSpecsFilterChange} />
-                        <CarType className="filter" onChange={handleCarTypeFilterChange} />
-                        <GearboxFilter className="filter" onChange={handleGearboxFilterChange} />
-                        <MileageFilter className="filter" onChange={handleMileageFilterChange} />
-                        <FuelPolicyFilter className="filter" onChange={handleFuelPolicyFilterChange} />
-                        <DepositFilter className="filter" onChange={handleDepositFilterChange} />
-                      </>
-                    )
-                  }
+                  {showFilters && (
+                    <div className="mitos-extra-filters">
+                      {!env.HIDE_SUPPLIERS && <SupplierFilter className="filter" suppliers={suppliers} onChange={handleSupplierFilterChange} />}
+                      <CarRatingFilter className="filter" onChange={handleRatingFilterChange} />
+                      <CarRangeFilter className="filter" onChange={handleRangeFilterChange} />
+                      <CarMultimediaFilter className="filter" onChange={handleMultimediaFilterChange} />
+                      <CarSeatsFilter className="filter" onChange={handleSeatsFilterChange} />
+                      <CarSpecsFilter className="filter" onChange={handleCarSpecsFilterChange} />
+                      <CarType className="filter" onChange={handleCarTypeFilterChange} />
+                      <GearboxFilter className="filter" onChange={handleGearboxFilterChange} />
+                      <MileageFilter className="filter" onChange={handleMileageFilterChange} />
+                      <FuelPolicyFilter className="filter" onChange={handleFuelPolicyFilterChange} />
+                      <DepositFilter className="filter" onChange={handleDepositFilterChange} />
+                    </div>
+                  )}
                 </>
               )}
-            </div>
-            <div className="col-2">
+            </aside>
+            <div className="col-2 mitos-search-results">
               <CarList
+                variant="mitos"
                 carSpecs={carSpecs}
                 suppliers={supplierIds}
                 carType={carType}
@@ -321,7 +269,6 @@ const Search = () => {
                 deposit={deposit}
                 pickupLocation={pickupLocation._id}
                 dropOffLocation={dropOffLocation._id}
-                // pickupLocationName={pickupLocation.name}
                 loading={loading}
                 from={from}
                 to={to}
@@ -329,10 +276,7 @@ const Search = () => {
                 multimedia={multimedia}
                 rating={rating}
                 seats={seats}
-                // distance={distance}
-                // onLoad={() => setLoadingPage(false)}
                 hideSupplier={env.HIDE_SUPPLIERS}
-                // includeAlreadyBookedCars
                 includeComingSoonCars
               />
             </div>
@@ -347,8 +291,6 @@ const Search = () => {
 
         {noMatch && <NoMatch hideHeader />}
       </Layout>
-
-      {/* {loadingPage && !noMatch && <Progress />} */}
     </>
   )
 }

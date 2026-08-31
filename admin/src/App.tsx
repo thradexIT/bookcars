@@ -129,7 +129,7 @@ const router = createBrowserRouter([
       { path: '*', element: <NoMatch /> }
     ]
   }
-], { basename: '/admin/' })
+], { basename: '/admin' })
 
 const App = () => <RouterProvider router={router} />
 

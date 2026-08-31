@@ -6,6 +6,23 @@
   z-index: 1400;
 }
 
+/* Mitos is the visible product identity. BookCars remains an internal
+   implementation/repository name only. */
+.header .MuiAppBar-root {
+  background-color: #012063 !important;
+}
+
+.header .toolbar::before {
+  content: 'MITOS ADMIN';
+  flex: 0 0 auto;
+  margin-right: 20px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+
 .menu {
   z-index: 1401 !important;
 }
@@ -40,6 +57,12 @@
 
   .toolbar {
     min-height: 56px !important;
+  }
+
+  .header .toolbar::before {
+    content: 'MITOS';
+    margin-right: 10px;
+    font-size: 13px;
   }
 }
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 import {
   Paper,
   FormControl,
@@ -47,6 +48,10 @@ const SignIn = () => {
     setError('root', { message: strings.ERROR_IN_SIGN_IN })
   }
 
+  const connectionError = () => {
+    setError('root', { message: strings.CONNECTION_ERROR })
+  }
+
   const onSubmit = async ({ email, password }: FormFields) => {
     try {
       const data: bookcarsTypes.SignInPayload = {
@@ -69,8 +74,12 @@ const SignIn = () => {
       } else {
         signinError()
       }
-    } catch {
-      signinError()
+    } catch (err) {
+      if (axios.isAxiosError(err) && !err.response) {
+        connectionError()
+      } else {
+        signinError()
+      }
     }
   }
 

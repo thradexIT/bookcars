@@ -46,6 +46,7 @@ interface CarListProps {
   includeComingSoonCars?: boolean
   onLoad?: bookcarsTypes.DataEvent<bookcarsTypes.Car>
   clientType?: string
+  variant?: 'default' | 'mitos'
 }
 
 const CarList = ({
@@ -78,6 +79,7 @@ const CarList = ({
   includeComingSoonCars,
   onLoad,
   clientType,
+  variant = 'default',
 }: CarListProps) => {
   const [init, setInit] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -215,9 +217,44 @@ const CarList = ({
     }
   }, [reload, suppliers, pickupLocation, carSpecs, _carType, gearbox, mileage, fuelPolicy, deposit, ranges, multimedia, rating, seats]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getMitosVisualClass = (car: bookcarsTypes.Car) => {
+    const name = car.name.toLowerCase()
+    if (name.includes('raize')) return 'is-raize'
+    if (name.includes('yaris')) return 'is-yaris'
+    return 'is-generic'
+  }
+
+  const renderCar = (car: bookcarsTypes.Car) => {
+    const item = (
+      <Car
+        key={car._id}
+        car={car}
+        booking={booking}
+        pickupLocation={pickupLocation}
+        dropOffLocation={dropOffLocation}
+        from={from as Date}
+        to={to as Date}
+        pickupLocationName={pickupLocationName}
+        distance={distance}
+        hideSupplier={hideSupplier}
+        sizeAuto={sizeAuto}
+        hidePrice={hidePrice}
+        clientType={clientType}
+      />
+    )
+
+    if (variant !== 'mitos') return item
+
+    return (
+      <div key={car._id} className={`mitos-car-result ${getMitosVisualClass(car)}`}>
+        {item}
+      </div>
+    )
+  }
+
   return (
     <>
-      <section className={`${className ? `${className} ` : ''}car-list`}>
+      <section className={`${className ? `${className} ` : ''}car-list${variant === 'mitos' ? ' car-list-mitos' : ''}`}>
         {rows.length === 0
           ? !init
           && !loading
@@ -229,39 +266,33 @@ const CarList = ({
               </CardContent>
             </Card>
           )
-          : ((from && to && pickupLocation && dropOffLocation) || hidePrice) // || (hidePrice && booking))
+          : ((from && to && pickupLocation && dropOffLocation) || hidePrice)
           && (
             <>
               {totalRecords > 0 && (
-                <div className="title">
-                  <div className="bookcars">
-                    <span>{strings.TITLE_1}</span>
-                    <span className="title-bookcars">{env.WEBSITE_NAME}</span>
-                    <span>{strings.TITLE_2}</span>
-                  </div>
-                  <div className="car-count">
-                    {`(${totalRecords} ${totalRecords === 1 ? strings.TITLE_CAR_AVAILABLE : strings.TITLE_CARS_AVAILABLE})`}
-                  </div>
+                <div className={`title${variant === 'mitos' ? ' mitos-results-title' : ''}`}>
+                  {variant === 'mitos' ? (
+                    <>
+                      <span className="mitos-results-kicker">DISPONIBILIDAD MITOS</span>
+                      <div className="bookcars">Elige el auto para tu ruta.</div>
+                      <div className="car-count">{`${totalRecords} ${totalRecords === 1 ? 'auto disponible' : 'autos disponibles'}`}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="bookcars">
+                        <span>{strings.TITLE_1}</span>
+                        <span className="title-bookcars">{env.WEBSITE_NAME}</span>
+                        <span>{strings.TITLE_2}</span>
+                      </div>
+                      <div className="car-count">
+                        {`(${totalRecords} ${totalRecords === 1 ? strings.TITLE_CAR_AVAILABLE : strings.TITLE_CARS_AVAILABLE})`}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
-              {rows.map((car) => (
-                <Car
-                  key={car._id}
-                  car={car}
-                  booking={booking}
-                  pickupLocation={pickupLocation}
-                  dropOffLocation={dropOffLocation}
-                  from={from as Date}
-                  to={to as Date}
-                  pickupLocationName={pickupLocationName}
-                  distance={distance}
-                  hideSupplier={hideSupplier}
-                  sizeAuto={sizeAuto}
-                  hidePrice={hidePrice}
-                  clientType={clientType}
-                />
-              ))}
+              {rows.map(renderCar)}
             </>
           )}
         {loading && <Progress />}

@@ -24,7 +24,10 @@ const env = {
   isMobile: window.innerWidth <= 960,
   isSafari: /^((?!chrome|android).)*safari/i.test(navigator.userAgent),
 
-  WEBSITE_NAME: String(import.meta.env.VITE_BC_WEBSITE_NAME),
+  // Admin belongs to the Mitos rental product. Keep BookCars only as an
+  // implementation/repository name, never as visible product identity.
+  WEBSITE_NAME: 'MITOS RENT A CAR',
+  ADMIN_NAME: 'MITOS ADMIN',
 
   APP_TYPE: bookcarsTypes.AppType.Admin,
   API_HOST: String(import.meta.env.VITE_BC_API_HOST),

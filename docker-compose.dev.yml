@@ -39,6 +39,17 @@ services:
       - ./backend:/bookcars/backend
       - /bookcars/backend/node_modules
       - backend_logs:/bookcars/backend/logs
+    environment:
+      - NODE_ENV=development
+      - BC_FRONTEND_HOST=${BC_FRONTEND_HOST:-http://localhost:8080/}
+      - BC_ADMIN_HOST=${BC_ADMIN_HOST:-http://localhost:3001/}
+      - BC_WEBSITE_NAME=MITOS RENT A CAR
+      - BC_ADMIN_EMAIL=${BC_ADMIN_EMAIL:-admin@mitos.pe}
+      - BC_SMTP_FROM=${BC_SMTP_FROM:-no-reply@mitos.pe}
+      - BC_EMAIL_ENABLED=false
+      - BC_DEFAULT_LANGUAGE=es
+      - BC_TIMEZONE=America/Lima
+      - BC_IPINFO_DEFAULT_COUNTRY=PE
 
   bc-dev-admin:
     build:
@@ -56,6 +67,8 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - VITE_BC_WEBSITE_NAME=MITOS RENT A CAR
+      - VITE_BC_DEFAULT_LANGUAGE=es
 
   bc-dev-frontend:
     build:
@@ -67,13 +80,17 @@ services:
       - bc-dev-backend
     ports:
       - 8080:8080
-      - 8443:443
     volumes:
       - ./frontend:/bookcars/frontend
       - /bookcars/frontend/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - VITE_BC_WEBSITE_NAME=MITOS RENT A CAR
+      - VITE_BC_DEFAULT_LANGUAGE=es
+      - VITE_BC_MAP_LATITUDE=-12.0464
+      - VITE_BC_MAP_LONGITUDE=-77.0428
+      - VITE_BC_MAP_ZOOM=11
 
 volumes:
   cdn:

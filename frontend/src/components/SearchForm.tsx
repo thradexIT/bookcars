@@ -28,6 +28,8 @@ interface SearchFormProps {
   dropOffLocation?: string
   ranges?: bookcarsTypes.CarRange[]
   onCancel?: () => void
+  variant?: 'default' | 'mitos'
+  defaultSameLocation?: boolean
 }
 
 const SearchForm = ({
@@ -35,9 +37,11 @@ const SearchForm = ({
   dropOffLocation: __dropOffLocation,
   ranges: __ranges,
   onCancel,
+  variant = 'default',
+  defaultSameLocation = true,
 }: SearchFormProps) => {
   const navigate = useNavigate()
-
+  const isMitos = variant === 'mitos'
   const { settings } = useSetting()
 
   const [pickupLocationId, setPickupLocationId] = useState('')
@@ -78,8 +82,8 @@ const SearchForm = ({
     resolver: zodResolver(schema),
     mode: 'onSubmit',
     defaultValues: {
-      sameLocation: true,
-    }
+      sameLocation: defaultSameLocation,
+    },
   })
 
   const from = useWatch({ control, name: 'from' })
@@ -91,10 +95,10 @@ const SearchForm = ({
   useEffect(() => {
     if (settings) {
       const _from = new Date()
-      if (settings!.minPickupHours < 72) {
+      if (settings.minPickupHours < 72) {
         _from.setDate(_from.getDate() + 3)
       } else {
-        _from.setDate(_from.getDate() + Math.ceil(settings!.minPickupHours / 24) + 1)
+        _from.setDate(_from.getDate() + Math.ceil(settings.minPickupHours / 24) + 1)
       }
       _from.setHours(10)
       _from.setMinutes(0)
@@ -102,14 +106,14 @@ const SearchForm = ({
       _from.setMilliseconds(0)
 
       const _to = new Date(_from)
-      if (settings!.minRentalHours < 72) {
+      if (settings.minRentalHours < 72) {
         _to.setDate(_to.getDate() + 3)
       } else {
-        _to.setDate(_to.getDate() + Math.ceil(settings!.minRentalHours / 24) + 1)
+        _to.setDate(_to.getDate() + Math.ceil(settings.minRentalHours / 24) + 1)
       }
 
       let __minDate = new Date()
-      __minDate = addHours(__minDate, settings!.minRentalHours)
+      __minDate = addHours(__minDate, settings.minRentalHours)
 
       setMinDate(__minDate)
       setValue('from', _from)
@@ -151,16 +155,12 @@ const SearchForm = ({
   }, [__ranges])
 
   const validateHour = (hour: number) => {
-    if (!settings) {
-      return false
-    }
+    if (!settings) return false
     return hour >= settings.minPickupDropoffHour && hour <= settings.maxPickupDropoffHour
   }
 
   const validateTimes = () => {
-    if (!settings) {
-      return false
-    }
+    if (!settings) return false
 
     let valid = true
     const minPickupDuration = settings.minPickupHours * 60 * 60 * 1000
@@ -172,18 +172,14 @@ const SearchForm = ({
       setMinDate(__minDate)
 
       const minPickupTime = from.getTime() - Date.now()
-
       if (minPickupTime < minPickupDuration) {
         setError('from', { message: strings.MIN_PICK_UP_HOURS_ERROR })
         valid = false
-      } else {
-        if (errors.from) {
-          clearErrors('from')
-        }
+      } else if (errors.from) {
+        clearErrors('from')
       }
 
-      const hourValid = validateHour(from.getHours())
-      if (!hourValid) {
+      if (!validateHour(from.getHours())) {
         setError('from', { message: strings.INVALID_PICK_UP_TIME })
         valid = false
       }
@@ -200,27 +196,22 @@ const SearchForm = ({
           _to.setDate(_to.getDate() + Math.ceil(settings.minRentalHours / 24) + 1)
         }
         const _from = new Date(from)
-        const fromHourValid = validateHour(_from.getHours())
-        if (!fromHourValid) {
+        if (!validateHour(_from.getHours())) {
           _from.setHours(settings.minPickupDropoffHour)
           setValue('from', _from)
         }
-        const toHourValid = validateHour(_to.getHours())
-        if (!toHourValid) {
+        if (!validateHour(_to.getHours())) {
           _to.setHours(settings.minPickupDropoffHour)
         }
         setValue('to', _to)
       } else if (rentalDuration < minRentalDuration) {
         setError('to', { message: strings.MIN_RENTAL_HOURS_ERROR })
         valid = false
-      } else {
-        if (errors.to) {
-          clearErrors('to')
-        }
+      } else if (errors.to) {
+        clearErrors('to')
       }
 
-      const hourValid = validateHour(to.getHours())
-      if (!hourValid) {
+      if (!validateHour(to.getHours())) {
         setError('to', { message: strings.INVALID_DROP_OFF_TIME })
         valid = false
       }
@@ -233,7 +224,6 @@ const SearchForm = ({
     validateTimes()
   }, [from, to]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guard against using `minDate` before it's ready
   if (!settings || !minDate || !fromMinDate || !minTime || !maxTime) {
     return null
   }
@@ -257,15 +247,23 @@ const SearchForm = ({
     }
   }
 
-  const handleSameLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = e.target
+  const setSameLocation = (checked: boolean) => {
     setValue('sameLocation', checked)
-
     if (checked) {
       setDropOffLocationId(pickupLocationId)
+      if (pickupLocation) setValue('dropOffLocation', pickupLocation as LocationField)
     } else {
       setDropOffLocationId('')
+      setValue('dropOffLocation', null)
     }
+  }
+
+  const handleSameLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSameLocation(e.target.checked)
+  }
+
+  const handleDifferentLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSameLocation(!e.target.checked)
   }
 
   const handleDropOffLocationChange = async (values: bookcarsTypes.Option[]) => {
@@ -281,24 +279,13 @@ const SearchForm = ({
   }
 
   const onSubmit = (data: FormFields) => {
-    const valid = validateTimes()
-    if (!valid) {
-      return
-    }
-
-    if (
-      !data.pickupLocation
-      || !data.dropOffLocation
-      || !data.from
-      || !data.to
-    ) {
-      return
-    }
+    if (!validateTimes()) return
+    if (!data.pickupLocation || !data.dropOffLocation || !data.from || !data.to) return
 
     setTimeout(navigate, 0, '/search', {
       state: {
-        pickupLocationId: pickupLocationId,
-        dropOffLocationId: dropOffLocationId,
+        pickupLocationId,
+        dropOffLocationId,
         from: data.from,
         to: data.to,
         ranges,
@@ -307,14 +294,15 @@ const SearchForm = ({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="home-search-form">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={`home-search-form${isMitos ? ' mitos-search-form' : ''}`}
+    >
       <FormControl className="pickup-location">
         <LocationSelectList
           {...register('pickupLocation')}
-          label={commonStrings.PICK_UP_LOCATION}
+          label={isMitos ? 'Retiro' : commonStrings.PICK_UP_LOCATION}
           hidePopupIcon
-          // customOpen={env.isMobile}
-          // init={!env.isMobile}
           init
           required
           variant="outlined"
@@ -322,6 +310,27 @@ const SearchForm = ({
           onChange={handlePickupLocationChange}
         />
       </FormControl>
+
+      {sameLocation && isMitos ? (
+        <div className="mitos-drop-off-mirror">
+          <small>Devolución</small>
+          <span>{pickupLocation ? 'Misma ubicación que retiro' : 'Ciudad o aeropuerto'}</span>
+        </div>
+      ) : !sameLocation ? (
+        <FormControl className="drop-off-location">
+          <LocationSelectList
+            {...register('dropOffLocation')}
+            label={isMitos ? 'Devolución' : commonStrings.DROP_OFF_LOCATION}
+            hidePopupIcon
+            init
+            value={dropOffLocation as bookcarsTypes.Location}
+            required
+            variant="outlined"
+            onChange={handleDropOffLocationChange}
+          />
+        </FormControl>
+      ) : null}
+
       <FormControl fullWidth className="from">
         <Controller
           name="from"
@@ -330,20 +339,19 @@ const SearchForm = ({
             <DateTimePicker
               {...field}
               variant="outlined"
-              label={strings.PICK_UP_DATE}
+              label={isMitos ? 'Fecha de retiro' : strings.PICK_UP_DATE}
               value={field.value || undefined}
               minDate={fromMinDate}
               minTime={minTime}
               maxTime={maxTime}
-              onChange={(date) => {
-                field.onChange(date)
-              }}
+              onChange={(date) => field.onChange(date)}
               language={UserService.getLanguage()}
             />
           )}
         />
         <FormHelperText error={!!errors.from}>{errors.from?.message}</FormHelperText>
       </FormControl>
+
       <FormControl fullWidth className="to">
         <Controller
           name="to"
@@ -352,54 +360,42 @@ const SearchForm = ({
             <DateTimePicker
               {...field}
               variant="outlined"
-              label={strings.DROP_OFF_DATE}
+              label={isMitos ? 'Fecha de devolución' : strings.DROP_OFF_DATE}
               value={field.value || undefined}
               minDate={minDate}
               minTime={minTime}
               maxTime={maxTime}
-              onChange={(date) => {
-                field.onChange(date)
-              }}
+              onChange={(date) => field.onChange(date)}
               language={UserService.getLanguage()}
             />
           )}
         />
         <FormHelperText error={!!errors.to}>{errors.to?.message}</FormHelperText>
       </FormControl>
+
+      <FormControl className="chk-same-location">
+        {isMitos ? (
+          <FormControlLabel
+            control={<Checkbox checked={!sameLocation} onChange={handleDifferentLocationChange} />}
+            label="Devolver en otra ubicación"
+          />
+        ) : (
+          <FormControlLabel
+            control={<Checkbox checked={sameLocation} onChange={handleSameLocationChange} />}
+            label={strings.DROP_OFF}
+          />
+        )}
+      </FormControl>
+
       <Button type="submit" variant="contained" className="btn-search" disabled={isSubmitting}>
-        {commonStrings.SEARCH}
+        {isMitos ? 'Buscar auto' : commonStrings.SEARCH}
       </Button>
+
       {onCancel && (
-        <Button
-          variant="outlined"
-          color="inherit"
-          className="btn-cancel"
-          onClick={() => {
-            onCancel()
-          }}
-        >
+        <Button variant="outlined" color="inherit" className="btn-cancel" onClick={onCancel}>
           {commonStrings.CANCEL}
         </Button>
       )}
-      {!sameLocation && (
-        <FormControl className="drop-off-location">
-          <LocationSelectList
-            {...register('dropOffLocation')}
-            label={commonStrings.DROP_OFF_LOCATION}
-            hidePopupIcon
-            // customOpen={env.isMobile}
-            // init={!env.isMobile}
-            init
-            value={dropOffLocation as bookcarsTypes.Location}
-            required
-            variant="outlined"
-            onChange={handleDropOffLocationChange}
-          />
-        </FormControl>
-      )}
-      <FormControl className="chk-same-location">
-        <FormControlLabel control={<Checkbox checked={sameLocation} onChange={handleSameLocationChange} />} label={strings.DROP_OFF} />
-      </FormControl>
     </form>
   )
 }

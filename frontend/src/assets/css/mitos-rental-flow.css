@@ -1,0 +1,219 @@
+.mitos-public-app {
+  --mitos-navy: #012063;
+  --mitos-blue: #1556b8;
+  --mitos-ink: #082b6e;
+  --mitos-body: #425478;
+  --mitos-line: #dce5f2;
+  --mitos-soft: #f5f8fc;
+}
+
+.mitos-public-app.mitos-route-rental {
+  min-height: 100svh;
+  background: var(--mitos-soft);
+  color: var(--mitos-ink);
+}
+
+.mitos-public-app.mitos-route-rental .content {
+  background: var(--mitos-soft);
+}
+
+.mitos-public-app.mitos-route-rental .MuiButton-contained,
+.mitos-public-app.mitos-route-rental .btn-primary,
+.mitos-public-app.mitos-route-rental .btn-checkout {
+  border-radius: 8px !important;
+  background: var(--mitos-navy) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+}
+
+.mitos-public-app.mitos-route-rental .MuiButton-outlined {
+  border-color: var(--mitos-navy) !important;
+  border-radius: 8px !important;
+  color: var(--mitos-navy) !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+.mitos-public-app.mitos-route-rental .MuiInputLabel-root.Mui-focused,
+.mitos-public-app.mitos-route-rental .MuiFormLabel-root.Mui-focused {
+  color: var(--mitos-blue) !important;
+}
+
+.mitos-public-app.mitos-route-rental .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.mitos-public-app.mitos-route-rental .MuiInput-underline::after {
+  border-color: var(--mitos-blue) !important;
+}
+
+/* Checkout -------------------------------------------------------------- */
+.mitos-public-app.mitos-route-rental div.checkout {
+  min-height: auto;
+  margin: 44px 0 72px;
+  padding: 0 22px;
+  background: transparent;
+}
+
+.mitos-public-app.mitos-route-rental div.checkout .checkout-form {
+  overflow: hidden;
+  border: 1px solid var(--mitos-line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(7, 39, 100, .10) !important;
+}
+
+.mitos-public-app.mitos-route-rental div.checkout .checkout-form-title {
+  color: var(--mitos-ink);
+  font-weight: 900;
+  letter-spacing: -.03em;
+}
+
+.mitos-public-app.mitos-route-rental div.checkout div.checkout-details-container,
+.mitos-public-app.mitos-route-rental div.checkout div.payment-options-container,
+.mitos-public-app.mitos-route-rental div.checkout div.driver-details,
+.mitos-public-app.mitos-route-rental div.checkout div.payment-info {
+  border: 1px solid var(--mitos-line);
+  border-radius: 16px;
+  background: #f9fbfe;
+}
+
+.mitos-public-app.mitos-route-rental div.checkout div.checkout-info svg,
+.mitos-public-app.mitos-route-rental div.checkout div.checkout-info span {
+  color: var(--mitos-navy);
+}
+
+.mitos-public-app.mitos-route-rental div.checkout div.checkout-details div.checkout-detail span.checkout-detail-title {
+  color: var(--mitos-ink);
+}
+
+.mitos-public-app.mitos-route-rental div.checkout div.checkout-details div.checkout-detail div.checkout-detail-value,
+.mitos-public-app.mitos-route-rental div.checkout div.payment-options span.payment-info {
+  color: var(--mitos-body);
+}
+
+.mitos-public-app.mitos-route-rental div.checkout div.payment-info {
+  color: var(--mitos-ink);
+  background: #eef4fc;
+}
+
+.mitos-public-app.mitos-route-rental div.checkout .booking-price,
+.mitos-public-app.mitos-route-rental div.checkout div.payment-info-price {
+  color: var(--mitos-navy);
+  font-weight: 900;
+}
+
+/* Confirmation ---------------------------------------------------------- */
+.mitos-public-app.mitos-route-rental .checkout-session,
+.mitos-public-app.mitos-route-rental .checkout-status {
+  color: var(--mitos-ink);
+}
+
+.mitos-public-app.mitos-route-rental .checkout-session {
+  min-height: calc(100svh - var(--mitos-header-height, 96px));
+  padding: 48px 22px 72px;
+  background: var(--mitos-soft);
+}
+
+.mitos-public-app.mitos-route-rental .checkout-status .status-details-container,
+.mitos-public-app.mitos-route-rental .checkout-status .side-panel {
+  border-color: var(--mitos-line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.mitos-public-app.mitos-route-rental .checkout-status .status-info,
+.mitos-public-app.mitos-route-rental .checkout-status .status-price,
+.mitos-public-app.mitos-route-rental .checkout-status .side-panel h1 {
+  color: var(--mitos-navy);
+}
+
+/* My bookings ----------------------------------------------------------- */
+.mitos-public-app.mitos-route-rental div.bookings {
+  inset: var(--mitos-header-height, 96px) 0 0;
+  background: var(--mitos-soft);
+}
+
+.mitos-public-app.mitos-route-rental div.bookings div.col-1 {
+  border-right: 1px solid var(--mitos-line);
+  background: #f8fbff;
+}
+
+.mitos-public-app.mitos-route-rental div.bookings div.col-2 {
+  background: #fff;
+}
+
+.mitos-public-app.mitos-route-rental div.bookings .panel,
+.mitos-public-app.mitos-route-rental div.bookings .panel-collapse,
+.mitos-public-app.mitos-route-rental div.bookings label.accordion {
+  border-color: var(--mitos-line);
+  background: #fff;
+}
+
+/* Booking detail -------------------------------------------------------- */
+.mitos-public-app.mitos-route-rental div.booking {
+  min-height: calc(100svh - var(--mitos-header-height, 96px));
+  background: var(--mitos-soft);
+}
+
+.mitos-public-app.mitos-route-rental div.booking div.col-1 {
+  border-color: var(--mitos-line);
+  background: #fff;
+}
+
+.mitos-public-app.mitos-route-rental div.booking div.col-2 {
+  background: #f8fbff;
+}
+
+.mitos-public-app.mitos-route-rental div.booking div.col-2 div.col-2-header span.price-main {
+  color: var(--mitos-navy);
+}
+
+.mitos-public-app.mitos-route-rental div.booking div.col-2 div.col-2-header span.price-days,
+.mitos-public-app.mitos-route-rental div.booking div.col-2 div.col-2-header span.price-day {
+  color: var(--mitos-body);
+}
+
+/* Customer authentication ---------------------------------------------- */
+.mitos-public-app.mitos-route-rental .signin,
+.mitos-public-app.mitos-route-rental .signup,
+.mitos-public-app.mitos-route-rental .forgot-password,
+.mitos-public-app.mitos-route-rental .reset-password,
+.mitos-public-app.mitos-route-rental .change-password {
+  background: var(--mitos-soft);
+}
+
+.mitos-public-app.mitos-route-rental .signin-form,
+.mitos-public-app.mitos-route-rental .signup-form,
+.mitos-public-app.mitos-route-rental .forgot-password-form,
+.mitos-public-app.mitos-route-rental .reset-password-form,
+.mitos-public-app.mitos-route-rental .change-password-form {
+  border: 1px solid var(--mitos-line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 54px rgba(7, 39, 100, .10) !important;
+}
+
+.mitos-public-app.mitos-route-rental .signin-form-title,
+.mitos-public-app.mitos-route-rental .signup-form-title,
+.mitos-public-app.mitos-route-rental .forgot-password-form-title,
+.mitos-public-app.mitos-route-rental .reset-password-form-title,
+.mitos-public-app.mitos-route-rental .change-password-form-title {
+  color: var(--mitos-ink) !important;
+  font-weight: 900;
+}
+
+@media only screen and (width <= 960px) {
+  .mitos-public-app.mitos-route-rental div.checkout {
+    margin: 18px 0 40px;
+    padding: 0;
+  }
+
+  .mitos-public-app.mitos-route-rental div.checkout .checkout-form {
+    border-radius: 14px;
+  }
+
+  .mitos-public-app.mitos-route-rental div.bookings {
+    position: relative;
+    inset: 0;
+  }
+}
