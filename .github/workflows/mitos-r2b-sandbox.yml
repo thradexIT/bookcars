@@ -42,16 +42,8 @@ jobs:
         run: npm run build
 
       - name: Assert no credential literal is embedded in R2B files
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -RInE '(APP_USR-|TEST-[0-9A-Za-z_-]{20,}|access[_ -]?token[=:][[:space:]]*[A-Za-z0-9_-]{20,})' \
-            backend/scripts/mitos-r2b-provider-cert.ts \
-            .github/workflows/mitos-r2b-sandbox.yml \
-            docs/mitos/evidence/MITOS_R2B_MERCADO_PAGO_REAL_SANDBOX_PLAN_2026-08-31.md; then
-            echo 'Potential credential literal detected in R2B certification files' >&2
-            exit 1
-          fi
+        working-directory: backend
+        run: npx tsx scripts/mitos-r2b-secret-literal-scan.ts
 
   real-test-provider:
     if: github.event_name == 'workflow_dispatch'
