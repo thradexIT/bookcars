@@ -88,31 +88,92 @@ const getInputMetadata = async (frame, scope = null) => {
   return { locator, metadata }
 }
 
-const fillAcrossFrames = async (page, hints, value) => {
+const isFrameElementVisible = async (frame) => {
+  if (!frame.parentFrame()) return true
+  const element = await frame.frameElement().catch(() => null)
+  if (!element) return false
+  return element.isVisible().catch(() => false)
+}
+
+const fillAcrossFrames = async (page, hints, value, timeoutMs = 10_000) => {
   if (!value) return null
-  for (const frame of page.frames()) {
-    const { locator, metadata } = await getInputMetadata(frame)
-    for (const descriptor of metadata) {
-      const haystack = descriptorText(frame, descriptor)
-      if (hints.some((hint) => haystack.includes(hint))) {
+  const deadline = Date.now() + timeoutMs
+
+  while (Date.now() < deadline) {
+    const candidates = []
+
+    for (const frame of page.frames()) {
+      const frameHost = safeHost(frame.url())
+      const frameVisible = await isFrameElementVisible(frame)
+      const { locator, metadata } = await getInputMetadata(frame)
+
+      for (const descriptor of metadata) {
+        const haystack = descriptorText(frame, descriptor)
+        if (!hints.some((hint) => haystack.includes(hint))) continue
+
         const input = locator.nth(descriptor.index)
-        if (await input.isVisible().catch(() => false)) {
-          await input.fill(value)
-          return {
-            frameHost: safeHost(frame.url()),
-            descriptor: {
-              type: descriptor.type,
-              name: descriptor.name,
-              id: descriptor.id,
-              placeholder: descriptor.placeholder,
-              ariaLabel: descriptor.ariaLabel,
-              autocomplete: descriptor.autocomplete,
-            },
-          }
-        }
+        const inputVisible = await input.isVisible().catch(() => false)
+        const descriptive = Boolean(descriptor.ariaLabel || descriptor.placeholder)
+        const secureField = frameHost === 'secure-fields.mercadopago.com'
+        const score = (inputVisible ? 100 : 0)
+          + (frameVisible ? 50 : 0)
+          + (descriptive ? 20 : 0)
+          + (secureField ? 10 : 0)
+
+        candidates.push({
+          frame,
+          frameHost,
+          frameVisible,
+          locator,
+          descriptor,
+          inputVisible,
+          descriptive,
+          secureField,
+          score,
+        })
       }
     }
+
+    candidates.sort((a, b) => b.score - a.score)
+
+    for (const candidate of candidates) {
+      const input = candidate.locator.nth(candidate.descriptor.index)
+      try {
+        if (candidate.inputVisible) {
+          await input.fill(value)
+        } else if (candidate.secureField && candidate.frameVisible && candidate.descriptive) {
+          // Mercado Pago Secure Fields can report the inner input as hidden even while
+          // the owning iframe is the visible, selected payment field. Only force-fill
+          // that visible iframe and only when its descriptor identifies the UI field.
+          await input.fill(value, { force: true })
+        } else {
+          continue
+        }
+
+        return {
+          frameHost: candidate.frameHost,
+          frameName: candidate.frame.name(),
+          frameVisible: candidate.frameVisible,
+          inputVisible: candidate.inputVisible,
+          forcedSecureField: !candidate.inputVisible,
+          descriptor: {
+            type: candidate.descriptor.type,
+            name: candidate.descriptor.name,
+            id: candidate.descriptor.id,
+            placeholder: candidate.descriptor.placeholder,
+            ariaLabel: candidate.descriptor.ariaLabel,
+            autocomplete: candidate.descriptor.autocomplete,
+          },
+        }
+      } catch {
+        // Dynamic Secure Fields may remount while the card method is activating.
+        // Retry against the fresh frame/input set until the bounded deadline.
+      }
+    }
+
+    await page.waitForTimeout(250)
   }
+
   return null
 }
 
@@ -168,22 +229,36 @@ const clickCreditCardOptionIfVisible = async (page, root) => {
     /crédito/i,
     /credito/i,
   ]
+
+  for (const pattern of patterns) {
+    const radio = root.getByRole('radio', { name: pattern }).first()
+    if (await radio.isVisible().catch(() => false)) {
+      await radio.check()
+      await page.waitForTimeout(1_200)
+      return await radio.isChecked().catch(() => true)
+    }
+  }
+
+  for (const frame of page.frames()) {
+    for (const pattern of patterns) {
+      const radio = frame.getByRole('radio', { name: pattern }).first()
+      if (await radio.isVisible().catch(() => false)) {
+        await radio.check()
+        await page.waitForTimeout(1_200)
+        return await radio.isChecked().catch(() => true)
+      }
+    }
+  }
+
   for (const pattern of patterns) {
     const inRoot = root.getByText(pattern).first()
     if (await inRoot.isVisible().catch(() => false)) {
       await inRoot.click()
-      await page.waitForTimeout(900)
+      await page.waitForTimeout(1_200)
       return true
     }
-    for (const frame of page.frames()) {
-      const candidate = frame.getByText(pattern).first()
-      if (await candidate.isVisible().catch(() => false)) {
-        await candidate.click()
-        await page.waitForTimeout(900)
-        return true
-      }
-    }
   }
+
   return false
 }
 
@@ -211,10 +286,13 @@ const clickPayButton = async (page, root) => {
 const sanitizeInputs = async (page) => {
   const output = []
   for (const frame of page.frames()) {
+    const frameVisible = await isFrameElementVisible(frame)
     const { metadata } = await getInputMetadata(frame)
     for (const input of metadata) {
       output.push({
         frameHost: safeHost(frame.url()),
+        frameName: frame.name(),
+        frameVisible,
         type: input.type,
         name: input.name,
         id: input.id,
@@ -344,13 +422,15 @@ try {
   })
   await screenshot(page, '02-payment-brick-rendered')
 
-  await clickCreditCardOptionIfVisible(page, brickShell)
+  const creditCardSelected = await clickCreditCardOptionIfVisible(page, brickShell)
+  record('credit-card method selected in Payment Brick', { selected: creditCardSelected })
 
   const cardNumber = await fillAcrossFrames(page, ['cardnumber', 'card_number', 'card-number', 'card number', 'numero de tarjeta', 'número de tarjeta', 'cc-number'], cardNumberValue)
-  const expiration = await fillAcrossFrames(page, ['expiration', 'expiry', 'vencimiento', 'cc-exp'], cardExpiryValue)
-  const securityCode = await fillAcrossFrames(page, ['security', 'cvv', 'cvc', 'codigo de seguridad', 'código de seguridad', 'cc-csc'], cardCvvValue)
-  const holder = await fillWithinRoot(brickShell, ['cardholder', 'titular'], cardHolderValue)
-    || await fillAcrossFrames(page, ['cardholder', 'titular'], cardHolderValue)
+  const expiration = await fillAcrossFrames(page, ['expirationdate', 'expiration', 'expiry', 'vencimiento', 'cc-exp'], cardExpiryValue)
+  const securityCode = await fillAcrossFrames(page, ['securitycode', 'security', 'cvv', 'cvc', 'codigo de seguridad', 'código de seguridad', 'cc-csc'], cardCvvValue)
+  const holderHints = ['holder_name', 'holder name', 'holdername', 'cardholder', 'titular']
+  const holder = await fillWithinRoot(brickShell, holderHints, cardHolderValue)
+    || await fillAcrossFrames(page, holderHints, cardHolderValue)
   const identification = payerDocumentValue
     ? await fillWithinRoot(brickShell, ['identification', 'document', 'dni'], payerDocumentValue)
       || await fillAcrossFrames(page, ['identification', 'document', 'dni'], payerDocumentValue)
@@ -363,6 +443,7 @@ try {
 
   if (!evidence.brick.cardAvailable) {
     record('required card fields were not all reachable', {
+      creditCardSelected,
       cardNumberField: Boolean(cardNumber),
       expirationField: Boolean(expiration),
       securityCodeField: Boolean(securityCode),
