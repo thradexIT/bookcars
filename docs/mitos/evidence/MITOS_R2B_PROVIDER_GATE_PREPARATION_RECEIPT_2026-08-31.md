@@ -1,7 +1,7 @@
 # MITOS R2B — Real Mercado Pago Test-Provider Gate Preparation Receipt
 
 Date: 2026-08-31
-Status: **GATE IMPLEMENTED AND VALIDATED — REAL PROVIDER EXECUTION STILL PENDING**
+Status: **REAL TEST-PROVIDER EXECUTION ARMED — APPROVED SCENARIO**
 
 ## Isolation
 
@@ -18,14 +18,38 @@ Status: **GATE IMPLEMENTED AND VALIDATED — REAL PROVIDER EXECUTION STILL PENDI
 
 ## Implemented gate
 
-R2B now contains a real-provider certification harness:
+R2B contains a real-provider certification harness:
 
 - `backend/scripts/mitos-r2b-provider-cert.ts`
 - `.github/workflows/mitos-r2b-sandbox.yml`
 - `backend/scripts/mitos-r2b-secret-literal-scan.ts`
 
 The harness does **not** stub `Payment.create` or `Payment.get`.
-When manually executed with Mercado Pago test credentials, it will use the real Mercado Pago SDK/provider boundary.
+It uses the real Mercado Pago TEST provider boundary.
+
+## Credential and tokenization contract
+
+Repository/GitHub Actions secrets are supplied externally and are never committed:
+
+- `MITOS_MP_TEST_ACCESS_TOKEN`
+- `MITOS_MP_TEST_PUBLIC_KEY`
+
+The obsolete `MITOS_MP_TEST_CARD_TOKEN` requirement was removed before real execution.
+
+R2B now creates a fresh, one-time CardToken at runtime using:
+
+- the Mercado Pago TEST Public Key;
+- Mercado Pago's published Peru TEST card data;
+- the test cardholder outcome code for the requested scenario.
+
+The CardToken:
+
+- exists only in runtime memory;
+- is masked immediately in GitHub Actions;
+- is never added to GitHub Secrets;
+- is never persisted in evidence;
+- is never committed;
+- is never printed intentionally.
 
 ## Safety properties
 
@@ -38,42 +62,45 @@ A normal branch push:
 - does **not** require Mercado Pago secrets;
 - does **not** create a payment.
 
-The real-provider job is restricted to `workflow_dispatch` and fails closed if either of these secrets is absent:
+The real-provider job runs only when either:
 
-- `MITOS_MP_TEST_ACCESS_TOKEN`
-- `MITOS_MP_TEST_CARD_TOKEN`
+- manually invoked through `workflow_dispatch`; or
+- a deliberate certification commit contains the marker `[r2b-real]`.
 
-`MITOS_MP_TEST_CARD_TOKEN` is explicitly treated as a one-time test token and must not be committed or printed.
+The real-provider job fails closed if either TEST credential is absent or if the Public Key is not explicitly TEST-scoped.
+
+Only Mercado Pago TEST card data is used. No real card data is used anywhere in R2B.
 
 ## Real-provider proof encoded in the harness
 
-On authorized manual execution the harness will prove:
+The authorized execution proves:
 
 1. isolated MitoS booking creation;
 2. backend-owned quote before payment;
 3. reservation enters `awaiting_payment`;
-4. real provider payment creation through MitoS backend;
-5. direct real-provider read-back using Mercado Pago SDK;
-6. provider `live_mode === false`;
-7. provider `external_reference === bookingId`;
-8. provider amount equals the MitoS server quote;
-9. provider currency is `PEN`;
-10. provider status matches the expected test scenario;
-11. approved provider truth confirms the reservation;
-12. non-approved provider truth does not confirm the reservation;
-13. same idempotency key reuses the same provider payment;
-14. for active payments, a distinct key is rejected with HTTP 409;
-15. Admin reconciliation re-reads provider truth.
+4. fresh Mercado Pago TEST CardToken generation;
+5. real provider payment creation through MitoS backend;
+6. direct real-provider read-back using Mercado Pago SDK;
+7. provider `live_mode === false`;
+8. provider `external_reference === bookingId`;
+9. provider amount equals the MitoS server quote;
+10. provider currency is `PEN`;
+11. provider status matches the expected test scenario;
+12. approved provider truth confirms the reservation;
+13. non-approved provider truth does not confirm the reservation;
+14. same idempotency key reuses the same provider payment without a second provider call;
+15. for active payments, a distinct key is rejected with HTTP 409 before provider create;
+16. Admin reconciliation re-reads provider truth.
 
 No browser redirect is used as payment authority.
 
-## Validation evidence
+## Latest safe pre-execution validation
 
 Validation workflow:
 
 - workflow: `mitos-r2b-sandbox`
-- run id: `33450792354`
-- head: `7694b07041b1038aaa008205e50a024880e05f2a`
+- run id: `33454397258`
+- head: `24d8c3753e4a729f3dadeac427068faee04cf26c`
 - conclusion: **success**
 
 Validated steps:
@@ -84,29 +111,33 @@ Use Node.js LTS                             success
 Install backend dependencies                success
 Compile R2B harness with backend            success
 Credential-literal scan                     success
-real-test-provider                          skipped (expected on push)
+real-test-provider                          skipped (expected on ordinary push)
 ```
 
-The first validation run exposed a false positive because the credential regex was embedded in the workflow being scanned. That was a certification-harness defect, not a product defect. It was corrected by moving the scanner into a separate script; the second validation run passed.
+This validation occurred after removing the manual CardToken secret requirement.
 
 ## Diff boundary
 
-Relative to the certified R2A parent, R2B preparation adds certification infrastructure/documentation only. It does not modify inherited payment controllers, routes, reservation logic, lifecycle logic, frontend behavior, Admin behavior, or pricing logic.
+Relative to the certified R2A parent, R2B changes certification infrastructure/documentation only. It does not modify inherited payment controllers, routes, reservation logic, lifecycle logic, frontend behavior, Admin behavior, or pricing logic.
 
-## Current claim
+## Current execution trigger
+
+The user configured both required Mercado Pago TEST credentials as GitHub repository secrets on 2026-08-31.
+
+This commit intentionally carries `[r2b-real]` to authorize one real TEST-provider run using the default approved scenario.
+
+No secret values are recorded here.
+
+## Current claim before provider result
 
 ```text
 R1 Pay Later runtime                       CERTIFIED
 R2A Mercado Pago application boundary      CERTIFIED
 R2A concurrent payment race                CLOSED / CERTIFIED
 R2B real-provider gate implementation      READY / VALIDATED
-R2B real Mercado Pago test provider        NOT YET EXECUTED
-Real Brick/CardToken browser proof          NOT YET CERTIFIED
+R2B real Mercado Pago test provider        EXECUTION ARMED
+Real Brick browser UI proof                 NOT YET CERTIFIED
 Real inbound Mercado Pago webhook           NOT YET CERTIFIED
 Production readiness                       NOT CLAIMED
 Merge readiness                            NOT CLAIMED
 ```
-
-## Remaining external prerequisite
-
-A real provider execution requires intentionally supplied Mercado Pago **test** credentials and a fresh one-time test CardToken. The repository contains no substitute or fallback credential and will not silently use production credentials.
