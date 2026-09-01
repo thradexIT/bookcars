@@ -254,6 +254,7 @@ jobs:
         working-directory: frontend
         run: |
           npm install --force
+          npm run install:dependencies
           npm install --no-save playwright
           npx playwright install --with-deps chromium
 
