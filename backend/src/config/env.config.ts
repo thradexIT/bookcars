@@ -37,8 +37,9 @@ export const LANGUAGES = [
 
 /**
  * Name of the field used for TTL (Time-To-Live) index expiration.
- * MongoDB automatically deletes documents when the date in this field is reached.
- * 
+ * This helps avoid large memory usage and improves performance during deletions.
+ * Default is 1000.
+ *
  * @constant
  * @type {string}
  */
@@ -259,25 +260,11 @@ export const CDN_ROOT = __env__('BC_CDN_ROOT', false, '/var/www/cdn')
 export const CDN_USERS = __env__('BC_CDN_USERS', true)
 
 /**
- * Users' temp cdn folder path.
- *
- * @type {string}
- */
-export const CDN_TEMP_USERS = __env__('BC_CDN_TEMP_USERS', true)
-
-/**
  * Cars' cdn folder path.
  *
  * @type {string}
  */
 export const CDN_CARS = __env__('BC_CDN_CARS', true)
-
-/**
- * Cars' temp cdn folder path.
- *
- * @type {string}
- */
-export const CDN_TEMP_CARS = __env__('BC_CDN_TEMP_CARS', true)
 
 /**
  * Locations' cdn folder path.
@@ -287,25 +274,11 @@ export const CDN_TEMP_CARS = __env__('BC_CDN_TEMP_CARS', true)
 export const CDN_LOCATIONS = __env__('BC_CDN_LOCATIONS', true)
 
 /**
- * Locations' temp cdn folder path.
+ * Temp licenses' cdn folder path.
  *
  * @type {string}
  */
-export const CDN_TEMP_LOCATIONS = __env__('BC_CDN_TEMP_LOCATIONS', true)
-
-/**
- * Contracts' cdn folder path.
- *
- * @type {string}
- */
-export const CDN_CONTRACTS = __env__('BC_CDN_CONTRACTS', true)
-
-/**
- * Contracts' temp cdn folder path.
- *
- * @type {string}
- */
-export const CDN_TEMP_CONTRACTS = __env__('BC_CDN_TEMP_CONTRACTS', true)
+export const CDN_TEMP_LICENSES = __env__('BC_CDN_TEMP_LICENSES', true)
 
 /**
  * Licenses' cdn folder path.
@@ -315,218 +288,186 @@ export const CDN_TEMP_CONTRACTS = __env__('BC_CDN_TEMP_CONTRACTS', true)
 export const CDN_LICENSES = __env__('BC_CDN_LICENSES', true)
 
 /**
- * Licenses' temp cdn folder path.
+ * Contracts' cdn folder path.
  *
  * @type {string}
  */
-export const CDN_TEMP_LICENSES = __env__('BC_CDN_TEMP_LICENSES', true)
+export const CDN_CONTRACTS = __env__('BC_CDN_CONTRACTS', true)
 
 /**
- * Admin host.
+ * Enable tracing logs.
+ *
+ * @type {boolean}
+ */
+export const TRACE = helper.StringToBoolean(__env__('BC_TRACE'))
+
+/**
+ * Default language.
  *
  * @type {string}
  */
-export const ADMIN_HOST = __env__('BC_ADMIN_HOST', true)
+export const DEFAULT_LANGUAGE = __env__('BC_DEFAULT_LANGUAGE', false, 'en')
 
 /**
- * Frontend host.
+ * Default timezone.
+ *
+ * @type {string}
+ */
+export const TIMEZONE = __env__('BC_TIMEZONE', false, 'Europe/Paris')
+
+/**
+ * Website URL.
+ *
+ * @type {string}
+ */
+export const WEBSITE_HOST = __env__('BC_WEBSITE_HOST', true)
+
+/**
+ * Frontend URL.
  *
  * @type {string}
  */
 export const FRONTEND_HOST = __env__('BC_FRONTEND_HOST', true)
 
 /**
- * Default language. Available options: en, fr, es.
+ * Admin URL.
  *
  * @type {string}
  */
-export const DEFAULT_LANGUAGE = __env__('BC_DEFAULT_LANGUAGE', false, 'es')
+export const ADMIN_HOST = __env__('BC_ADMIN_HOST', true)
 
 /**
- * Default Minimum age for rental. Default is 21 years.
- *
- * @type {number}
- */
-export const MINIMUM_AGE = Number.parseInt(__env__('BC_MINIMUM_AGE', false, '21'), 10)
-
-/**
- * Expo push access token.
+ * Mobile app scheme.
  *
  * @type {string}
  */
-export const EXPO_ACCESS_TOKEN = __env__('BC_EXPO_ACCESS_TOKEN', false)
+export const MOBILE_APP_SCHEME = __env__('BC_MOBILE_APP_SCHEME', false, 'bookcars')
+
+/**
+ * Enable recaptcha.
+ *
+ * @type {boolean}
+ */
+export const RECAPTCHA_ENABLED = helper.StringToBoolean(__env__('BC_RECAPTCHA_ENABLED'))
+
+/**
+ * Recaptcha secret key.
+ *
+ * @type {string}
+ */
+export const RECAPTCHA_SECRET = __env__('BC_RECAPTCHA_SECRET', RECAPTCHA_ENABLED)
+
+/**
+ * Enable admin recaptcha.
+ *
+ * @type {boolean}
+ */
+export const ADMIN_RECAPTCHA_ENABLED = helper.StringToBoolean(__env__('BC_ADMIN_RECAPTCHA_ENABLED'))
+
+/**
+ * Admin Recaptcha secret key.
+ *
+ * @type {string}
+ */
+export const ADMIN_RECAPTCHA_SECRET = __env__('BC_ADMIN_RECAPTCHA_SECRET', ADMIN_RECAPTCHA_ENABLED)
+
+/**
+ * Enable frontend recaptcha.
+ *
+ * @type {boolean}
+ */
+export const FRONTEND_RECAPTCHA_ENABLED = helper.StringToBoolean(__env__('BC_FRONTEND_RECAPTCHA_ENABLED'))
+
+/**
+ * Frontend Recaptcha secret key.
+ *
+ * @type {string}
+ */
+export const FRONTEND_RECAPTCHA_SECRET = __env__('BC_FRONTEND_RECAPTCHA_SECRET', FRONTEND_RECAPTCHA_ENABLED)
+
+/**
+ * Enable SMTP.
+ *
+ * @type {boolean}
+ */
+export const SMTP_ENABLED = helper.StringToBoolean(__env__('BC_SMTP_ENABLED', false, 'true'))
 
 /**
  * Stripe secret key.
  *
  * @type {string}
  */
-export const STRIPE_SECRET_KEY = __env__('BC_STRIPE_SECRET_KEY', false, 'STRIPE_SECRET_KEY')
+export const STRIPE_SECRET_KEY = __env__('BC_STRIPE_SECRET_KEY', false)
 
 /**
- * Mercado Pago Access Token.
+ * PayPal API URL.
  *
  * @type {string}
  */
-export const MERCADO_PAGO_ACCESS_TOKEN = __env__('BC_MERCADO_PAGO_ACCESS_TOKEN', false, 'MERCADO_PAGO_ACCESS_TOKEN')
-
-/**
- * Odoo URL.
- *
- * @type {string}
- */
-export const ODOO_URL = __env__('BC_ODOO_URL', false, '')
-
-/**
- * Odoo Database Name.
- *
- * @type {string}
- */
-export const ODOO_DB = __env__('BC_ODOO_DB', false, '')
-
-/**
- * Odoo Username.
- *
- * @type {string}
- */
-export const ODOO_USERNAME = __env__('BC_ODOO_USERNAME', false, '')
-
-/**
- * Odoo Password.
- *
- * @type {string}
- */
-export const ODOO_PASSWORD = __env__('BC_ODOO_PASSWORD', false, '')
-
-/**
- * Mercado Pago Public Key.
- *
- * @type {string}
- */
-export const MERCADO_PAGO_PUBLIC_KEY = __env__('BC_MERCADO_PAGO_PUBLIC_KEY', false, 'MERCADO_PAGO_PUBLIC_KEY')
-
-let stripeSessionExpireAt = Number.parseInt(__env__('BC_STRIPE_SESSION_EXPIRE_AT', false, '82800'), 10)
-stripeSessionExpireAt = stripeSessionExpireAt < 1800 ? 1800 : stripeSessionExpireAt
-stripeSessionExpireAt = stripeSessionExpireAt <= 82800 ? stripeSessionExpireAt : 82800
-
-/**
- * Stripe Checkout Session expiration in seconds. Should be at least 1800 seconds (30min) and max 82800 seconds. Default is 82800 seconds (~23h).
- * If the value is lower than 1800 seconds, it wil be set to 1800 seconds.
- * If the value is greater than 82800 seconds, it wil be set to 82800 seconds.
- *
- * @type {number}
- */
-export const STRIPE_SESSION_EXPIRE_AT = stripeSessionExpireAt
-
-/**
- * Indicates whether PayPal is used in sandbox mode or production.
- *
- * @type {boolean}
- */
-export const PAYPAL_SANDBOX = helper.StringToBoolean(__env__('BC_PAYPAL_SANDBOX', false, 'true'))
+export const PAYPAL_API_URL = __env__('BC_PAYPAL_API_URL', false, 'https://api-m.sandbox.paypal.com')
 
 /**
  * PayPal client ID.
  *
  * @type {string}
  */
-export const PAYPAL_CLIENT_ID = __env__('BC_PAYPAL_CLIENT_ID', false, 'PAYPAL_CLIENT_ID')
+export const PAYPAL_CLIENT_ID = __env__('BC_PAYPAL_CLIENT_ID', false)
 
 /**
  * PayPal client secret.
  *
  * @type {string}
  */
-export const PAYPAL_CLIENT_SECRET = __env__('BC_PAYPAL_CLIENT_SECRET', false, 'PAYPAL_CLIENT_SECRET')
+export const PAYPAL_CLIENT_SECRET = __env__('BC_PAYPAL_CLIENT_SECRET', false)
 
 /**
- * Booking expiration in seconds.
- * Bookings created from checkout with Stripe are temporary and are automatically deleted if the payment checkout session expires.
- *
- * @type {number}
- */
-export const BOOKING_EXPIRE_AT = STRIPE_SESSION_EXPIRE_AT + (10 * 60)
-
-/**
- * User expiration in seconds.
- * Non verified and active users created from checkout with Stripe are temporary and are automatically deleted if the payment checkout session expires.
- *
- *
- * @type {number}
- */
-export const USER_EXPIRE_AT = BOOKING_EXPIRE_AT
-
-/**
- * Admin email.
+ * Mercado Pago access token.
  *
  * @type {string}
  */
-export const ADMIN_EMAIL = __env__('BC_ADMIN_EMAIL', false)
+export const MERCADO_PAGO_ACCESS_TOKEN = __env__('BC_MERCADO_PAGO_ACCESS_TOKEN', false)
 
 /**
- * Google reCAPTCHA v3 secret key.
+ * Mercado Pago currency.
  *
  * @type {string}
  */
-export const RECAPTCHA_SECRET = __env__('BC_RECAPTCHA_SECRET', false)
+export const MERCADO_PAGO_CURRENCY = __env__('BC_MERCADO_PAGO_CURRENCY', false, 'PEN').toUpperCase()
 
 /**
- * Timezone for converting dates from UTC to local time.
- * Must be a valid TZ identifier.
+ * Odoo API URL.
  *
  * @type {string}
  */
-export const TIMEZONE = __env__('BC_TIMEZONE', false, 'America/Lima')
+export const ODOO_API_URL = __env__('BC_ODOO_API_URL', false)
 
 /**
- * ipinfo.io API key.
- * Required for more than 1000 requests/day.
+ * Odoo database.
  *
  * @type {string}
  */
-export const IPINFO_API_KEY = __env__('BC_IPINFO_API_KEY', false)
+export const ODOO_DB = __env__('BC_ODOO_DB', false)
 
 /**
- * Default ISO 2 country code ipinfo.io.
+ * Odoo username.
  *
  * @type {string}
  */
-export const IPINFO_DEFAULT_COUNTRY = __env__('BC_IPINFO_DEFAULT_COUNTRY', false, 'PE')
+export const ODOO_USERNAME = __env__('BC_ODOO_USERNAME', false)
 
 /**
- * Enables or disables Sentry error reporting. Set to true to enable.
- *
- * @type {boolean}
- */
-export const ENABLE_SENTRY = helper.StringToBoolean(__env__('BC_ENABLE_SENTRY', false, 'false'))
-
-/**
- * The Sentry DSN (Data Source Name) used to identify your backend project.
+ * Odoo API key.
  *
  * @type {string}
  */
-export const SENTRY_DSN_BACKEND = __env__('BC_SENTRY_DSN_BACKEND', ENABLE_SENTRY)
+export const ODOO_API_KEY = __env__('BC_ODOO_API_KEY', false)
 
 /**
- * Sentry traces sample rate.
- * Set to 1.0 to capture 100% of transactions for tracing.
- * 0.1 means 10% of transactions will be sent to Sentry.
- * 0 means no transactions will be sent to Sentry.
- * We recommend adjusting this value in production to avoid high data volume and costs.
- *
- * Learn more at
- * https://docs.sentry.io/platforms/javascript/guides/node/configuration/options/#tracesSampleRate
- * 
- * @type {number}
- */
-export const SENTRY_TRACES_SAMPLE_RATE = Number.parseFloat(__env__('BC_SENTRY_TRACES_SAMPLE_RATE', false, '1.0'))
-
-/**
- * Google Client ID for SSO.
+ * Website version.
  *
  * @type {string}
  */
-export const GOOGLE_CLIENT_ID = __env__('BC_GG_APP_ID', false)
+export const VERSION = __env__('BC_VERSION', false, '1.0.0')
 
 /**
  * User Document.
@@ -537,6 +478,7 @@ export const GOOGLE_CLIENT_ID = __env__('BC_GG_APP_ID', false)
  * @extends {Document}
  */
 export interface User extends Document {
+  _id: Types.ObjectId
   supplier?: Types.ObjectId
   fullName: string
   email: string
@@ -547,16 +489,19 @@ export interface User extends Document {
   verifiedAt?: Date
   active?: boolean
   language: string
-  enableEmailNotifications?: boolean
+  enableEmailNotifications: boolean
   avatar?: string
   bio?: string
   location?: string
-  type?: bookcarsTypes.UserType
+  type: bookcarsTypes.UserType
   blacklisted?: boolean
-  payLater?: boolean
+  payLater: boolean
   customerId?: string
-  contracts?: bookcarsTypes.Contract[]
-  licenseRequired?: boolean
+  contracts?: {
+    language: string
+    file: string
+  }[]
+  licenseRequired: boolean
   license?: string | null
   minimumRentalDays?: number
   expireAt?: Date
@@ -610,7 +555,7 @@ export interface AdditionalDriver {
   fullName: string
   email: string
   phone: string
-  birthDate: Date
+  birthDate?: Date
 }
 
 /**
