@@ -198,6 +198,12 @@ const collectFormDiagnostics = async (page) => {
   }
 }
 
+const enterMuiSegment = async (segment, value) => {
+  await segment.click()
+  await segment.press('Control+A').catch(() => undefined)
+  await segment.pressSequentially(value, { delay: 40 })
+}
+
 let browser
 try {
   browser = await chromium.launch({ headless: true })
@@ -266,15 +272,20 @@ try {
   await driverInputs.nth(1).fill(`r3-browser-${runId}@example.test`)
   await driverInputs.nth(2).fill('+51987654321')
 
-  // MUI X DatePicker is a segmented field. Playwright .fill() can mutate the
-  // underlying input without driving the section model, after which React
-  // restores the empty DD/MM/YYYY value. Interact with it like a real user and
-  // prove the required field retained a value before submitting the booking.
+  // MUI X DatePicker v8 renders an aria-hidden input plus editable sections.
+  // Drive the visible accessible sections exactly as a keyboard user would.
+  const daySection = driverForm.getByRole('spinbutton', { name: /d[ií]a/i }).first()
+  const monthSection = driverForm.getByRole('spinbutton', { name: /mes/i }).first()
+  const yearSection = driverForm.getByRole('spinbutton', { name: /a[nñ]o/i }).first()
+  if (!(await daySection.count()) || !(await monthSection.count()) || !(await yearSection.count())) {
+    throw new Error('R3 could not locate MUI birth-date day/month/year sections')
+  }
+  await enterMuiSegment(daySection, '01')
+  await enterMuiSegment(monthSection, '01')
+  await enterMuiSegment(yearSection, '1990')
+  await yearSection.press('Tab')
+
   const birthDateInput = driverInputs.nth(3)
-  await birthDateInput.click()
-  await birthDateInput.press('Control+A').catch(() => undefined)
-  await birthDateInput.pressSequentially('01011990', { delay: 35 })
-  await birthDateInput.press('Tab')
   const birthDateValue = await birthDateInput.inputValue().catch(() => '')
   if (!birthDateValue) {
     evidence.formDiagnostics = await collectFormDiagnostics(page)
@@ -282,7 +293,7 @@ try {
       valuePresent: false,
       diagnostics: evidence.formDiagnostics,
     }, 'R3-HARNESS-BIRTH-DATE-INTERACTION')
-    throw new Error('R3 browser harness could not populate the MUI birth date field through user interaction')
+    throw new Error('R3 browser harness could not populate the MUI segmented birth date field')
   }
 
   const tos = page.locator('input[type="checkbox"][name="tos"]')
