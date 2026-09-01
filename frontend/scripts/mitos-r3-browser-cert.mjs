@@ -26,7 +26,9 @@ const evidence = {
     checkout: null,
     quote: null,
     payment: null,
+    apiResponses: [],
   },
+  formDiagnostics: null,
   brick: {
     rendered: false,
     frames: [],
@@ -160,6 +162,42 @@ const clickPayButton = async (page, root) => {
   return false
 }
 
+const collectFormDiagnostics = async (page) => {
+  const fields = await page.locator('.driver-details-form input').evaluateAll((nodes) => nodes.map((node, index) => ({
+    index,
+    type: node.getAttribute('type') || '',
+    name: node.getAttribute('name') || '',
+    ariaInvalid: node.getAttribute('aria-invalid') || '',
+    valuePresent: Boolean(node.value),
+    checked: 'checked' in node ? Boolean(node.checked) : undefined,
+    htmlValid: typeof node.checkValidity === 'function' ? node.checkValidity() : undefined,
+  })))
+
+  const visibleMessages = await page.locator('.MuiFormHelperText-root, [role="alert"], .error, .Mui-error')
+    .evaluateAll((nodes) => nodes
+      .filter((node) => {
+        const style = window.getComputedStyle(node)
+        const rect = node.getBoundingClientRect()
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0
+      })
+      .map((node) => (node.textContent || '').trim())
+      .filter(Boolean)
+      .filter((value, index, all) => all.indexOf(value) === index)
+      .slice(0, 30))
+
+  const birthDateInput = page.locator('.driver-details-form input').nth(3)
+  return {
+    fields,
+    visibleMessages,
+    birthDate: {
+      valuePresent: await birthDateInput.inputValue().then((value) => Boolean(value)).catch(() => false),
+      ariaInvalid: await birthDateInput.getAttribute('aria-invalid').catch(() => null),
+    },
+    tosChecked: await page.locator('input[type="checkbox"][name="tos"]').isChecked().catch(() => false),
+    payInFullChecked: await page.locator('input[type="radio"][value="payInFull"]').isChecked().catch(() => false),
+  }
+}
+
 let browser
 try {
   browser = await chromium.launch({ headless: true })
@@ -169,6 +207,14 @@ try {
   page.on('response', async (response) => {
     const url = response.url()
     try {
+      if (url.includes('/api/')) {
+        const parsed = new URL(url)
+        evidence.network.apiResponses.push({
+          method: response.request().method(),
+          path: parsed.pathname,
+          status: response.status(),
+        })
+      }
       if (url.includes('/api/checkout') && response.request().method() === 'POST') {
         const body = await response.json()
         evidence.network.checkout = { status: response.status(), bookingId: body?.bookingId || '' }
@@ -231,10 +277,22 @@ try {
   const checkoutButton = page.getByRole('button', { name: 'Checkout' })
   await checkoutButton.click()
 
-  await page.waitForFunction(() => {
+  const paymentAreaReady = await page.waitForFunction(() => {
     const paymentArea = document.querySelector('.checkout-payment-buttons')
     return Boolean(paymentArea && (paymentArea.querySelector('iframe') || paymentArea.querySelector('input') || paymentArea.textContent?.trim()))
-  }, null, { timeout: 45_000 })
+  }, null, { timeout: 12_000 }).then(() => true).catch(() => false)
+
+  if (!paymentAreaReady) {
+    evidence.formDiagnostics = await collectFormDiagnostics(page)
+    await screenshot(page, '01b-after-reserve')
+    record('reservation submit blocked before Mercado Pago Brick', {
+      checkoutObserved: Boolean(evidence.network.checkout),
+      quoteObserved: Boolean(evidence.network.quote),
+      diagnostics: evidence.formDiagnostics,
+      apiResponses: evidence.network.apiResponses,
+    }, 'R3-PRE-BRICK-SUBMIT-BLOCKED')
+    throw new Error('R3 reservation submit did not reach the Payment Brick; sanitized form diagnostics captured')
+  }
 
   const paymentRoot = page.locator('.checkout-payment-buttons .payment-options-container').last()
   await paymentRoot.waitFor({ state: 'visible', timeout: 30_000 })
