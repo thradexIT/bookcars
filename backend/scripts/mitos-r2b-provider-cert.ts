@@ -19,7 +19,7 @@ const adminEmail = String(process.env.MITOS_DEMO_ADMIN_EMAIL || '')
 const supplierEmail = String(process.env.MITOS_DEMO_SUPPLIER_EMAIL || '')
 const password = String(process.env.MITOS_DEMO_PASSWORD || '')
 const accessToken = String(process.env.BC_MERCADO_PAGO_ACCESS_TOKEN || '')
-const cardToken = String(process.env.MITOS_MP_TEST_CARD_TOKEN || '')
+const publicKey = String(process.env.MITOS_MP_TEST_PUBLIC_KEY || '')
 const paymentMethodId = String(process.env.MITOS_MP_TEST_PAYMENT_METHOD_ID || 'visa')
 const expectedStatus = String(process.env.MITOS_MP_EXPECTED_STATUS || 'approved').toLowerCase()
 
@@ -27,8 +27,11 @@ const allowedExpected = new Set(['approved', 'pending', 'rejected'])
 if (!dbUri || !customerEmail || !adminEmail || !supplierEmail || !password) {
   throw new Error('R2B isolated fixture environment is incomplete')
 }
-if (!accessToken || !cardToken) {
-  throw new Error('R2B requires test Access Token and one-time test CardToken via environment secrets')
+if (!accessToken || !publicKey) {
+  throw new Error('R2B requires Mercado Pago TEST Public Key and TEST Access Token via environment secrets')
+}
+if (!publicKey.startsWith('TEST-')) {
+  throw new Error('R2B refuses a Public Key that is not explicitly TEST-scoped')
 }
 if (!allowedExpected.has(expectedStatus)) {
   throw new Error(`Unsupported MITOS_MP_EXPECTED_STATUS=${expectedStatus}`)
@@ -49,6 +52,7 @@ const evidence = {
   branch: process.env.GITHUB_REF_NAME || 'cert/mitos-r2b-mercado-pago-sandbox',
   commit: process.env.GITHUB_SHA || 'local',
   providerMode: 'real-mercado-pago-test-provider',
+  tokenizationMode: 'mercado-pago-card-token-api-with-test-public-key',
   expectedStatus,
   steps: [] as EvidenceStep[],
   defects: [] as string[],
@@ -76,6 +80,71 @@ const httpRequest = async (pathname: string, init: RequestInit = {}) => {
 
 const jsonHeaders = (extra: Record<string, string> = {}) => ({ 'content-type': 'application/json', ...extra })
 const tokenHeaders = (token: string) => ({ 'x-access-token': token })
+
+const cardholderNameByExpectedStatus: Record<string, string> = {
+  approved: 'APRO',
+  pending: 'CONT',
+  rejected: 'OTHE',
+}
+
+/**
+ * R2B uses only Mercado Pago's published Peru TEST card data. This function
+ * creates a fresh, one-time CardToken with the TEST Public Key immediately
+ * before the payment attempt. The CardToken is never persisted in evidence,
+ * committed, or printed.
+ */
+const createFreshTestCardToken = async () => {
+  const cardholderName = cardholderNameByExpectedStatus[expectedStatus]
+  const cardholder: Record<string, unknown> = { name: cardholderName }
+
+  if (expectedStatus !== 'pending') {
+    cardholder.identification = {
+      type: 'DNI',
+      number: '123456789',
+    }
+  }
+
+  const response = await fetch(
+    `https://api.mercadopago.com/v1/card_tokens?public_key=${encodeURIComponent(publicKey)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        card_number: '4009175332806176',
+        expiration_month: 11,
+        expiration_year: 2030,
+        security_code: '123',
+        cardholder,
+      }),
+    },
+  )
+
+  let body: any = undefined
+  try {
+    body = await response.json()
+  } catch {
+    // The status alone is enough for sanitized failure evidence.
+  }
+
+  if (!response.ok || !body?.id) {
+    throw new Error(`Mercado Pago TEST card tokenization failed: HTTP ${response.status}`)
+  }
+
+  const token = String(body.id)
+  // GitHub Actions interprets this command and masks the one-time token if any
+  // dependency ever writes it later in the same job.
+  console.log(`::add-mask::${token}`)
+
+  record({
+    name: 'fresh one-time TEST CardToken generated from TEST Public Key',
+    timestamp: new Date().toISOString(),
+    httpStatus: response.status,
+    expected: { generated: true, persisted: false },
+    observed: { generated: true, persisted: false, providerTokenStatus: body?.status || 'created' },
+  })
+
+  return token
+}
 
 const signinAdmin = async () => {
   const result = await httpRequest('/api/sign-in/admin', {
@@ -139,7 +208,12 @@ const quote = (bookingId: string, sessionId: string) => httpRequest(
   `/api/mercadopago/quote/${encodeURIComponent(bookingId)}/${encodeURIComponent(sessionId)}`,
 )
 
-const pay = (bookingId: string, sessionId: string, idempotencyKey: string) => httpRequest('/api/create-mercadopago-payment', {
+const pay = (
+  bookingId: string,
+  sessionId: string,
+  idempotencyKey: string,
+  cardToken: string,
+) => httpRequest('/api/create-mercadopago-payment', {
   method: 'POST',
   headers: jsonHeaders({ 'x-idempotency-key': idempotencyKey }),
   body: JSON.stringify({
@@ -148,7 +222,12 @@ const pay = (bookingId: string, sessionId: string, idempotencyKey: string) => ht
     token: cardToken,
     installments: 1,
     paymentMethodId,
-    payer: { email: customerEmail },
+    payer: {
+      email: customerEmail,
+      ...(expectedStatus !== 'pending'
+        ? { identification: { docType: 'DNI', docNumber: '123456789' } }
+        : {}),
+    },
   }),
 })
 
@@ -197,8 +276,9 @@ try {
     ...((amount > 0 && currency === 'PEN' && awaiting?.status === ReservationStatus.AwaitingPayment) ? {} : { defect: 'R2B-QUOTE-AUTHORITY' }),
   })
 
+  const cardToken = await createFreshTestCardToken()
   const idempotencyKey = `r2b-${runId}`
-  const created = await pay(booking.bookingId, booking.sessionId, idempotencyKey)
+  const created = await pay(booking.bookingId, booking.sessionId, idempotencyKey, cardToken)
   if (![200, 201].includes(created.response.status) || !created.body?.id) {
     throw new Error(`R2B provider payment creation failed: HTTP ${created.response.status}`)
   }
@@ -258,9 +338,9 @@ try {
       : { defect: 'R2B-STATE-MAPPING' }),
   })
 
-  const sameKey = await pay(booking.bookingId, booking.sessionId, idempotencyKey)
+  const sameKey = await pay(booking.bookingId, booking.sessionId, idempotencyKey, cardToken)
   record({
-    name: 'same idempotency key reuses existing provider payment',
+    name: 'same idempotency key reuses existing provider payment without reusing token at provider',
     timestamp: new Date().toISOString(),
     httpStatus: sameKey.response.status,
     expected: { providerPaymentId, replay: true },
@@ -271,7 +351,7 @@ try {
   })
 
   if (expectedStatus === 'approved' || expectedStatus === 'pending') {
-    const secondKey = await pay(booking.bookingId, booking.sessionId, `r2b-second-${runId}`)
+    const secondKey = await pay(booking.bookingId, booking.sessionId, `r2b-second-${runId}`, cardToken)
     record({
       name: 'different key cannot open second active provider payment',
       timestamp: new Date().toISOString(),
@@ -304,7 +384,7 @@ try {
 } catch (error) {
   evidence.result = 'failed'
   evidence.completedAt = new Date().toISOString()
-  evidence.failure = error instanceof Error ? error.stack || error.message : String(error)
+  evidence.failure = error instanceof Error ? error.message : String(error)
   console.error('[R2B] HARNESS FAILURE', error instanceof Error ? error.message : String(error))
   process.exitCode = 1
 } finally {
