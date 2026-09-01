@@ -265,14 +265,31 @@ try {
   await driverInputs.nth(0).fill('MITOS R3 Browser Test')
   await driverInputs.nth(1).fill(`r3-browser-${runId}@example.test`)
   await driverInputs.nth(2).fill('+51987654321')
-  await driverInputs.nth(3).fill('01/01/1990')
-  await driverInputs.nth(3).press('Tab')
+
+  // MUI X DatePicker is a segmented field. Playwright .fill() can mutate the
+  // underlying input without driving the section model, after which React
+  // restores the empty DD/MM/YYYY value. Interact with it like a real user and
+  // prove the required field retained a value before submitting the booking.
+  const birthDateInput = driverInputs.nth(3)
+  await birthDateInput.click()
+  await birthDateInput.press('Control+A').catch(() => undefined)
+  await birthDateInput.pressSequentially('01011990', { delay: 35 })
+  await birthDateInput.press('Tab')
+  const birthDateValue = await birthDateInput.inputValue().catch(() => '')
+  if (!birthDateValue) {
+    evidence.formDiagnostics = await collectFormDiagnostics(page)
+    record('MUI birth date interaction failed before reservation submit', {
+      valuePresent: false,
+      diagnostics: evidence.formDiagnostics,
+    }, 'R3-HARNESS-BIRTH-DATE-INTERACTION')
+    throw new Error('R3 browser harness could not populate the MUI birth date field through user interaction')
+  }
 
   const tos = page.locator('input[type="checkbox"][name="tos"]')
   await tos.check()
   const payInFull = page.locator('input[type="radio"][value="payInFull"]')
   if (await payInFull.count()) await payInFull.check()
-  record('guest reservation form completed with test identity', { tos: true, paymentChoice: 'payInFull' })
+  record('guest reservation form completed with test identity', { tos: true, paymentChoice: 'payInFull', birthDatePresent: true })
 
   const checkoutButton = page.getByRole('button', { name: 'Checkout' })
   await checkoutButton.click()
