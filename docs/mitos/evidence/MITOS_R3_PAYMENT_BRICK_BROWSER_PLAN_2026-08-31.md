@@ -1,7 +1,7 @@
 # MITOS R3 — Payment Brick Browser Certification Plan
 
 Date: 2026-08-31
-Status: **PLANNED / ISOLATED**
+Status: **REAL BROWSER EXECUTION ARMED**
 
 ## Objective
 
@@ -94,7 +94,14 @@ The provider/browser job executes only through:
 - `workflow_dispatch`; or
 - a deliberate commit whose message contains `[r3-browser-real]`.
 
-This prevents routine branch pushes from creating Mercado Pago TEST payments.
+Safe validation before this trigger:
+
+- workflow: `mitos-r3-browser-e2e`
+- run: `33455927667`
+- validation: `success`
+- real browser job: `skipped` as expected
+
+This commit deliberately carries `[r3-browser-real]` to authorize one Mercado Pago TEST browser execution.
 
 ## Nonclaims
 
