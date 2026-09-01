@@ -52,17 +52,11 @@ const DatePicker = ({
     }
   }, [minDateValue])
 
-  // MitoS checkout does not use date of birth as a payment or reservation
-  // requirement. Keep the shared picker available elsewhere, but do not
-  // render the legacy driver birth-date field on /checkout.
-  if (name === 'birthDate' && globalThis.location?.pathname === '/checkout') {
-    return null
-  }
-
   return (
     <LocalizationProvider adapterLocale={language === 'fr' ? fr : language === 'es' ? es : enUS} dateAdapter={AdapterDateFns}>
       <MuiDatePicker
         inputRef={ref}
+        name={name}
         label={label}
         views={['year', 'month', 'day']}
         value={value}
