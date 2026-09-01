@@ -8,6 +8,7 @@ import { DateValidationError } from '@mui/x-date-pickers'
 
 interface DatePickerProps {
   ref?: Ref<HTMLInputElement>
+  name?: string
   value?: Date
   label?: string
   minDate?: Date
@@ -22,6 +23,7 @@ interface DatePickerProps {
 
 const DatePicker = ({
   ref,
+  name,
   value: dateValue,
   label,
   minDate: minDateValue,
@@ -49,6 +51,13 @@ const DatePicker = ({
       setMinDate(undefined)
     }
   }, [minDateValue])
+
+  // MitoS checkout does not use date of birth as a payment or reservation
+  // requirement. Keep the shared picker available elsewhere, but do not
+  // render the legacy driver birth-date field on /checkout.
+  if (name === 'birthDate' && globalThis.location?.pathname === '/checkout') {
+    return null
+  }
 
   return (
     <LocalizationProvider adapterLocale={language === 'fr' ? fr : language === 'es' ? es : enUS} dateAdapter={AdapterDateFns}>
