@@ -1,7 +1,7 @@
 # MITOS R3 — Payment Brick Browser Certification Plan
 
 Date: 2026-08-31
-Status: **REAL BROWSER EXECUTION ARMED**
+Status: **REAL BROWSER EXECUTION RETRY ARMED AFTER HARNESS FIX**
 
 ## Objective
 
@@ -94,14 +94,33 @@ The provider/browser job executes only through:
 - `workflow_dispatch`; or
 - a deliberate commit whose message contains `[r3-browser-real]`.
 
-Safe validation before this trigger:
+## Execution history before retry
 
-- workflow: `mitos-r3-browser-e2e`
-- run: `33455927667`
+Initial safe validation:
+
+- workflow run: `33455927667`
 - validation: `success`
 - real browser job: `skipped` as expected
 
-This commit deliberately carries `[r3-browser-real]` to authorize one Mercado Pago TEST browser execution.
+First real execution:
+
+- workflow run: `33456091228`
+- payment/browser execution: **not reached**
+- failure boundary: local CI backend startup
+- observed infrastructure failure: Mongo attempted `::1:27017`
+- Mercado Pago payment created by this run: **no**
+- product defect claimed: **no**
+
+Harness correction:
+
+- commit: `e1cdffd7a5c3543374f0f731ba4c27e9439188e9`
+- force `BC_DB_URI` to `127.0.0.1` on backend process launch
+- replace HTTP health assumption with TCP readiness on port 4002
+- validation run: `33456521657`
+- validation result: `success`
+- real browser job: `skipped` as expected
+
+This commit deliberately carries `[r3-browser-real]` to authorize exactly one retry against Mercado Pago TEST after the harness-only correction.
 
 ## Nonclaims
 
