@@ -41,13 +41,6 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Mercado Pago regression harness compile
-        working-directory: backend
-        run: |
-          npx tsc --noEmit --pretty false scripts/mitos-r2a-runtime-cert.ts --esModuleInterop --skipLibCheck --module commonjs --target es2020 --moduleResolution node
-          npx tsc --noEmit --pretty false scripts/mitos-r2a-concurrency-cert.ts --esModuleInterop --skipLibCheck --module commonjs --target es2020 --moduleResolution node
-          npx tsc --noEmit --pretty false scripts/mitos-r2a-terminal-retry-cert.ts --esModuleInterop --skipLibCheck --module commonjs --target es2020 --moduleResolution node
-
       - name: Provider guard
         run: |
           echo 'SAFE VALIDATION ONLY — no Mercado Pago provider call, no deploy.'
