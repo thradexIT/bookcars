@@ -1,9 +1,9 @@
 # MITOS R3 — Payment Brick Browser Execution Marker
 
 Date: 2026-09-01
-Status: AUTHORIZED TEST EXECUTION
+Status: AUTHORIZED TEST EXECUTION — RETRY AFTER HARNESS-ONLY DATEPICKER FIX
 
-This commit intentionally triggers the isolated R3 browser certification workflow.
+This commit intentionally triggers the isolated R3 browser certification workflow after the previous run proved that the browser harness, not MitoS product logic, failed to populate the required MUI segmented birth-date field.
 
 Safety boundary:
 
@@ -19,4 +19,11 @@ Safety boundary:
 - `main` untouched
 - `developer` untouched
 
-The run is expected to execute the real MitoS checkout in Chromium, render the Mercado Pago Payment Brick, submit a TEST payment, and persist only sanitized evidence/screenshots.
+Harness correction before this retry:
+
+- product `Checkout.tsx` unchanged;
+- product `DatePicker.tsx` unchanged;
+- Playwright now interacts with the MUI birth-date field as a browser user using focus, sequential keyboard input and blur;
+- the harness refuses to submit if the required date value did not persist.
+
+The run is expected to execute the real MitoS checkout in Chromium, render the Mercado Pago Payment Brick, submit one TEST payment, and persist only sanitized evidence/screenshots.
