@@ -232,16 +232,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          nohup npx tsx src/index.ts > /tmp/mitos-r3-backend.log 2>&1 &
+          env BC_DB_URI='mongodb://127.0.0.1:27017/bookcars?appName=bookcars' \
+            nohup npx tsx src/index.ts > /tmp/mitos-r3-backend.log 2>&1 &
           echo $! > /tmp/mitos-r3-backend.pid
           for i in {1..60}; do
-            if curl -fsS http://localhost:4002/health >/dev/null 2>&1; then
+            if (echo > /dev/tcp/127.0.0.1/4002) >/dev/null 2>&1; then
               exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/mitos-r3-backend.pid)" >/dev/null 2>&1; then
+              cat /tmp/mitos-r3-backend.log || true
+              echo 'MitoS backend exited before readiness' >&2
+              exit 1
             fi
             sleep 1
           done
           cat /tmp/mitos-r3-backend.log || true
-          echo 'MitoS backend did not become ready' >&2
+          echo 'MitoS backend did not become reachable on TCP 4002' >&2
           exit 1
 
       - name: Install frontend and browser dependencies
