@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       expected_status:
-        description: Expected Mercado Pago test outcome for the supplied one-time CardToken
+        description: Expected Mercado Pago TEST payment outcome
         required: true
         default: approved
         type: choice
@@ -15,7 +15,7 @@ on:
           - pending
           - rejected
       payment_method_id:
-        description: Mercado Pago payment method matching the supplied CardToken
+        description: Mercado Pago TEST payment method
         required: true
         default: visa
         type: string
@@ -46,7 +46,7 @@ jobs:
         run: npx tsx scripts/mitos-r2b-secret-literal-scan.ts
 
   real-test-provider:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[r2b-real]'))
     needs: validate-harness
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -93,9 +93,9 @@ jobs:
       BC_BASE_CURRENCY: PEN
       BC_MERCADO_PAGO_CURRENCY: PEN
       BC_MERCADO_PAGO_ACCESS_TOKEN: ${{ secrets.MITOS_MP_TEST_ACCESS_TOKEN }}
-      MITOS_MP_TEST_CARD_TOKEN: ${{ secrets.MITOS_MP_TEST_CARD_TOKEN }}
-      MITOS_MP_EXPECTED_STATUS: ${{ inputs.expected_status }}
-      MITOS_MP_TEST_PAYMENT_METHOD_ID: ${{ inputs.payment_method_id }}
+      MITOS_MP_TEST_PUBLIC_KEY: ${{ secrets.MITOS_MP_TEST_PUBLIC_KEY }}
+      MITOS_MP_EXPECTED_STATUS: ${{ inputs.expected_status || 'approved' }}
+      MITOS_MP_TEST_PAYMENT_METHOD_ID: ${{ inputs.payment_method_id || 'visa' }}
       BC_MINIMUM_AGE: "21"
       BC_WEBSITE_NAME: MITOS RENT A CAR
       BC_TIMEZONE: America/Lima
@@ -112,7 +112,7 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Refuse execution without explicit test secrets
+      - name: Refuse execution without TEST credentials
         shell: bash
         run: |
           set -euo pipefail
@@ -120,11 +120,15 @@ jobs:
             echo 'Missing GitHub secret MITOS_MP_TEST_ACCESS_TOKEN' >&2
             exit 1
           fi
-          if [[ -z "${MITOS_MP_TEST_CARD_TOKEN:-}" ]]; then
-            echo 'Missing GitHub secret MITOS_MP_TEST_CARD_TOKEN (one-time test CardToken)' >&2
+          if [[ -z "${MITOS_MP_TEST_PUBLIC_KEY:-}" ]]; then
+            echo 'Missing GitHub secret MITOS_MP_TEST_PUBLIC_KEY' >&2
             exit 1
           fi
-          echo 'R2B secret preflight passed; secret values remain masked.'
+          if [[ "${MITOS_MP_TEST_PUBLIC_KEY}" != TEST-* ]]; then
+            echo 'R2B refuses a Public Key that is not TEST-scoped' >&2
+            exit 1
+          fi
+          echo 'R2B TEST credential preflight passed; secret values remain masked.'
 
       - name: Generate ephemeral MitoS identities and local secrets
         shell: bash
@@ -134,7 +138,7 @@ jobs:
           COOKIE_SECRET="$(openssl rand -hex 32)"
           JWT_SECRET="$(openssl rand -hex 32)"
           WEBHOOK_SECRET="$(openssl rand -hex 32)"
-          CUSTOMER="r2b-customer-${GITHUB_RUN_ID}@example.com"
+          CUSTOMER="test@testuser.com"
           ADMIN="r2b-admin-${GITHUB_RUN_ID}@example.test"
           SUPPLIER="r2b-supplier-${GITHUB_RUN_ID}@example.test"
 
@@ -193,7 +197,7 @@ jobs:
         working-directory: backend
         run: npm run seed:mitos:dev
 
-      - name: Execute real Mercado Pago test-provider certification
+      - name: Execute real Mercado Pago TEST-provider certification
         working-directory: backend
         run: npx tsx scripts/mitos-r2b-provider-cert.ts
 
