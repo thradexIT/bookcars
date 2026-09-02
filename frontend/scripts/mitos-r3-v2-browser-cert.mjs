@@ -383,7 +383,7 @@ try {
   const driverInputCount = await driverInputs.count()
   if (driverInputCount < 3) throw new Error(`R3 v2 expected at least three driver inputs; observed ${driverInputCount}`)
 
-  const email = `r3-v2-${runId}@testuser.com`
+  const email = 'test@testuser.com'
   await driverInputs.nth(0).fill('MITOS R3 Browser Test')
   await driverInputs.nth(1).fill(email)
   await driverInputs.nth(1).press('Tab')
