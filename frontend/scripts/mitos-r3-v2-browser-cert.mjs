@@ -340,6 +340,8 @@ try {
           paymentStatus: body?.status || '',
           bookingId: body?.bookingId || '',
           idempotentReplay: body?.idempotentReplay === true,
+          errorCode: body?.error || body?.code || '',
+          errorMessage: body?.message || '',
         }
       }
     } catch {
@@ -381,7 +383,7 @@ try {
   const driverInputCount = await driverInputs.count()
   if (driverInputCount < 3) throw new Error(`R3 v2 expected at least three driver inputs; observed ${driverInputCount}`)
 
-  const email = `r3-v2-${runId}@example.test`
+  const email = `r3-v2-${runId}@testuser.com`
   await driverInputs.nth(0).fill('MITOS R3 Browser Test')
   await driverInputs.nth(1).fill(email)
   await driverInputs.nth(1).press('Tab')
@@ -471,8 +473,21 @@ try {
     rawCardDataStoredInEvidence: false,
   })
 
+  const paymentResponsePromise = page.waitForResponse(
+    (response) => response.url().includes('/api/create-mercadopago-payment')
+      && response.request().method() === 'POST',
+    { timeout: 60_000 },
+  )
   const clicked = await clickPayButton(page, brickShell)
   if (!clicked) throw new Error('R3 v2 could not locate Payment Brick submit button')
+
+  const paymentResponse = await paymentResponsePromise
+  if (!paymentResponse.ok()) {
+    const providerFailure = await paymentResponse.json().catch(() => ({}))
+    throw new Error(
+      `R3 v2 payment API returned HTTP ${paymentResponse.status()}: ${providerFailure?.message || providerFailure?.error || 'unknown provider rejection'}`,
+    )
+  }
 
   await page.locator('.checkout-status').waitFor({ state: 'visible', timeout: 60_000 })
   await screenshot(page, '03-payment-success')
