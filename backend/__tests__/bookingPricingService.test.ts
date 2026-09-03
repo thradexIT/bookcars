@@ -2,7 +2,7 @@ import {
   calculateReservationPayment,
   MITOS_RESERVATION_PAYMENT_FLOOR,
   MITOS_RESERVATION_PAYMENT_RATE,
-} from '../src/services/bookingPricingService'
+} from '../src/services/mitosReservationPaymentPolicy'
 
 describe('MitoS reservation payment policy', () => {
   it('uses the S/ 35 floor when 10% would be too small', () => {
