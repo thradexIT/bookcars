@@ -86,6 +86,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - VITE_PORT=8080
       - VITE_BC_WEBSITE_NAME=MITOS RENT A CAR
       - VITE_BC_DEFAULT_LANGUAGE=es
       - VITE_BC_MAP_LATITUDE=-12.0464
