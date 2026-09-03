@@ -1,0 +1,60 @@
+name: mitos-flexible-reservation-payment
+
+on:
+  push:
+    branches:
+      - feature/mitos-flexible-reservation-payment
+  workflow_dispatch:
+
+jobs:
+  backend-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install backend
+        working-directory: backend
+        run: npm install
+
+      - name: Lint backend
+        working-directory: backend
+        run: npm run lint
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Test MitoS reservation payment policy
+        working-directory: backend
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+        run: npx jest __tests__/bookingPricingService.test.ts --runInBand --coverage=false --no-cache
+
+  frontend-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install frontend
+        working-directory: frontend
+        run: npm install --force
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
