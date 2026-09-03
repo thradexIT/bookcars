@@ -79,17 +79,6 @@ if (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago) {
   initMercadoPago(env.MERCADO_PAGO_PUBLIC_KEY)
 }
 
-const MITOS_RESERVATION_PAYMENT_FLOOR = 35
-const MITOS_RESERVATION_PAYMENT_RATE = 0.10
-const calculateReservationPayment = (rentalTotal: number) => {
-  const roundedTotal = Math.round((Number(rentalTotal) + Number.EPSILON) * 100) / 100
-  if (!(roundedTotal > 0)) return 0
-  return Math.round((Math.min(
-    roundedTotal,
-    Math.max(MITOS_RESERVATION_PAYMENT_FLOOR, roundedTotal * MITOS_RESERVATION_PAYMENT_RATE),
-  ) + Number.EPSILON) * 100) / 100
-}
-
 const Checkout = () => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -147,7 +136,6 @@ const Checkout = () => {
   const bookingDetailHeight = env.SUPPLIER_IMAGE_HEIGHT + 10
   const days = bookcarsHelper.days(from, to)
   const daysLabel = from && to && `${helper.getDaysShort(days)} (${bookcarsHelper.capitalize(format(from, _format, { locale: _locale }))} - ${bookcarsHelper.capitalize(format(to, _format, { locale: _locale }))})`
-  const reservationPayment = calculateReservationPayment(price)
 
   const schema = createSchema(car)
 
@@ -290,7 +278,7 @@ const Checkout = () => {
 
           let finalPrice = price
           if (payDeposit) {
-            finalPrice = reservationPayment
+            throw new globalThis.Error('MitoS partial reservation payments are authoritative through Mercado Pago only')
           }
 
           if (clientTypeName === 'Insurance' && !payDeposit) {
@@ -909,7 +897,7 @@ const Checkout = () => {
                                 )}
                               />
                             )}
-                            {clientTypeName !== 'Internal' && (
+                            {clientTypeName !== 'Internal' && env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago && (
                               <FormControlLabel
                                 value="payDeposit"
                                 control={<Radio />}
@@ -917,7 +905,7 @@ const Checkout = () => {
                                 className={clientSecret || payPalLoaded || mercadoPagoReady ? 'payment-radio-disabled' : ''}
                                 label={(
                                   <span className="payment-button">
-                                    <span>{strings.PAY_DEPOSIT} — {bookcarsHelper.formatPrice(reservationPayment, commonStrings.CURRENCY, language)}</span>
+                                    <span>{strings.PAY_DEPOSIT}</span>
                                     <span className="payment-info">{strings.PAY_DEPOSIT_INFO}</span>
                                   </span>
                                 )}
@@ -975,12 +963,20 @@ const Checkout = () => {
                         {
                           mercadoPagoQuote
                             ? bookcarsHelper.formatPrice(mercadoPagoQuote.amount, commonStrings.CURRENCY, language)
-                            : bookcarsHelper.formatPrice(
-                              payDeposit ? reservationPayment
-                                : (price - (clientTypeName === 'Insurance' ? deductible : 0))
-                              , commonStrings.CURRENCY, language)
+                            : payDeposit
+                              ? strings.CALCULATED_ON_CONTINUE
+                              : bookcarsHelper.formatPrice(
+                                price - (clientTypeName === 'Insurance' ? deductible : 0),
+                                commonStrings.CURRENCY,
+                                language,
+                              )
                         }
                       </div>
+                      {mercadoPagoQuote && payDeposit && (
+                        <div className="payment-info-balance" style={{ marginTop: 6 }}>
+                          {strings.BALANCE_AT_PICKUP}: {bookcarsHelper.formatPrice(mercadoPagoQuote.balanceDue, commonStrings.CURRENCY, language)}
+                        </div>
+                      )}
                     </div>
 
                     {!payLater && (
@@ -1130,7 +1126,7 @@ const Checkout = () => {
                                     const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
                                     let amount = price
                                     if (payDeposit) {
-                                      amount = reservationPayment
+                                      throw new globalThis.Error('MitoS partial reservation payments are authoritative through Mercado Pago only')
                                     }
                                     if (clientTypeName === 'Insurance' && !payDeposit) {
                                       amount -= deductible

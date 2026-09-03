@@ -143,10 +143,52 @@ export const getAuthoritativeBookingCharge = async (bookingId: string) => {
   if (clientType?.name === 'Internal') deposit = 0
   deposit = money(deposit)
 
-  const reservationPayment = calculateReservationPayment(rentalPrice)
+  const baseCurrency = env.__env__('BC_BASE_CURRENCY', false, 'PEN').toUpperCase()
+  const mercadoPagoCurrency = env.__env__('BC_MERCADO_PAGO_CURRENCY', false, 'PEN').toUpperCase()
+  if (baseCurrency !== mercadoPagoCurrency) {
+    throw new Error(`Payment currency mismatch: pricing=${baseCurrency}, mercadoPago=${mercadoPagoCurrency}`)
+  }
 
-  // Payment choice is represented by the existing booking flags, but the
-  // amount is always derived here from server-owned booking/car data.
+  let bookingDirty = false
+  let reservationPayment = rentalPrice
+  let reservationPolicy: ReturnType<typeof calculateReservationPayment> | undefined
+
+  if (booking.isDeposit) {
+    const snapshotMatches = Number(booking.reservationPaymentAmount || 0) > 0
+      && booking.reservationPaymentCurrency === mercadoPagoCurrency
+      && Number(booking.reservationPaymentFxRate || 0) > 0
+      && Number(booking.reservationPaymentRentalPrice || 0) === rentalPrice
+
+    if (snapshotMatches) {
+      reservationPayment = money(Number(booking.reservationPaymentAmount))
+      const snapshotFxRate = Number(booking.reservationPaymentFxRate)
+      const recalculated = calculateReservationPayment(rentalPrice, snapshotFxRate)
+      reservationPolicy = {
+        ...recalculated,
+        amount: reservationPayment,
+        balanceDue: money(Math.max(rentalPrice - reservationPayment, 0)),
+      }
+    } else {
+      const usdToPaymentCurrencyRate = mercadoPagoCurrency === 'USD'
+        ? 1
+        : Number(env.__env__('BC_MITOS_USD_TO_PAYMENT_CURRENCY_RATE', false))
+
+      if (!Number.isFinite(usdToPaymentCurrencyRate) || usdToPaymentCurrencyRate <= 0) {
+        throw new Error('BC_MITOS_USD_TO_PAYMENT_CURRENCY_RATE must be configured with a positive rate for non-USD payments')
+      }
+
+      reservationPolicy = calculateReservationPayment(rentalPrice, usdToPaymentCurrencyRate)
+      reservationPayment = reservationPolicy.amount
+      booking.reservationPaymentAmount = reservationPolicy.amount
+      booking.reservationPaymentCurrency = mercadoPagoCurrency
+      booking.reservationPaymentFloorUsd = reservationPolicy.floorUsd
+      booking.reservationPaymentFxRate = reservationPolicy.usdToPaymentCurrencyRate
+      booking.reservationPaymentRate = reservationPolicy.percentageRate
+      booking.reservationPaymentRentalPrice = rentalPrice
+      bookingDirty = true
+    }
+  }
+
   let amount = rentalPrice
   if (booking.isDeposit) amount = reservationPayment
   if (booking.isPayedInFull) amount = rentalPrice
@@ -154,16 +196,14 @@ export const getAuthoritativeBookingCharge = async (bookingId: string) => {
 
   if (!(amount > 0)) throw new Error('Payment amount must be greater than zero')
 
-  const baseCurrency = env.__env__('BC_BASE_CURRENCY', false, 'PEN').toUpperCase()
-  const mercadoPagoCurrency = env.__env__('BC_MERCADO_PAGO_CURRENCY', false, 'PEN').toUpperCase()
-  if (baseCurrency !== mercadoPagoCurrency) {
-    throw new Error(`Payment currency mismatch: pricing=${baseCurrency}, mercadoPago=${mercadoPagoCurrency}`)
-  }
+  const balanceDue = money(Math.max(rentalPrice - amount, 0))
+  const paymentPlan = booking.isDeposit ? 'reservation' : booking.isPayedInFull ? 'full' : 'online'
 
-  // Replace the client-submitted booking price with the server-derived rental
-  // price once a provider payment is prepared.
   if (booking.price !== rentalPrice) {
     booking.price = rentalPrice
+    bookingDirty = true
+  }
+  if (bookingDirty) {
     await booking.save()
   }
 
@@ -175,6 +215,9 @@ export const getAuthoritativeBookingCharge = async (bookingId: string) => {
     rentalPrice,
     deposit,
     reservationPayment,
+    balanceDue,
+    paymentPlan,
+    reservationPolicy,
     currency: mercadoPagoCurrency,
   }
 }

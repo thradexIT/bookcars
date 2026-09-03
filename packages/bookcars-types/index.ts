@@ -106,6 +106,15 @@ export interface Booking {
   expireAt?: Date
   isDeposit?: boolean
   isPayedInFull?: boolean
+  reservationPaymentAmount?: number
+  reservationPaymentCurrency?: string
+  reservationPaymentFloorUsd?: number
+  reservationPaymentFxRate?: number
+  reservationPaymentRate?: number
+  reservationPaymentRentalPrice?: number
+  paidAmount?: number
+  balanceDue?: number
+  paymentCurrency?: string
   paypalOrderId?: string
   odooOrderId?: number
   kmOut?: number
