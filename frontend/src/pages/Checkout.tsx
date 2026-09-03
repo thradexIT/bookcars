@@ -79,6 +79,17 @@ if (env.PAYMENT_GATEWAY === bookcarsTypes.PaymentGateway.MercadoPago) {
   initMercadoPago(env.MERCADO_PAGO_PUBLIC_KEY)
 }
 
+const MITOS_RESERVATION_PAYMENT_FLOOR = 35
+const MITOS_RESERVATION_PAYMENT_RATE = 0.10
+const calculateReservationPayment = (rentalTotal: number) => {
+  const roundedTotal = Math.round((Number(rentalTotal) + Number.EPSILON) * 100) / 100
+  if (!(roundedTotal > 0)) return 0
+  return Math.round((Math.min(
+    roundedTotal,
+    Math.max(MITOS_RESERVATION_PAYMENT_FLOOR, roundedTotal * MITOS_RESERVATION_PAYMENT_RATE),
+  ) + Number.EPSILON) * 100) / 100
+}
+
 const Checkout = () => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -136,6 +147,7 @@ const Checkout = () => {
   const bookingDetailHeight = env.SUPPLIER_IMAGE_HEIGHT + 10
   const days = bookcarsHelper.days(from, to)
   const daysLabel = from && to && `${helper.getDaysShort(days)} (${bookcarsHelper.capitalize(format(from, _format, { locale: _locale }))} - ${bookcarsHelper.capitalize(format(to, _format, { locale: _locale }))})`
+  const reservationPayment = calculateReservationPayment(price)
 
   const schema = createSchema(car)
 
@@ -155,6 +167,9 @@ const Checkout = () => {
     defaultValues: {
       additionalDriverEmail: '',
       additionalDriverPhone: '',
+      payLater: false,
+      payDeposit: false,
+      payInFull: true,
     }
   })
 
@@ -231,18 +246,10 @@ const Checkout = () => {
         }
       }
 
-      let amount = price
-      if (payDeposit) {
-        amount = depositPrice
-      } else if (payInFull) {
-        amount = price + depositPrice
-      }
-
-      if (clientTypeName === 'Insurance' && !payDeposit) {
-        amount += deductible
-      }
-
-      const basePrice = await bookcarsHelper.convertPrice(amount, PaymentService.getCurrency(), env.BASE_CURRENCY)
+      // Booking.price always represents the full rental price. The selected
+      // payment option is represented separately by booking flags and the
+      // authoritative provider charge is recalculated server-side.
+      const basePrice = await bookcarsHelper.convertPrice(price, PaymentService.getCurrency(), env.BASE_CURRENCY)
 
       const booking: bookcarsTypes.Booking = {
         supplier: car.supplier._id as string,
@@ -283,9 +290,7 @@ const Checkout = () => {
 
           let finalPrice = price
           if (payDeposit) {
-            finalPrice = depositPrice
-          } else if (payInFull) {
-            finalPrice = price + depositPrice
+            finalPrice = reservationPayment
           }
 
           if (clientTypeName === 'Insurance' && !payDeposit) {
@@ -883,7 +888,7 @@ const Checkout = () => {
                       <div className="payment-options">
                         <FormControl>
                           <RadioGroup
-                            defaultValue={depositPrice > 0 ? 'payOnline' : 'payInFull'}
+                            defaultValue="payInFull"
                             onChange={(e) => {
                               setValue('payLater', e.target.value === 'payLater')
                               setValue('payDeposit', e.target.value === 'payDeposit')
@@ -904,38 +909,20 @@ const Checkout = () => {
                                 )}
                               />
                             )}
-                            {
-                              car.deposit > 0 && (
-                                <FormControlLabel
-                                  value="payDeposit"
-                                  control={<Radio />}
-                                  disabled={!!clientSecret || payPalLoaded || mercadoPagoReady}
-                                  className={clientSecret || payPalLoaded || mercadoPagoReady ? 'payment-radio-disabled' : ''}
-                                  label={(
-                                    <span className="payment-button">
-                                      <span>{strings.PAY_DEPOSIT}</span>
-                                      <span className="payment-info">{strings.PAY_DEPOSIT_INFO}</span>
-                                    </span>
-                                  )}
-                                />
-                              )
-                            }
-                            {
-                              depositPrice > 0 && (
-                                <FormControlLabel
-                                  value="payOnline"
-                                  control={<Radio />}
-                                  disabled={!!clientSecret || payPalLoaded || mercadoPagoReady}
-                                  className={clientSecret || payPalLoaded || mercadoPagoReady ? 'payment-radio-disabled' : ''}
-                                  label={(
-                                    <span className="payment-button">
-                                      <span>{strings.PAY_ONLINE}</span>
-                                      <span className="payment-info">{strings.PAY_ONLINE_INFO}</span>
-                                    </span>
-                                  )}
-                                />
-                              )
-                            }
+                            {clientTypeName !== 'Internal' && (
+                              <FormControlLabel
+                                value="payDeposit"
+                                control={<Radio />}
+                                disabled={!!clientSecret || payPalLoaded || mercadoPagoReady}
+                                className={clientSecret || payPalLoaded || mercadoPagoReady ? 'payment-radio-disabled' : ''}
+                                label={(
+                                  <span className="payment-button">
+                                    <span>{strings.PAY_DEPOSIT} — {bookcarsHelper.formatPrice(reservationPayment, commonStrings.CURRENCY, language)}</span>
+                                    <span className="payment-info">{strings.PAY_DEPOSIT_INFO}</span>
+                                  </span>
+                                )}
+                              />
+                            )}
                             <FormControlLabel
                               value="payInFull"
                               control={<Radio />}
@@ -943,7 +930,7 @@ const Checkout = () => {
                               className={clientSecret || payPalLoaded || mercadoPagoReady ? 'payment-radio-disabled' : ''}
                               label={(
                                 <span className="payment-button">
-                                  <span>{strings.PAY_IN_FULL}</span>
+                                  <span>{strings.PAY_IN_FULL} — {bookcarsHelper.formatPrice(price, commonStrings.CURRENCY, language)}</span>
                                   <span className="payment-info">{strings.PAY_IN_FULL_INFO}</span>
                                 </span>
                               )}
@@ -989,9 +976,8 @@ const Checkout = () => {
                           mercadoPagoQuote
                             ? bookcarsHelper.formatPrice(mercadoPagoQuote.amount, commonStrings.CURRENCY, language)
                             : bookcarsHelper.formatPrice(
-                              payDeposit ? depositPrice
-                                : payInFull ? (price + depositPrice - (clientTypeName === 'Insurance' ? deductible : 0))
-                                  : (price - (clientTypeName === 'Insurance' ? deductible : 0))
+                              payDeposit ? reservationPayment
+                                : (price - (clientTypeName === 'Insurance' ? deductible : 0))
                               , commonStrings.CURRENCY, language)
                         }
                       </div>
@@ -1144,9 +1130,7 @@ const Checkout = () => {
                                     const description = bookcarsHelper.truncateString(_description, PayPalService.ORDER_DESCRIPTION_MAX_LENGTH)
                                     let amount = price
                                     if (payDeposit) {
-                                      amount = depositPrice
-                                    } else if (payInFull) {
-                                      amount = price + depositPrice
+                                      amount = reservationPayment
                                     }
                                     if (clientTypeName === 'Insurance' && !payDeposit) {
                                       amount -= deductible
