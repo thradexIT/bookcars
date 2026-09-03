@@ -35,6 +35,27 @@ jobs:
           path.write_text(text.replace(marker, "    currency: mercadoPagoCurrency,\n  }\n}\n", 1))
           PY
 
+      - name: Correct generated frontend type boundaries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          checkout = Path('frontend/src/pages/Checkout.tsx')
+          text = checkout.read_text()
+          old = "throw new Error('MitoS partial reservation payments are authoritative through Mercado Pago only')"
+          count = text.count(old)
+          if count != 2:
+              raise SystemExit(f'Expected two generated Error collisions, found {count}')
+          checkout.write_text(text.replace(old, "throw new globalThis.Error('MitoS partial reservation payments are authoritative through Mercado Pago only')"))
+
+          status = Path('frontend/src/components/CheckoutStatus.tsx')
+          text = status.read_text()
+          old = "const partialPayment = booking.status === bookcarsTypes.BookingStatus.Deposit"
+          if old not in text:
+              raise SystemExit('Expected CheckoutStatus booking guard not found')
+          status.write_text(text.replace(old, "const partialPayment = booking?.status === bookcarsTypes.BookingStatus.Deposit", 1))
+          PY
+
       - name: Validate reservation-floor currency copy
         run: |
           if grep -R "S/ 35" backend/src/services frontend/src/lang/checkout.ts frontend/src/pages/Checkout.tsx; then
