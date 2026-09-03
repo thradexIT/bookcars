@@ -86,9 +86,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add backend frontend admin packages .github/workflows/mitos-flexible-reservation-payment.yml
+          git restore .github/workflows/mitos-flexible-reservation-payment.yml
+          git add backend frontend admin packages
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No implementation changes to commit"
             exit 1
           fi
           git commit -m "fix(mitos): make reservation floor USD-denominated"
