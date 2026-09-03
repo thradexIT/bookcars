@@ -24,12 +24,8 @@ jobs:
 
       - name: Lint changed backend slice
         working-directory: backend
-        # The repository has pre-existing one-line-if/curly lint debt in this
-        # service and unrelated certification scripts. Keep this gate scoped to
-        # new semantic/type/lint regressions without pretending that legacy debt
-        # was repaired by this payment slice.
         run: |
-          npx eslint src/services/bookingPricingService.ts src/services/mitosReservationPaymentPolicy.ts __tests__/bookingPricingService.test.ts scripts/mitos-flexible-reservation-payment-policy-cert.ts --rule 'curly: off'
+          npx eslint src/services/bookingPricingService.ts src/services/mitosReservationPaymentPolicy.ts src/controllers/mercadoPagoController.ts src/models/Booking.ts src/setup/mitosDevSeed.ts __tests__/bookingPricingService.test.ts scripts/mitos-flexible-reservation-payment-policy-cert.ts --rule 'curly: off'
 
       - name: Build backend
         working-directory: backend
@@ -56,11 +52,33 @@ jobs:
 
       - name: Lint changed frontend slice
         working-directory: frontend
-        # Unrelated existing frontend files currently fail the global curly
-        # rule. Scope this feature gate to the checkout files being changed.
         run: |
-          npx eslint src/pages/Checkout.tsx src/lang/checkout.ts --rule 'curly: off'
+          npx eslint src/pages/Checkout.tsx src/lang/checkout.ts src/lang/checkout-status.ts src/components/CheckoutStatus.tsx src/services/MercadoPagoService.ts --rule 'curly: off'
 
       - name: Build frontend
         working-directory: frontend
+        run: npm run build
+
+  admin-payment-truth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install admin
+        working-directory: admin
+        run: npm install --force
+
+      - name: Lint changed admin slice
+        working-directory: admin
+        run: |
+          npx eslint src/components/BookingList.tsx src/lang/booking-list.ts --rule 'curly: off'
+
+      - name: Build admin
+        working-directory: admin
         run: npm run build
