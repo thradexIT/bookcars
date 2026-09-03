@@ -10,6 +10,31 @@ const hours = (from: Date, to: Date) => Math.ceil((to.getTime() - from.getTime()
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
 
 /**
+ * MitoS reservation payment policy.
+ *
+ * The customer has one partial-payment choice: pay now to secure the booking.
+ * The amount is selected by policy, never by the browser:
+ *
+ *   max(S/ 35, 10% of the authoritative rental total)
+ *
+ * A defensive cap prevents the reservation payment from ever exceeding the
+ * full rental amount if a future product is priced below the current S/ 35
+ * MitoS floor.
+ */
+export const MITOS_RESERVATION_PAYMENT_FLOOR = 35
+export const MITOS_RESERVATION_PAYMENT_RATE = 0.10
+
+export const calculateReservationPayment = (rentalPrice: number) => {
+  const normalizedRentalPrice = money(Number(rentalPrice))
+  if (!(normalizedRentalPrice > 0)) return 0
+
+  return money(Math.min(
+    normalizedRentalPrice,
+    Math.max(MITOS_RESERVATION_PAYMENT_FLOOR, normalizedRentalPrice * MITOS_RESERVATION_PAYMENT_RATE),
+  ))
+}
+
+/**
  * Server counterpart of the shared BookCars price calculation. Payment
  * creation must never trust a browser-provided amount.
  */
@@ -135,14 +160,20 @@ export const getAuthoritativeBookingCharge = async (bookingId: string) => {
     clientType?.privileges?.rentDiscount || 0,
   )
 
+  // Warranty/security deposit remains a separate concept from the MitoS
+  // reservation payment. It is still returned for legacy consumers and UI.
   let deposit = Number(car.deposit || 0)
   deposit += deposit * (priceChangeRate / 100)
   if (clientType?.name === 'Internal') deposit = 0
   deposit = money(deposit)
 
+  const reservationPayment = calculateReservationPayment(rentalPrice)
+
+  // Payment choice is represented by the existing booking flags, but the
+  // amount is always derived here from server-owned booking/car data.
   let amount = rentalPrice
-  if (booking.isDeposit) amount = deposit
-  if (booking.isPayedInFull) amount = rentalPrice + deposit
+  if (booking.isDeposit) amount = reservationPayment
+  if (booking.isPayedInFull) amount = rentalPrice
   amount = money(amount)
 
   if (!(amount > 0)) throw new Error('Payment amount must be greater than zero')
@@ -167,6 +198,7 @@ export const getAuthoritativeBookingCharge = async (bookingId: string) => {
     amount,
     rentalPrice,
     deposit,
+    reservationPayment,
     currency: mercadoPagoCurrency,
   }
 }
