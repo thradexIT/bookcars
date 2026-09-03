@@ -29,17 +29,15 @@ jobs:
         # new semantic/type/lint regressions without pretending that legacy debt
         # was repaired by this payment slice.
         run: |
-          npx eslint src/services/bookingPricingService.ts __tests__/bookingPricingService.test.ts --rule 'curly: off'
+          npx eslint src/services/bookingPricingService.ts src/services/mitosReservationPaymentPolicy.ts __tests__/bookingPricingService.test.ts scripts/mitos-flexible-reservation-payment-policy-cert.ts --rule 'curly: off'
 
       - name: Build backend
         working-directory: backend
         run: npm run build
 
-      - name: Test MitoS reservation payment policy
+      - name: Certify MitoS reservation payment policy
         working-directory: backend
-        env:
-          NODE_OPTIONS: --experimental-vm-modules
-        run: npx jest __tests__/bookingPricingService.test.ts --runInBand --coverage=false --no-cache
+        run: node dist/scripts/mitos-flexible-reservation-payment-policy-cert.js
 
   frontend-checkout:
     runs-on: ubuntu-latest
