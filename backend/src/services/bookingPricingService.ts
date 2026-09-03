@@ -4,35 +4,11 @@ import Car from '../models/Car'
 import User from '../models/User'
 import ClientType from '../models/ClientType'
 import * as env from '../config/env.config'
+import { calculateReservationPayment } from './mitosReservationPaymentPolicy'
 
 const days = (from: Date, to: Date) => Math.ceil((to.getTime() - from.getTime()) / (1000 * 3600 * 24))
 const hours = (from: Date, to: Date) => Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60))
 const money = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
-
-/**
- * MitoS reservation payment policy.
- *
- * The customer has one partial-payment choice: pay now to secure the booking.
- * The amount is selected by policy, never by the browser:
- *
- *   max(S/ 35, 10% of the authoritative rental total)
- *
- * A defensive cap prevents the reservation payment from ever exceeding the
- * full rental amount if a future product is priced below the current S/ 35
- * MitoS floor.
- */
-export const MITOS_RESERVATION_PAYMENT_FLOOR = 35
-export const MITOS_RESERVATION_PAYMENT_RATE = 0.10
-
-export const calculateReservationPayment = (rentalPrice: number) => {
-  const normalizedRentalPrice = money(Number(rentalPrice))
-  if (!(normalizedRentalPrice > 0)) return 0
-
-  return money(Math.min(
-    normalizedRentalPrice,
-    Math.max(MITOS_RESERVATION_PAYMENT_FLOOR, normalizedRentalPrice * MITOS_RESERVATION_PAYMENT_RATE),
-  ))
-}
 
 /**
  * Server counterpart of the shared BookCars price calculation. Payment
