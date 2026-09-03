@@ -23,6 +23,18 @@ jobs:
       - name: Apply authoritative USD-floor payment slice
         run: python3 .github/scripts/apply_mitos_usd_floor.py
 
+      - name: Correct generated pricing service boundary
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('backend/src/services/bookingPricingService.ts')
+          text = path.read_text()
+          marker = "    currency: mercadoPagoCurrency,\n  }\n}\n}\n"
+          if marker not in text:
+              raise SystemExit('Expected generated duplicate service boundary not found')
+          path.write_text(text.replace(marker, "    currency: mercadoPagoCurrency,\n  }\n}\n", 1))
+          PY
+
       - name: Validate reservation-floor currency copy
         run: |
           if grep -R "S/ 35" backend/src/services frontend/src/lang/checkout.ts frontend/src/pages/Checkout.tsx; then
