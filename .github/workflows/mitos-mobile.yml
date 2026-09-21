@@ -75,7 +75,7 @@ jobs:
             throw new Error('Mobile default language fallback is not Spanish')
           }
 
-          const legacyPattern = /BookCars|Book Cars/g
+          const legacyPattern = /BookCars|Book Cars|#f37022/gi
           const roots = ['mobile/screens', 'mobile/components']
           const hits = []
           const walk = (dir) => {
@@ -90,7 +90,7 @@ jobs:
             }
           }
           roots.forEach(walk)
-          if (hits.length) throw new Error(`Visible legacy BookCars identity remains in: ${hits.join(', ')}`)
+          if (hits.length) throw new Error(`Visible legacy BookCars identity/color remains in: ${hits.join(', ')}`)
 
           function pngSize(file) {
             const b = fs.readFileSync(file)
