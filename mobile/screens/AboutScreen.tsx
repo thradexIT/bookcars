@@ -39,7 +39,9 @@ const AboutScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, 
   const open = async (url: string) => {
     try {
       const supported = await Linking.canOpenURL(url)
-      if (supported) await Linking.openURL(url)
+      if (supported) {
+        await Linking.openURL(url)
+      }
     } catch (error) {
       console.error('Error opening Mitos link:', error)
     }
