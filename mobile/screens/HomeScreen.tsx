@@ -61,8 +61,7 @@ const HomeScreen = ({ navigation, route }: NativeStackScreenProps<StackParams, '
             </View>
 
             <Text style={styles.eyebrow}>TU PRÓXIMA RUTA</Text>
-            <Text style={styles.title}>Tu ruta empieza{'
-'}cuando tú decides.</Text>
+            <Text style={styles.title}>Tu ruta empieza{'\\n'}cuando tú decides.</Text>
             <Text style={styles.tagline}>{mitosBrand.tagline}</Text>
           </View>
 
