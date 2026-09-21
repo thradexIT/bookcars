@@ -15,6 +15,10 @@ on:
       - '.github/workflows/mitos-mobile.yml'
   workflow_dispatch:
 
+concurrency:
+  group: mitos-mobile-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   mobile-integrity:
     runs-on: ubuntu-latest
