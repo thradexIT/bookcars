@@ -11,6 +11,7 @@ export const mitosBrand = {
   whatsappUrl: 'https://wa.me/51941368086',
   phoneUri: 'tel:+51941368086',
   market: 'Lima, Perú',
+  operationalLocation: 'La Molina, Lima',
 } as const
 
 export const mitosColors = {
